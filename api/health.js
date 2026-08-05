@@ -1,3 +1,3 @@
 export default function handler(_request, response) {
-  response.status(200).json({ status: 'ok', service: 'anecdotes-du-soin' });
+  response.status(200).json({ status: 'ok', service: 'iladitquoi' });
 }

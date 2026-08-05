@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { populateProfessionSelect } from '../lib/professions.js';
 
 const AUTH_PAGE = '/auth.html';
 const PROFILE_PAGE = '/profile.html';
@@ -31,7 +32,6 @@ function frenchAuthError(error) {
   if (code === 'weak_password') return 'Choisissez un mot de passe plus robuste.';
   if (code === 'over_email_send_rate_limit' || error?.status === 429) return 'Trop de messages ont été demandés. Réessayez dans quelques minutes.';
   if (code === 'validation_failed') return 'Vérifiez les informations saisies.';
-  if (code === 'provider_disabled') return 'La connexion Google n’est pas encore activée.';
   if (String(error?.message || '').toLowerCase().includes('duplicate key')) return 'Ce pseudonyme est déjà utilisé.';
   return error?.message || 'Une erreur est survenue. Réessayez.';
 }
@@ -79,6 +79,8 @@ function updateAccountChrome(session, profile) {
   setText('[data-auth-name]', pseudonym);
   setText('[data-auth-meta]', meta);
   setText('[data-auth-avatar]', signedIn ? pseudonym.charAt(0).toUpperCase() : '→');
+  setText('[data-auth-level]', signedIn ? level : 0);
+  setText('[data-auth-xp]', Number(profile?.xp) || 0);
   document.querySelectorAll('[data-auth-guest]').forEach((element) => { element.hidden = signedIn; });
   document.querySelectorAll('[data-auth-member]').forEach((element) => { element.hidden = !signedIn; });
 
@@ -139,7 +141,7 @@ function profileEntry(anecdote) {
   const state = document.createElement('span');
   state.textContent = anecdote.moderation_status === 'published' ? 'Validée' : anecdote.moderation_status === 'refused' ? 'Refusée' : 'En attente';
   foot.append(votes, state);
-  if (anecdote.moderation_status === 'refused' && anecdote.moderation_reason) {
+  if (anecdote.moderation_reason) {
     const reason = document.createElement('span');
     reason.textContent = anecdote.moderation_reason;
     foot.append(reason);
@@ -255,7 +257,7 @@ function renderAuthPageState(session, profile, requestedMode, params) {
   }
   if (session) {
     setText('[data-signed-in-email]', session.user.email || 'Compte connecté');
-    if (params.has('oauth') || params.has('confirmed')) {
+    if (params.has('confirmed')) {
       window.location.replace(redirectTarget());
       return;
     }
@@ -270,6 +272,7 @@ async function setupAuthPage(session, profile) {
   if (!root) return;
   const params = new URLSearchParams(window.location.search);
   const requestedMode = params.get('mode');
+  document.querySelectorAll('select[name="profession"]').forEach((select) => populateProfessionSelect(select));
   if (root.dataset.bound === 'true') {
     renderAuthPageState(session, profile, requestedMode, params);
     return;
@@ -286,21 +289,6 @@ async function setupAuthPage(session, profile) {
     setAuthView('reset');
   });
   document.querySelectorAll('[data-back-to-login]').forEach((button) => button.addEventListener('click', () => setAuthView('signin')));
-
-  document.querySelector('#google-login')?.addEventListener('click', async (event) => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    setStatus('Redirection vers Google…');
-    const next = encodeURIComponent(redirectTarget());
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}${AUTH_PAGE}?oauth=1&next=${next}` }
-    });
-    if (error) {
-      button.disabled = false;
-      setStatus(frenchAuthError(error), true);
-    }
-  });
 
   document.querySelector('#signin-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -446,6 +434,7 @@ const ready = initialize();
 window.AnecdotesAuth = {
   ready,
   async getSession() { await ready; return currentSession; },
+  async getProfile() { await ready; return currentProfile; },
   async getAccessToken() { await ready; return currentSession?.access_token || ''; },
   async signOut() { await ready; return supabase?.auth.signOut(); }
 };

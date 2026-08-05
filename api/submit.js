@@ -1,14 +1,9 @@
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
 import { authenticateRequest } from '../lib/auth-user.js';
+import { sanitizePublicText } from '../lib/privacy-filter.js';
 
 const MAX_CHARS = 355;
-
-function sanitizePublicText(value) {
-  const phone = /(?<!\d)(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}(?!\d)/g;
-  const email = /\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b/gi;
-  const titledName = /\b(?:M|Mme|Monsieur|Madame|Dr|Docteur)\.?\s+[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+(?:\s+[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+)?/g;
-  return value.replace(email, '[coordonnée masquée]').replace(phone, '[coordonnée masquée]').replace(titledName, '[personne]');
-}
+const ALLOWED_THEMES = new Set(['leger', 'drole', 'touchant', 'epuisant', 'surprenant', 'apprentissage']);
 
 function allowOrigin(request, response) {
   const configuredOrigin = process.env.PUBLIC_APP_ORIGIN;
@@ -28,10 +23,11 @@ export default async function handler(request, response) {
 
   const body = typeof request.body === 'object' && request.body ? request.body : {};
   const text = typeof body.text === 'string' ? body.text.trim() : '';
-  const profession = typeof body.profession === 'string' ? body.profession.trim().slice(0, 80) : '';
-  const theme = typeof body.theme === 'string' ? body.theme.trim().slice(0, 40) : 'leger';
+  const submittedProfession = typeof body.profession === 'string' ? body.profession.trim().slice(0, 80) : '';
+  const requestedTheme = typeof body.theme === 'string' ? body.theme.trim().toLocaleLowerCase() : 'leger';
+  const theme = ALLOWED_THEMES.has(requestedTheme) ? requestedTheme : 'leger';
   const anonymous = body.anonymous === true;
-  if (!text || text.length > MAX_CHARS || !profession) return response.status(422).json({ error: 'invalid_submission' });
+  if (!text || text.length > MAX_CHARS) return response.status(422).json({ error: 'invalid_submission' });
 
   const identity = await authenticateRequest(request, { url, publishableKey });
   if (identity.status === 'invalid') return response.status(401).json({ error: 'invalid_session' });
@@ -40,7 +36,7 @@ export default async function handler(request, response) {
 
   let profile = null;
   if (identity.user) {
-    const profileQuery = new URLSearchParams({ id: `eq.${identity.user.id}`, select: 'pseudonym', limit: '1' });
+    const profileQuery = new URLSearchParams({ id: `eq.${identity.user.id}`, select: 'pseudonym,profession', limit: '1' });
     let profileResponse;
     try {
       profileResponse = await fetch(`${url}/rest/v1/profiles?${profileQuery}`, {
@@ -55,13 +51,18 @@ export default async function handler(request, response) {
     if (!profile) return response.status(409).json({ error: 'profile_required' });
   }
 
+  const profession = identity.user ? profile.profession || submittedProfession : submittedProfession;
+  if (!profession) return response.status(422).json({ error: 'profession_required' });
+  const privacy = sanitizePublicText(text);
+
   const payload = {
-    body: sanitizePublicText(text),
+    body: privacy.text,
     profession,
     theme,
     visibility: 'public',
     moderation_status: 'pending',
     author_label: anonymous ? 'Anonyme' : profile.pseudonym,
+    moderation_reason: privacy.changed ? `Filtre automatique : ${privacy.flags.join(', ')} masqué(s) avant stockage.` : null,
     ...(identity.user ? { author_id: identity.user.id } : {})
   };
   let upstream;
@@ -81,5 +82,9 @@ export default async function handler(request, response) {
   }
   if (!upstream.ok) return response.status(502).json({ error: 'persistence_failed' });
   const [anecdote] = await upstream.json();
-  return response.status(201).json({ id: anecdote.id, status: anecdote.moderation_status });
+  return response.status(201).json({
+    id: anecdote.id,
+    status: anecdote.moderation_status,
+    privacy: { changed: privacy.changed, flags: privacy.flags }
+  });
 }

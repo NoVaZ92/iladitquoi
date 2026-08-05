@@ -3,902 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Anecdotes du soin, le fil des petites histoires du travail de santé.">
-  <title>Mon profil · Anecdotes du soin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Votre profil iladitquoi, vos publications et votre carnet privé.">
+  <title>Mon profil · iladitquoi</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --page: #0e171f;
-      --header: #131f28;
-      --surface: #182630;
-      --surface-raised: #202f3a;
-      --surface-soft: #1b2a34;
-      --line: #3b4b55;
-      --line-strong: #587078;
-      --text: #f4f2e8;
-      --muted: #aeb7b7;
-      --subtle: #7d9195;
-      --yellow: #e7c34e;
-      --yellow-ink: #111a21;
-      --teal: #2ba9a2;
-      --coral: #ef765d;
-      --max: 1440px;
-      --content: 800px;
-      --rail: 238px;
-      --space: 16px;
-      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-    }
-
+    :root { color-scheme: light; --page: #f7f8fb; --surface: #fff; --soft: #f0f3f8; --line: #dfe4ed; --text: #101522; --muted: #687187; --blue: #155cff; --lime: #b8f000; --danger: #b9362b; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
-    html { background: var(--page); scroll-behavior: smooth; }
-    body { min-width: 320px; margin: 0; background: var(--page); color: var(--text); font-size: 15px; line-height: 1.45; }
-    button, input, select { font: inherit; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--page); color: var(--text); }
+    button, a { font: inherit; }
     button { cursor: pointer; }
-    button:disabled { cursor: not-allowed; opacity: .55; }
-    :focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
-    ::selection { background: var(--yellow); color: var(--yellow-ink); }
-
-    .site-header { border-bottom: 1px solid var(--line); background: var(--header); }
-    .header-inner { display: flex; align-items: center; gap: 28px; min-height: 68px; max-width: var(--max); margin: 0 auto; padding: 0 28px; }
-    .brand { display: inline-flex; align-items: baseline; gap: 7px; color: var(--text); font-size: 19px; font-weight: 700; letter-spacing: 0; text-decoration: none; white-space: nowrap; }
-    .brand-mark { color: var(--teal); font-size: 24px; line-height: 0; }
-    .brand-note { color: var(--muted); font-size: 11px; font-weight: 400; }
-    .primary-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
-    .nav-link { border: 0; border-bottom: 2px solid transparent; padding: 22px 12px 20px; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; text-decoration: none; }
-    .nav-link:hover, .nav-link[aria-current="page"] { border-color: var(--yellow); color: var(--text); }
-    .user-menu { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--line); padding: 7px 10px; background: var(--surface); color: var(--text); text-decoration: none; }
-    .user-menu:hover { border-color: var(--teal); }
-    .user-avatar { display: inline-grid; place-items: center; width: 26px; height: 26px; background: var(--yellow); color: var(--yellow-ink); font-size: 12px; font-weight: 700; }
-    .user-copy { display: grid; gap: 0; text-align: left; font-size: 12px; line-height: 1.2; }
-    .user-copy small { color: var(--muted); font-size: 10px; }
-
-    .page-layout { display: grid; grid-template-columns: minmax(0, var(--content)) var(--rail); gap: 34px; max-width: 1120px; margin: 0 auto; padding: 30px 28px 64px; }
-    .main-column { min-width: 0; }
-    .section-intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
-    .eyebrow { margin: 0 0 3px; color: var(--teal); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
-    h1, h2, h3, p { margin-top: 0; }
-    h1 { margin-bottom: 0; font-size: clamp(26px, 4vw, 34px); line-height: 1.05; letter-spacing: 0; }
-    h2 { margin-bottom: 0; font-size: 17px; line-height: 1.2; }
-    h3 { margin-bottom: 0; font-size: 14px; line-height: 1.3; }
-    .intro-meta { color: var(--muted); font-size: 12px; text-align: right; }
-
-    .feed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px 0; }
-    .tab-button, .filter-button { border: 1px solid var(--line); padding: 7px 10px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; }
-    .tab-button:hover, .filter-button:hover { border-color: var(--line-strong); color: var(--text); }
-    .tab-button[aria-selected="true"], .filter-button[aria-pressed="true"] { border-color: var(--yellow); background: var(--yellow); color: var(--yellow-ink); }
-    .toolbar-spacer { flex: 1; min-width: 8px; }
-    .filter-label { color: var(--subtle); font-size: 11px; }
-    .select { min-height: 32px; border: 1px solid var(--line); padding: 4px 28px 4px 8px; background: var(--surface); color: var(--text); font-size: 12px; }
-
-    .composer { margin: 22px 0 18px; border: 1px solid var(--line); background: var(--surface); }
-    .composer-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 15px 17px 13px; }
-    .composer-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-    .composer-body { padding: 16px 17px 14px; }
-    .editor { min-height: 92px; border: 1px solid var(--line-strong); padding: 12px; background: var(--page); color: var(--text); font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .editor:empty::before { content: attr(data-placeholder); color: var(--subtle); pointer-events: none; }
-    .editor:focus { border-color: var(--teal); }
-    .composer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 12px; }
-    .counter { margin-right: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-    .counter.near-limit { color: var(--yellow); }
-    .counter.at-limit { color: var(--coral); }
-    .select-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
-    .toggle-label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
-    .toggle-label input { accent-color: var(--teal); }
-    .primary-button { border: 1px solid var(--yellow); padding: 8px 13px; background: var(--yellow); color: var(--yellow-ink); font-size: 12px; font-weight: 700; }
-    .primary-button:hover { background: #f0d467; }
-    .visibility-choice { min-width: 178px; }
-    .visibility-note { display: none; margin: 12px 0 0; border-left: 3px solid var(--teal); padding: 8px 10px; background: var(--surface-soft); color: var(--muted); font-size: 11px; }
-    .visibility-note.is-visible { display: block; }
-    .moderation-note { display: none; margin: 12px 0 0; border-left: 3px solid var(--coral); padding: 8px 10px; background: #28282b; color: var(--muted); font-size: 11px; }
-    .moderation-note.is-visible { display: block; }
-    .form-status { min-height: 17px; margin: 9px 0 0; color: var(--teal); font-size: 12px; }
-
-    .feed { display: grid; gap: 10px; }
-    .post { border: 1px solid var(--line); background: var(--surface); }
-    .post:hover { border-color: var(--line-strong); }
-    .post.is-hidden { display: none; }
-    .post-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding: 15px 17px 0; }
-    .post-author { display: flex; align-items: center; gap: 9px; min-width: 0; }
-    .post-avatar { display: inline-grid; flex: 0 0 auto; place-items: center; width: 30px; height: 30px; background: var(--surface-raised); color: var(--teal); font-size: 12px; font-weight: 700; }
-    .author-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 12px; font-weight: 700; }
-    .author-level { color: var(--yellow); font-size: 11px; font-weight: 500; }
-    .post-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; color: var(--muted); font-size: 11px; }
-    .meta-separator { color: var(--subtle); }
-    .moderation-state { color: var(--teal); font-size: 11px; white-space: nowrap; }
-    .post-body { padding: 13px 17px 4px 56px; }
-    .post-copy { margin-bottom: 0; color: var(--text); font-size: 16px; line-height: 1.48; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .post-copy[contenteditable="true"] { cursor: text; }
-    .post-copy[contenteditable="true"]:focus { outline: 1px solid var(--teal); outline-offset: 5px; }
-    .post-long .post-copy { max-height: 4.5em; overflow: hidden; }
-    .post-long.expanded .post-copy { max-height: none; }
-    .read-more { display: none; border: 0; padding: 6px 0 0; background: transparent; color: var(--yellow); font-size: 12px; font-weight: 600; }
-    .post-long .read-more { display: inline-block; }
-    .post-foot { display: flex; align-items: center; gap: 13px; padding: 13px 17px 15px 56px; color: var(--muted); font-size: 11px; }
-    .vote-group { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--line); padding: 2px 4px; background: var(--surface-soft); }
-    .vote-button, .share-button, .report-button { border: 0; background: transparent; color: var(--muted); }
-    .vote-button { width: 24px; height: 24px; font-size: 15px; line-height: 1; }
-    .vote-button:hover, .vote-button.is-active { color: var(--yellow); }
-    .vote-score { min-width: 31px; color: var(--text); font-size: 12px; font-weight: 700; text-align: center; }
-    .share-button:hover, .report-button:hover { color: var(--text); }
-    .report-button { margin-left: auto; color: var(--subtle); }
-    .feed-empty { display: none; border: 1px dashed var(--line); padding: 24px; color: var(--muted); text-align: center; }
-    .feed-empty.is-visible { display: block; }
-
-    .side-rail { min-width: 0; padding-top: 52px; }
-    .rail-block { margin-bottom: 18px; border-top: 2px solid var(--teal); padding-top: 11px; }
-    .rail-block h2 { margin-bottom: 7px; font-size: 13px; }
-    .rail-block p { margin-bottom: 0; color: var(--muted); font-size: 12px; }
-    .partner-box { min-height: 190px; border: 1px dashed var(--teal); padding: 16px; background: var(--surface); }
-    .partner-label { margin-bottom: 32px; color: var(--teal); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .partner-box strong { display: block; margin-bottom: 8px; font-size: 16px; line-height: 1.2; }
-    .partner-box span { display: block; color: var(--muted); font-size: 12px; }
-    .profile-summary { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px 0; }
-    .profile-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; color: var(--muted); font-size: 11px; }
-    .profile-row strong { color: var(--text); font-weight: 600; }
-    .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-    .badge { border: 1px solid var(--line-strong); padding: 4px 6px; color: var(--yellow); font-size: 10px; }
-    .rail-link { display: inline-block; margin-top: 10px; color: var(--yellow); font-size: 12px; font-weight: 600; }
-    .private-lock { color: var(--teal); font-size: 10px; font-weight: 500; }
-    .private-summary { margin-bottom: 10px !important; }
-    .private-list { display: grid; gap: 8px; }
-    .private-empty { border: 1px dashed var(--line); padding: 10px; color: var(--muted); font-size: 11px; }
-    .private-note { border: 1px solid var(--line); padding: 10px; background: var(--surface); }
-    .private-note-meta { display: flex; align-items: start; justify-content: space-between; gap: 8px; color: var(--subtle); font-size: 10px; }
-    .private-note p { margin: 7px 0 9px; color: var(--text); font-size: 12px; line-height: 1.4; }
-    .private-share { border: 0; padding: 0; background: transparent; color: var(--yellow); font-size: 10px; font-weight: 600; text-align: left; }
-    .private-share:hover { color: var(--text); }
-    .share-dialog { width: min(420px, calc(100vw - 32px)); border: 1px solid var(--line-strong); padding: 0; background: var(--surface); color: var(--text); }
-    .share-dialog::backdrop { background: rgba(5, 10, 14, .72); }
-    .share-dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 16px; }
-    .share-dialog-head h2 { margin: 0; font-size: 16px; }
-    .dialog-close { border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }
-    .share-dialog-body { padding: 16px; }
-    .share-dialog-body p { margin-bottom: 12px; color: var(--muted); font-size: 12px; }
-    .short-url { display: block; width: 100%; border: 1px solid var(--line-strong); padding: 10px; background: var(--page); color: var(--text); font-size: 12px; }
-    .share-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .share-action { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); padding: 8px 10px; background: transparent; color: var(--text); font-size: 12px; text-decoration: none; }
-    .share-action:hover { border-color: var(--teal); }
-    .share-action.whatsapp { border-color: var(--teal); color: var(--teal); }
-    .share-status { min-height: 17px; margin: 10px 0 0 !important; color: var(--teal) !important; font-size: 11px !important; }
-
-    .page-layout.legacy-feed { display: none; }
-    body[data-page="profile"] .brand { flex: 0 0 240px; }
-    .profile-page { max-width: 1120px; margin: 0 auto; padding: 34px 28px 64px; }
-    .profile-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px; border-bottom: 2px solid var(--teal); padding: 8px 0 22px; }
-    .profile-identity { display: flex; align-items: center; gap: 16px; }
-    .profile-avatar-large { display: inline-grid; place-items: center; flex: 0 0 auto; width: 68px; height: 68px; border: 1px solid var(--yellow); background: var(--yellow); color: var(--yellow-ink); font-size: 26px; font-weight: 700; }
-    .profile-subtitle { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-    .profile-stats { display: grid; grid-template-columns: repeat(3, minmax(74px, 1fr)); gap: 18px; }
-    .profile-stat { border-left: 1px solid var(--line); padding-left: 12px; }
+    [hidden] { display: none !important; }
+    :focus-visible { outline: 3px solid rgba(21,92,255,.24); outline-offset: 2px; }
+    .lucide { width: 18px; height: 18px; }
+    html:not(.auth-ready) .profile-shell { visibility: hidden; }
+    .profile-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+    .profile-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; border-right: 1px solid var(--line); padding: 28px 20px 22px; background: var(--surface); }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 8px; background: var(--blue); color: white; font-family: Georgia, serif; font-size: 34px; font-weight: 800; }
+    .brand strong { display: block; font-size: 21px; line-height: 1; }
+    .brand small { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
+    .side-links { display: grid; gap: 5px; margin-top: 32px; }
+    .side-link { display: flex; align-items: center; gap: 10px; min-height: 43px; border: 0; border-radius: 6px; padding: 9px 11px; background: transparent; color: #343d50; font-size: 12px; font-weight: 700; text-align: left; text-decoration: none; }
+    .side-link:hover, .side-link.is-active { background: #eaf0ff; color: var(--blue); }
+    .side-account { margin-top: auto; }
+    .side-account button { width: 100%; }
+    .profile-main { min-width: 0; }
+    .mobile-head { display: none; }
+    .profile-inner { width: min(100%, 1180px); margin: 0 auto; padding: 38px 42px 72px; }
+    .profile-status { min-height: 18px; margin: 0 0 10px; color: var(--danger); font-size: 11px; }
+    .profile-hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+    .profile-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .profile-avatar-large { display: grid; place-items: center; flex: none; width: 70px; height: 70px; border-radius: 50%; background: #111827; color: white; font-size: 25px; font-weight: 850; }
+    .eyebrow { margin: 0 0 6px; color: var(--blue); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 31px; line-height: 1.15; }
+    .profile-subtitle { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .profile-stats { display: flex; align-items: stretch; }
+    .profile-stat { min-width: 86px; border-left: 1px solid var(--line); padding: 3px 18px; text-align: center; }
     .profile-stat strong, .profile-stat span { display: block; }
-    .profile-stat strong { color: var(--yellow); font-size: 20px; line-height: 1.1; }
-    .profile-stat span { margin-top: 3px; color: var(--muted); font-size: 11px; }
-    .profile-tabs { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--line); padding: 16px 0; }
-    .profile-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 34px; padding-top: 24px; }
+    .profile-stat strong { font-size: 23px; }
+    .profile-stat span { margin-top: 3px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+    .profile-tabs { display: flex; gap: 3px; margin-top: 26px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+    .tab { flex: none; border: 0; border-bottom: 3px solid transparent; padding: 11px 14px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 750; }
+    .tab.is-active { border-color: var(--blue); color: var(--blue); }
+    .profile-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 286px; gap: 28px; padding-top: 24px; }
     .profile-panel { min-width: 0; }
-    .profile-panel[hidden] { display: none; }
-    .profile-panel-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-    .profile-panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-    .profile-entry { border: 1px solid var(--line); background: var(--surface); }
-    .profile-entry + .profile-entry { margin-top: 10px; }
-    .profile-entry-main { padding: 16px 17px; }
-    .profile-entry-meta { display: flex; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: 11px; }
-    .profile-entry p { margin: 10px 0 0; font-size: 15px; }
-    .profile-entry-foot { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 10px 17px; color: var(--muted); font-size: 11px; }
-    .profile-side { display: grid; align-content: start; gap: 22px; }
-    .profile-side .rail-block { margin: 0; }
-    .profile-action { display: block; width: 100%; border: 1px solid var(--yellow); padding: 10px 12px; background: var(--yellow); color: var(--yellow-ink); font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
-    .profile-action + .profile-action { margin-top: 8px; border-color: var(--line); background: transparent; color: var(--text); }
-    .profile-action + .profile-action:hover { border-color: var(--teal); }
-    .profile-status { min-height: 18px; margin: 0 0 14px; color: var(--coral); font-size: 12px; }
-    html:not(.auth-ready) body[data-page="profile"] .profile-page { visibility: hidden; }
-    .saved-remove { border: 0; padding: 0; background: transparent; color: var(--teal); font: inherit; font-size: 11px; font-weight: 700; }
-    .saved-remove:hover { color: var(--coral); }
-    .profile-private-list .private-note { padding: 14px; }
-    .profile-private-list .private-note p { font-size: 14px; }
-    .moderation-list { display: grid; gap: 10px; }
-    .moderation-item { border-left: 3px solid var(--yellow); padding: 12px 14px; background: var(--surface); }
-    .moderation-item strong, .moderation-item span { display: block; }
-    .moderation-item span { margin-top: 4px; color: var(--muted); font-size: 12px; }
-
-    .site-footer { border-top: 1px solid var(--line); padding: 18px 28px 28px; color: var(--subtle); font-size: 11px; }
-    .footer-inner { display: flex; justify-content: space-between; gap: 20px; max-width: 1120px; margin: 0 auto; }
-    .footer-inner p { margin: 0; }
-
-    @media (prefers-color-scheme: dark) {
-      :root { color-scheme: dark; }
-    }
-
-    @media (max-width: 1024px) {
-      .page-layout { grid-template-columns: minmax(0, 1fr) 210px; gap: 24px; max-width: 980px; }
-      .header-inner { gap: 18px; }
-      .primary-nav { gap: 0; }
-      .nav-link { padding-inline: 8px; }
-    }
-    @media (max-width: 768px) {
-      .header-inner { min-height: 60px; gap: 8px; padding: 0 12px; overflow: hidden; }
-      .brand-note, .primary-nav .nav-link:nth-child(n+3) { display: none; }
-      .primary-nav .nav-link { padding-inline: 6px; font-size: 12px; }
-      .user-copy { display: none; }
-      .user-menu { padding: 5px; }
-      .page-layout { display: block; padding: 24px 18px 48px; }
-      .side-rail { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding-top: 28px; }
-      .rail-block { margin-bottom: 0; }
-      .partner-box { min-height: 150px; }
-      .footer-inner { display: block; }
-      .footer-inner p + p { margin-top: 6px; }
-      .profile-page { padding: 24px 18px 48px; }
-      .profile-hero, .profile-workspace { display: block; }
-      .profile-stats { margin-top: 22px; }
-      .profile-side { grid-template-columns: 1fr 1fr; margin-top: 28px; }
-      body[data-page="profile"] .brand { flex: 1 1 auto; min-width: 0; }
-    }
-    @media (max-width: 375px) {
-      body { font-size: 14px; }
-      .header-inner { padding: 0 12px; }
-      .brand { font-size: 17px; }
-      .primary-nav .nav-link:nth-child(2) { display: none; }
-      .page-layout { padding-inline: 12px; }
-      .section-intro { display: block; }
-      .intro-meta { margin-top: 8px; text-align: left; }
-      .composer-head { display: block; }
-      .composer-head h2 { margin-bottom: 4px; }
-      .composer-controls { align-items: stretch; }
-      .counter { flex-basis: 100%; }
-      .select-label { flex: 1; }
-      .select { width: 100%; }
-      .primary-button { width: 100%; }
-      .post-body { padding-left: 17px; }
-      .post-foot { padding-left: 17px; }
-      .post-head { gap: 8px; }
-      .moderation-state { font-size: 10px; }
-      .side-rail { display: block; }
-      .side-rail .rail-block + .rail-block { margin-top: 24px; }
-      .profile-page { padding-inline: 12px; }
-      .profile-identity { align-items: start; }
-      .profile-avatar-large { width: 56px; height: 56px; font-size: 22px; }
-      .profile-stats { gap: 10px; }
-      .profile-stat { padding-left: 8px; }
-      .profile-stat strong { font-size: 17px; }
-      .profile-side { display: block; }
-      .profile-side .rail-block + .rail-block { margin-top: 22px; }
-    }
-
-    @media (max-width: 480px) {
-      body[data-page="profile"] .primary-nav { display: none; }
-      body[data-page="profile"] .brand { font-size: 17px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
-    }
-
-    :root {
-      color-scheme: light;
-      --page: #f8f8f5;
-      --header: #ffffff;
-      --surface: #ffffff;
-      --surface-raised: #f0f2f5;
-      --surface-soft: #f4f6ff;
-      --line: #dfe3ea;
-      --line-strong: #c9d0dc;
-      --text: #111827;
-      --muted: #677085;
-      --subtle: #8790a3;
-      --yellow: #cefa13;
-      --yellow-ink: #19220b;
-      --teal: #1658f5;
-      --coral: #ff6d1f;
-      font-family: "Manrope", "IBM Plex Sans", sans-serif;
-    }
-    body { background: var(--page); color: var(--text); }
-    .site-header { position: fixed; z-index: 5; inset: 0 auto 0 0; width: 252px; border: 0; border-right: 1px solid var(--line); background: var(--header); }
-    .header-inner { display: flex; flex-direction: column; align-items: stretch; gap: 20px; min-height: 100%; margin: 0; padding: 30px 22px 20px; }
-    body[data-page="profile"] .brand { position: relative; display: block; flex: 0 0 auto; padding: 7px 0 0 26px; color: var(--text); font-size: 27px; font-weight: 800; line-height: 1.05; text-decoration: none; white-space: normal; }
-    .brand span:nth-child(2) { display: block; max-width: 170px; }
-    .brand-mark { position: absolute; top: 6px; left: 0; color: var(--teal); font-size: 44px; line-height: .55; }
-    .brand-note { display: block; max-width: 170px; margin-top: 8px; color: var(--teal); font-size: 11px; font-weight: 700; line-height: 1.35; }
-    .primary-nav { display: grid; gap: 4px; margin: 16px 0 0; }
-    .nav-link { display: flex; align-items: center; min-height: 42px; border: 0; border-left: 3px solid transparent; padding: 10px 12px; background: transparent; color: var(--text); font-size: 14px; font-weight: 700; text-align: left; }
-    .nav-link:hover, .nav-link[aria-current="page"] { border-color: var(--teal); background: #f0f4ff; color: var(--teal); }
-    .user-menu { order: 3; margin-top: auto; border: 1px solid var(--line); padding: 10px; background: #fff; color: var(--text); text-decoration: none; }
-    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--text); color: #fff; }
-    .user-copy small { color: var(--muted); }
-    .page-layout.legacy-feed { display: none; }
-
-    .profile-page { max-width: 1280px; margin: 0 auto 0 252px; padding: 42px 38px 64px; }
-    .profile-hero { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 28px; border-bottom: 0; padding: 0 0 24px; }
-    .profile-identity { gap: 16px; }
-    .profile-avatar-large { width: 76px; height: 76px; border: 0; border-radius: 50%; background: var(--text); color: #fff; }
-    .profile-hero h1 { color: var(--text); font-size: 38px; }
-    .profile-subtitle { color: var(--muted); }
-    .profile-stats { gap: 22px; }
-    .profile-stat { border-color: var(--line); }
-    .profile-stat strong { color: var(--teal); font-size: 24px; }
-    .profile-stat span { color: var(--muted); }
-    .profile-tabs { gap: 8px; border-color: var(--line); padding: 0 0 20px; }
-    .tab-button { min-height: 36px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; background: #fff; color: var(--text); font-size: 12px; font-weight: 700; }
-    .tab-button[aria-selected="true"] { border-color: var(--teal); background: var(--teal); color: #fff; }
-    .profile-workspace { grid-template-columns: minmax(0, 1fr) 318px; gap: 32px; padding-top: 26px; }
-    .profile-panel-head { margin-bottom: 18px; }
-    .profile-panel-head h2 { color: var(--text); font-size: 19px; }
-    .profile-panel-head p { color: var(--muted); }
-    .profile-entry { overflow: hidden; border-color: var(--line); border-radius: 8px; background: #fff; box-shadow: 0 4px 14px rgba(33, 45, 73, .035); }
-    .profile-entry-main { padding: 18px 20px; }
-    .profile-entry-meta { color: var(--muted); }
-    .profile-entry p { color: var(--text); font-size: 16px; }
-    .profile-entry-foot { border-color: var(--line); color: var(--muted); }
-    .profile-side { gap: 16px; }
-    .profile-side .rail-block { margin: 0; border: 1px solid var(--line); border-radius: 8px; padding: 18px; background: #fff; }
-    .profile-side .rail-block h2 { color: var(--text); }
-    .profile-side .rail-block p { color: var(--muted); }
-    .profile-action { border: 0; border-radius: 999px; background: var(--teal); color: #fff; }
-    .profile-action + .profile-action { border: 1px solid var(--line); background: #fff; color: var(--text); }
-    .badge { border-color: #c7d3ff; border-radius: 999px; color: var(--teal); }
-    .private-lock { color: var(--teal); }
-    .private-note, .private-empty { border-color: var(--line); border-radius: 8px; background: #fff; color: var(--muted); }
-    .private-note p { color: var(--text); }
-    .private-share { color: var(--teal); }
-    .moderation-item { border-left: 0; border-radius: 8px; background: #fff; box-shadow: 0 3px 12px rgba(33, 45, 73, .04); }
-    .share-dialog { border: 0; border-radius: 8px; background: #fff; color: var(--text); box-shadow: 0 24px 80px rgba(11, 24, 52, .24); }
-    .share-dialog-head { border-color: var(--line); }
-    .short-url { border-color: var(--line); background: #f6f7fa; color: var(--text); }
-    .share-action { border-radius: 6px; color: var(--text); }
-    .site-footer { margin-left: 252px; border-color: var(--line); color: var(--muted); }
-
-    @media (min-width: 1101px) {
-      body[data-page="profile"] .site-header .brand { position: absolute; top: 30px; left: 22px; width: 188px; }
-      body[data-page="profile"] .site-header .primary-nav { margin-top: 128px; }
-      body[data-page="profile"] .site-header .user-menu { position: absolute; right: 22px; bottom: 20px; left: 22px; }
-    }
-
-    @media (max-width: 1100px) {
-      .site-header { position: static; width: auto; border-right: 0; border-bottom: 1px solid var(--line); }
-      .header-inner { flex-direction: row; align-items: center; min-height: 66px; padding: 0 20px; }
-      body[data-page="profile"] .brand { display: inline-flex; position: static; flex: 0 1 auto; align-items: baseline; padding: 0; font-size: 19px; white-space: nowrap; }
-      .brand span:nth-child(2) { max-width: none; }
-      .brand-mark { position: static; font-size: 25px; }
-      .brand-note { max-width: none; margin-top: 0; }
-      .primary-nav { display: flex; gap: 4px; margin: 0 0 0 auto; }
-      .nav-link { min-height: 48px; border-left: 0; border-bottom: 3px solid transparent; padding: 12px 9px; }
-      .nav-link:hover, .nav-link[aria-current="page"] { border-color: var(--teal); background: transparent; }
-      .user-menu { order: 0; margin: 0; }
-      .profile-page, .site-footer { margin-left: 0; }
-      .profile-page { padding-inline: 24px; }
-    }
-    @media (max-width: 760px) {
-      .header-inner { min-height: 58px; padding-inline: 14px; }
-      .brand-note, .primary-nav { display: none; }
-      .brand { font-size: 18px; }
-      .profile-page { padding: 26px 16px 44px; }
-      .profile-hero, .profile-workspace { display: block; }
-      .profile-avatar-large { width: 62px; height: 62px; }
-      .profile-hero h1 { font-size: 30px; }
-      .profile-stats { margin-top: 22px; }
-      .profile-side { display: grid; grid-template-columns: 1fr 1fr; margin-top: 22px; }
-      .site-footer { padding: 20px 16px 28px; }
-    }
-    @media (max-width: 520px) {
-      .profile-side { display: block; }
-      .profile-side .rail-block + .rail-block { margin-top: 14px; }
-      .profile-stats { gap: 10px; }
-      .profile-stat { padding-left: 8px; }
-    }
+    .panel-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 15px; }
+    .panel-head h2 { margin: 0; font-size: 18px; }
+    .panel-head p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+    .panel-summary { color: var(--muted); font-size: 10px; }
+    #published-list, #pending-list, #saved-list, #private-list { display: grid; gap: 10px; }
+    .profile-entry, .notebook-entry { border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: white; }
+    .profile-entry-main p, .notebook-entry p { margin: 8px 0 0; font-size: 13px; line-height: 1.55; }
+    .profile-entry-meta, .notebook-entry > span { color: var(--muted); font-size: 9px; }
+    .profile-entry-foot { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 9px; }
+    .private-empty { display: grid; place-items: center; min-height: 150px; border: 1px dashed var(--line); border-radius: 8px; padding: 24px; color: var(--muted); font-size: 11px; text-align: center; }
+    .profile-aside { display: grid; align-content: start; gap: 0; border-left: 1px solid var(--line); padding-left: 24px; }
+    .aside-section { border-bottom: 1px solid var(--line); padding: 0 0 20px; }
+    .aside-section + .aside-section { padding-top: 20px; }
+    .aside-section:last-child { border-bottom: 0; }
+    .aside-section h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 12px; }
+    .aside-section h2 .lucide { color: var(--blue); }
+    .aside-section p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .profile-action { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 39px; margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: white; color: var(--text); font-size: 10px; font-weight: 750; text-decoration: none; }
+    .profile-action:hover { border-color: var(--blue); color: var(--blue); }
+    .badge-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .badge { border-radius: 5px; padding: 6px 8px; background: #eef3ff; color: var(--blue); font-size: 9px; font-weight: 750; }
+    @media (max-width: 980px) { .profile-workspace { grid-template-columns: 1fr; } .profile-aside { grid-template-columns: repeat(3, 1fr); gap: 18px; border: 0; border-top: 1px solid var(--line); padding: 22px 0 0; } .aside-section, .aside-section + .aside-section { border: 0; padding: 0; } }
+    @media (max-width: 760px) { .profile-shell { display: block; } .profile-sidebar { display: none; } .mobile-head { display: flex; align-items: center; justify-content: space-between; min-height: 62px; border-bottom: 1px solid var(--line); padding: 10px 16px; background: white; } .mobile-head .brand-mark { width: 34px; height: 34px; font-size: 29px; } .mobile-head .brand strong { font-size: 18px; } .profile-inner { padding: 26px 16px 50px; } .profile-hero { align-items: start; flex-direction: column; } .profile-stats { width: 100%; } .profile-stat { flex: 1; min-width: 0; padding-inline: 10px; } .profile-stat:first-child { border-left: 0; } .profile-aside { grid-template-columns: 1fr; } }
+    @media (max-width: 430px) { .profile-inner { padding-inline: 12px; } .profile-avatar-large { width: 58px; height: 58px; } h1 { font-size: 25px; } .profile-stat strong { font-size: 19px; } }
   </style>
 </head>
 <body data-page="profile">
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="finalized.html" aria-label="Anecdotes du soin, accueil"><span class="brand-mark" aria-hidden="true">&#8220;</span><span>Anecdotes du soin</span><span class="brand-note">La communauté des soignants</span></a>
-      <nav class="primary-nav" aria-label="Navigation principale">
-        <a class="nav-link" href="finalized.html">Accueil</a>
-        <a class="nav-link" href="finalized.html?sort=new">Récentes</a>
-        <a class="nav-link" aria-current="page" href="profile.html">Mon profil</a>
-      </nav>
-      <a class="user-menu" href="auth.html" data-auth-link aria-current="page" aria-label="Se connecter ou créer un compte">
-        <span class="user-avatar" data-auth-avatar aria-hidden="true">→</span>
-        <span class="user-copy"><span data-auth-name>Connexion</span><small data-auth-meta>Chargement du compte</small></span>
-      </a>
-    </div>
-  </header>
-
-  <div class="page-layout legacy-feed" aria-hidden="true">
-    <main class="main-column">
-      <section class="section-intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">Fil public · anecdotes validées</p><h1 id="page-title">Les meilleurs moments du soin</h1></div>
-        <p class="intro-meta">12 486 anecdotes partagées<br>par celles et ceux qui soignent</p>
-      </section>
-
-      <section class="feed-toolbar" id="filters" aria-label="Filtres du fil">
-        <div role="tablist" aria-label="Tri des anecdotes">
-          <button class="tab-button" role="tab" aria-selected="true" data-tab="top">Top</button>
-          <button class="tab-button" role="tab" aria-selected="false" data-tab="new">Nouvelles</button>
-        </div>
-        <span class="toolbar-spacer"></span>
-        <span class="filter-label">Filtrer par</span>
-        <select class="select" id="profession-filter" aria-label="Filtrer par métier">
-          <option value="all">Tous les métiers</option>
-          <option value="infirmiere">Infirmière</option>
-          <option value="ambulancier">Ambulancier</option>
-          <option value="dentiste">Dentiste</option>
-          <option value="orthophoniste">Orthophoniste</option>
-        </select>
-        <select class="select" id="theme-filter" aria-label="Filtrer par contenu">
-          <option value="all">Tous les thèmes</option>
-          <option value="leger">Léger</option>
-          <option value="absurde">Absurde</option>
-          <option value="touchant">Touchant</option>
-        </select>
-      </section>
-
-      <section class="composer" id="composer" aria-labelledby="composer-title">
-        <div class="composer-head"><div><h2 id="composer-title">Le moment que vous n'oublierez pas</h2><p>Texte libre, 355 caractères maximum.</p></div><span class="eyebrow" id="composer-kicker">Publication modérée</span></div>
-        <div class="composer-body">
-          <div class="editor" id="anecdote-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Votre anecdote" data-placeholder="Racontez votre moment de soin..." data-pretext></div>
-          <div class="composer-controls">
-            <span class="counter" id="char-counter">0/355 caractères</span>
-            <label class="select-label" for="profession-choice">Métier
-              <select class="select" id="profession-choice"><option>Infirmière</option><option>Ambulancier</option><option>Dentiste</option><option>Orthophoniste</option><option>Aide-soignante</option></select>
-            </label>
-            <label class="select-label" for="visibility-choice">Visibilité
-              <select class="select visibility-choice" id="visibility-choice"><option value="public">Fil public</option><option value="private">Carnet privé</option></select>
-            </label>
-            <label class="toggle-label" id="anonymous-toggle-wrap"><input type="checkbox" id="anonymous-toggle"> Publier anonymement</label>
-            <button class="primary-button" type="button" id="submit-anecdote">Soumettre</button>
-          </div>
-          <p class="moderation-note" id="moderation-note" role="status">Votre anecdote sera relue avant publication. Les noms et prénoms sont retirés automatiquement ; une modération peut aussi la refuser.</p>
-          <p class="visibility-note" id="private-note" role="status">Cette anecdote restera dans votre carnet privé. Elle ne sera pas publiée dans le fil et ne sera lisible par quelqu'un d'autre qu'après création d'un lien de partage.</p>
-          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-        </div>
-      </section>
-
-      <section class="feed" id="feed" aria-label="Anecdotes du fil">
-        <article class="post" data-profession="ambulancier" data-theme="absurde" data-score="312">
-          <div class="post-head"><div class="post-author"><span class="post-avatar" aria-hidden="true">G</span><div><div class="author-line"><span>GardeDeNuit</span><span class="author-level">Niveau 9</span></div><div class="post-meta"><span>Ambulancier</span><span class="meta-separator">·</span><span>Absurde</span><span class="meta-separator">·</span><span>il y a 2 h</span></div></div></div><span class="moderation-state">Validée</span></div>
-          <div class="post-body"><p class="post-copy" contenteditable="true" role="textbox" aria-label="Modifier cette anecdote" data-pretext>À 3 h 12, le patient m'a demandé si l'ambulance avait une option « retour à la maison après la pub ».</p><button class="read-more" type="button">Voir plus...</button></div>
-          <div class="post-foot"><div class="vote-group" aria-label="312 votes"><button class="vote-button" type="button" data-vote="up" aria-label="Upvoter">&#9650;</button><span class="vote-score">312</span><button class="vote-button" type="button" data-vote="down" aria-label="Downvoter">&#9660;</button></div><button class="share-button" type="button">Partager</button><button class="report-button" type="button">Signaler</button></div>
-        </article>
-
-        <article class="post" data-profession="dentiste" data-theme="leger" data-score="221">
-          <div class="post-head"><div class="post-author"><span class="post-avatar" aria-hidden="true">A</span><div><div class="author-line"><span>Anonyme</span><span class="author-level">Niveau 0</span></div><div class="post-meta"><span>Dentiste</span><span class="meta-separator">·</span><span>Léger</span><span class="meta-separator">·</span><span>il y a 4 h</span></div></div></div><span class="moderation-state">Validée</span></div>
-          <div class="post-body"><p class="post-copy" contenteditable="true" role="textbox" aria-label="Modifier cette anecdote" data-pretext>Le patient ouvre grand la bouche, puis chuchote : « Je peux quand même parler avec les yeux ? »</p><button class="read-more" type="button">Voir plus...</button></div>
-          <div class="post-foot"><div class="vote-group" aria-label="221 votes"><button class="vote-button" type="button" data-vote="up" aria-label="Upvoter">&#9650;</button><span class="vote-score">221</span><button class="vote-button" type="button" data-vote="down" aria-label="Downvoter">&#9660;</button></div><button class="share-button" type="button">Partager</button><button class="report-button" type="button">Signaler</button></div>
-        </article>
-
-        <article class="post post-long" data-profession="orthophoniste" data-theme="leger" data-score="184">
-          <div class="post-head"><div class="post-author"><span class="post-avatar" aria-hidden="true">M</span><div><div class="author-line"><span>MotsEnBouche</span><span class="author-level">Niveau 4</span></div><div class="post-meta"><span>Orthophoniste</span><span class="meta-separator">·</span><span>Léger</span><span class="meta-separator">·</span><span>hier</span></div></div></div><span class="moderation-state">Validée</span></div>
-          <div class="post-body"><p class="post-copy" contenteditable="true" role="textbox" aria-label="Modifier cette anecdote" data-pretext>Mon patient a parfaitement prononcé « orthophoniste ». Il a ensuite demandé si je pouvais lui apprendre « mercredi », puis « anticonstitutionnellement », juste pour voir. Après trois essais, il a déclaré que le mot était plus facile à dire quand on ne savait pas ce qu'il voulait dire. J'ai noté la phrase pour la prochaine séance.</p><button class="read-more" type="button" aria-expanded="false">Voir plus...</button></div>
-          <div class="post-foot"><div class="vote-group" aria-label="184 votes"><button class="vote-button" type="button" data-vote="up" aria-label="Upvoter">&#9650;</button><span class="vote-score">184</span><button class="vote-button" type="button" data-vote="down" aria-label="Downvoter">&#9660;</button></div><button class="share-button" type="button">Partager</button><button class="report-button" type="button">Signaler</button></div>
-        </article>
-        <p class="feed-empty" id="feed-empty">Aucune anecdote ne correspond à ces filtres.</p>
-      </section>
-    </main>
-
-    <aside class="side-rail" aria-label="Informations complémentaires">
-      <section class="rail-block"><h2>À découvrir</h2><div class="partner-box"><div class="partner-label">Espace partenaire</div><strong>Une marque utile aux équipes de soin</strong><span>Emplacement réservé à un partenariat santé, sans interrompre la lecture.</span></div><a class="rail-link" href="#top">En savoir plus sur les partenaires</a></section>
-      <section class="rail-block"><h2>Votre espace</h2><p>Vos anecdotes publiées, vos brouillons privés et vos niveaux se trouvent sur votre profil.</p><a class="rail-link" href="profile.html">Ouvrir mon profil</a></section>
-      <section class="rail-block"><h2>Règles du fil</h2><p>Pas de noms ni de détails permettant d'identifier un patient. Chaque anecdote est validée par des modérateurs.</p><a class="rail-link" href="#composer-title">Publier une anecdote</a></section>
+  <div class="profile-shell">
+    <aside class="profile-sidebar">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span><span><strong>iladitquoi</strong><small>Des blouses, des histoires, zéro prénom.</small></span></a>
+      <nav class="side-links"><a class="side-link" href="/"><i data-lucide="arrow-left"></i>Retour au fil</a><a class="side-link is-active" href="/profile.html"><i data-lucide="user-round"></i>Mon profil</a><a class="side-link" href="/?mode=private#composer"><i data-lucide="pen-line"></i>Nouvelle note</a><a class="side-link" href="/rules.html"><i data-lucide="book-open"></i>Règles</a></nav>
+      <div class="side-account"><button class="side-link" type="button" data-auth-signout><i data-lucide="log-out"></i>Se déconnecter</button></div>
     </aside>
+    <main class="profile-main">
+      <header class="mobile-head"><a class="brand" href="/"><span class="brand-mark">”</span><strong>iladitquoi</strong></a><a href="/" aria-label="Retour au fil"><i data-lucide="arrow-left"></i></a></header>
+      <div class="profile-inner">
+        <p class="profile-status" data-profile-status role="status" aria-live="polite"></p>
+        <section class="profile-hero">
+          <div class="profile-identity"><span class="profile-avatar-large" data-profile-avatar aria-hidden="true">·</span><div><p class="eyebrow">Profil personnel</p><h1 data-profile-pseudonym>Mon profil</h1><p class="profile-subtitle" data-profile-profession>Chargement…</p></div></div>
+          <div class="profile-stats"><div class="profile-stat"><strong data-profile-xp>0</strong><span>XP</span></div><div class="profile-stat"><strong data-profile-published-count>0</strong><span>publiées</span></div><div class="profile-stat"><strong data-profile-badge-count>0</strong><span>badges</span></div></div>
+        </section>
+        <div class="profile-tabs" role="tablist" aria-label="Contenu du profil"><button class="tab" type="button" role="tab" data-profile-tab="published">Publications</button><button class="tab" type="button" role="tab" data-profile-tab="saved">Sélections</button><button class="tab" type="button" role="tab" data-profile-tab="private">Carnet privé</button><button class="tab" type="button" role="tab" data-profile-tab="pending">Modération</button></div>
+        <div class="profile-workspace">
+          <div>
+            <section class="profile-panel" data-profile-panel="published"><div class="panel-head"><div><h2>Vos publications</h2><p>Les anecdotes validées et visibles dans le fil.</p></div><span class="panel-summary" data-profile-published-summary>0 au total</span></div><div id="published-list"><div class="private-empty">Chargement des publications…</div></div></section>
+            <section class="profile-panel" data-profile-panel="saved" hidden><div class="panel-head"><div><h2>Vos sélections</h2><p>Les histoires gardées pour plus tard.</p></div><span class="panel-summary" id="saved-summary">Aucune sélection</span></div><div id="saved-list"></div></section>
+            <section class="profile-panel" data-profile-panel="private" hidden><div class="panel-head"><div><h2>Carnet privé</h2><p>Ces notes restent sur cet appareil dans cette version.</p></div><span class="panel-summary" id="private-summary">Aucune note privée</span></div><div id="private-list"></div></section>
+            <section class="profile-panel" data-profile-panel="pending" hidden><div class="panel-head"><div><h2>Suivi de modération</h2><p>Décisions humaines et alertes du filtre automatique.</p></div><span class="panel-summary" id="pending-summary">Aucune soumission</span></div><div id="pending-list"><div class="private-empty">Chargement de la modération…</div></div></section>
+          </div>
+          <aside class="profile-aside">
+            <section class="aside-section"><h2><i data-lucide="pen-line"></i>Écrire</h2><p>Ajoutez une anecdote publique ou une note privée.</p><a class="profile-action" href="/#composer"><i data-lucide="pen-line"></i>Nouvelle anecdote</a></section>
+            <section class="aside-section"><h2><i data-lucide="shield-check"></i>Badges</h2><div class="badge-list" data-profile-badges></div></section>
+            <section class="aside-section"><h2><i data-lucide="user-round"></i>Compte</h2><a class="profile-action" href="/auth.html?mode=profile&next=%2Fprofile.html">Modifier mon profil</a><button class="profile-action" type="button" data-auth-signout><i data-lucide="log-out"></i>Se déconnecter</button></section>
+          </aside>
+        </div>
+      </div>
+    </main>
   </div>
-
-  <main class="profile-page" id="top">
-    <p class="profile-status" data-profile-status role="status" aria-live="polite"></p>
-    <section class="profile-hero" aria-labelledby="profile-title">
-      <div class="profile-identity"><span class="profile-avatar-large" data-profile-avatar aria-hidden="true">·</span><div><p class="eyebrow">Profil personnel</p><h1 id="profile-title" data-profile-pseudonym>Mon profil</h1><p class="profile-subtitle" data-profile-profession>Chargement…</p></div></div>
-      <div class="profile-stats" aria-label="Statistiques du profil"><div class="profile-stat"><strong data-profile-xp>0</strong><span>XP</span></div><div class="profile-stat"><strong data-profile-published-count>0</strong><span>publiées</span></div><div class="profile-stat"><strong data-profile-badge-count>0</strong><span>badges</span></div></div>
-    </section>
-
-    <div class="profile-tabs" role="tablist" aria-label="Contenu du profil">
-      <button class="tab-button" type="button" role="tab" aria-selected="true" data-profile-tab="published">Publications</button>
-      <button class="tab-button" type="button" role="tab" aria-selected="false" data-profile-tab="saved">Sélections</button>
-      <button class="tab-button" type="button" role="tab" aria-selected="false" data-profile-tab="private">Carnet privé</button>
-      <button class="tab-button" type="button" role="tab" aria-selected="false" data-profile-tab="pending">Modération</button>
-    </div>
-
-    <div class="profile-workspace">
-      <section class="profile-panel" data-profile-panel="published" aria-labelledby="published-title">
-        <div class="profile-panel-head"><div><h2 id="published-title">Vos publications</h2><p>Les anecdotes validées et visibles dans le fil.</p></div><span class="intro-meta" data-profile-published-summary>0 au total</span></div>
-        <div id="published-list"><div class="private-empty">Chargement de vos publications…</div></div>
-      </section>
-
-      <section class="profile-panel" data-profile-panel="saved" aria-labelledby="saved-title" hidden>
-        <div class="profile-panel-head"><div><h2 id="saved-title">Vos sélections</h2><p>Les anecdotes que vous avez choisies de garder de côté.</p></div><span class="intro-meta" id="saved-summary">Aucune sélection</span></div>
-        <div class="moderation-list" id="saved-list"></div>
-      </section>
-
-      <section class="profile-panel" data-profile-panel="private" aria-labelledby="private-title" hidden>
-        <div class="profile-panel-head"><div><h2 id="private-title">Carnet privé <span class="private-lock">· visible par vous</span></h2><p class="private-summary" id="private-summary">Vos anecdotes non publiées restent ici.</p></div></div>
-        <div class="private-list profile-private-list" id="private-list"></div>
-      </section>
-
-      <section class="profile-panel" data-profile-panel="pending" aria-labelledby="pending-title" hidden>
-        <div class="profile-panel-head"><div><h2 id="pending-title">Suivi de modération</h2><p>Vos soumissions avec profil apparaissent ici jusqu'à la décision.</p></div><span class="intro-meta" id="pending-summary">Aucune soumission en attente</span></div>
-        <div class="moderation-list" id="pending-list"></div>
-      </section>
-
-      <aside class="profile-side" aria-label="Actions du profil">
-        <section class="rail-block"><h2>Écrire</h2><a class="profile-action" href="finalized.html#composer">Nouvelle anecdote</a><a class="profile-action" id="private-add" href="finalized.html?mode=private#composer">Ajouter au carnet privé</a></section>
-        <section class="rail-block"><h2>Badges</h2><div class="badge-list" data-profile-badges></div><p>Les badges récompensent les contributions appréciées, sans classement public.</p></section>
-        <section class="rail-block"><h2>Compte</h2><a class="profile-action" href="auth.html?mode=profile&next=%2Fprofile.html">Modifier mon profil</a><button class="profile-action" type="button" data-auth-signout>Se déconnecter</button></section>
-        <section class="rail-block"><h2>Confidentialité</h2><p>Les liens privés sont créés individuellement depuis le carnet et leur contenu ne figure pas dans le message WhatsApp.</p></section>
-      </aside>
-    </div>
-  </main>
-
-  <footer class="site-footer"><div class="footer-inner"><p>Anecdotes du soin · une communauté ouverte à tous les métiers du soin.</p><p>Règles · Confidentialité · Modération</p></div></footer>
-
-  <dialog class="share-dialog" id="share-dialog" aria-labelledby="share-title">
-    <div class="share-dialog-head"><h2 id="share-title">Partager cette anecdote privée</h2><button class="dialog-close" type="button" id="close-share" aria-label="Fermer">&times;</button></div>
-    <div class="share-dialog-body"><p>Le message partagé contient uniquement ce lien court. Le texte de l'anecdote reste sur la page protégée.</p><input class="short-url" id="short-url" type="text" readonly aria-label="Lien court de partage"><div class="share-actions"><a class="share-action whatsapp" id="whatsapp-share" href="#" target="_blank" rel="noopener">Partager sur WhatsApp</a><button class="share-action" type="button" id="copy-short-url">Copier le lien</button></div><p class="share-status" id="share-status" role="status" aria-live="polite"></p></div>
-  </dialog>
-
-  <script>
-    eval(atob("dmFyIHgwPVsiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiUyIsIkIiLCJTIiwiV1MiLCJCIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkIiLCJCIiwiQiIsIlMiLCJXUyIsIk9OIiwiT04iLCJFVCIsIkVUIiwiRVQiLCJPTiIsIk9OIiwiT04iLCJPTiIsIk9OIiwiT04iLCJDUyIsIk9OIiwiQ1MiLCJPTiIsIkVOIiwiRU4iLCJFTiIsIkVOIiwiRU4iLCJFTiIsIkVOIiwiRU4iLCJFTiIsIkVOIiwiT04iLCJPTiIsIk9OIiwiT04iLCJPTiIsIk9OIiwiT04iLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIk9OIiwiT04iLCJPTiIsIk9OIiwiT04iLCJPTiIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiT04iLCJPTiIsIk9OIiwiT04iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkJOIiwiQk4iLCJCTiIsIkNTIiwiT04iLCJFVCIsIkVUIiwiRVQiLCJFVCIsIk9OIiwiT04iLCJPTiIsIk9OIiwiTCIsIk9OIiwiT04iLCJPTiIsIk9OIiwiT04iLCJFVCIsIkVUIiwiRU4iLCJFTiIsIk9OIiwiTCIsIk9OIiwiT04iLCJPTiIsIkVOIiwiTCIsIk9OIiwiT04iLCJPTiIsIk9OIiwiT04iLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIk9OIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIk9OIiwiTCIsIkwiLCJMIiwiTCIsIkwiLCJMIiwiTCIsIkwiXSxnMD1bIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkNTIiwiQUwiLCJPTiIsIk9OIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIk5TTSIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQU4iLCJBTiIsIkFOIiwiQU4iLCJBTiIsIkFOIiwiQU4iLCJBTiIsIkFOIiwiQU4iLCJFVCIsIkFOIiwiQU4iLCJBTCIsIkFMIiwiQUwiLCJOU00iLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiTlNNIiwiT04iLCJOU00iLCJOU00iLCJOU00iLCJOU00iLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiLCJBTCIsIkFMIiwiQUwiXTtmdW5jdGlvbiBtMChPKXtpZihPPD0yNTUpcmV0dXJuIHgwW09dO2lmKDE0MjQ8PU8mJk88PTE1MjQpcmV0dXJuIlIiO2lmKDE1MzY8PU8mJk88PTE3OTEpcmV0dXJuIGcwW08mMjU1XTtpZigxNzkyPD1PJiZPPD0yMjIwKXJldHVybiJBTCI7cmV0dXJuIkwifWZ1bmN0aW9uIHIwKE8pe2xldCBfPU8ubGVuZ3RoO2lmKF89PT0wKXJldHVybiBudWxsO2xldCBKPUFycmF5KF8pLFk9MDtmb3IobGV0IFY9MDtWPF87VisrKXtsZXQgJD1tMChPLmNoYXJDb2RlQXQoVikpO2lmKCQ9PT0iUiJ8fCQ9PT0iQUwifHwkPT09IkFOIilZKys7SltWXT0kfWlmKFk9PT0wKXJldHVybiBudWxsO2xldCBYPV8vWTwwLjM/MDoxLFI9bmV3IEludDhBcnJheShfKTtmb3IobGV0IFY9MDtWPF87VisrKVJbVl09WDtsZXQgWj1YJjE/IlIiOiJMIixRPVosZj1RO2ZvcihsZXQgVj0wO1Y8XztWKyspaWYoSltWXT09PSJOU00iKUpbVl09ZjtlbHNlIGY9SltWXTtmPVE7Zm9yKGxldCBWPTA7VjxfO1YrKyl7bGV0ICQ9SltWXTtpZigkPT09IkVOIilKW1ZdPWY9PT0iQUwiPyJBTiI6IkVOIjtlbHNlIGlmKCQ9PT0iUiJ8fCQ9PT0iTCJ8fCQ9PT0iQUwiKWY9JH1mb3IobGV0IFY9MDtWPF87VisrKWlmKEpbVl09PT0iQUwiKUpbVl09IlIiO2ZvcihsZXQgVj0xO1Y8Xy0xO1YrKyl7aWYoSltWXT09PSJFUyImJkpbVi0xXT09PSJFTiImJkpbVisxXT09PSJFTiIpSltWXT0iRU4iO2lmKEpbVl09PT0iQ1MiJiYoSltWLTFdPT09IkVOInx8SltWLTFdPT09IkFOIikmJkpbVisxXT09PUpbVi0xXSlKW1ZdPUpbVi0xXX1mb3IobGV0IFY9MDtWPF87VisrKXtpZihKW1ZdIT09IkVOIiljb250aW51ZTtsZXQgJDtmb3IoJD1WLTE7JD49MCYmSlskXT09PSJFVCI7JC0tKUpbJF09IkVOIjtmb3IoJD1WKzE7JDxfJiZKWyRdPT09IkVUIjskKyspSlskXT0iRU4ifWZvcihsZXQgVj0wO1Y8XztWKyspe2xldCAkPUpbVl07aWYoJD09PSJXUyJ8fCQ9PT0iRVMifHwkPT09IkVUInx8JD09PSJDUyIpSltWXT0iT04ifWY9UTtmb3IobGV0IFY9MDtWPF87VisrKXtsZXQgJD1KW1ZdO2lmKCQ9PT0iRU4iKUpbVl09Zj09PSJMIj8iTCI6IkVOIjtlbHNlIGlmKCQ9PT0iUiJ8fCQ9PT0iTCIpZj0kfWZvcihsZXQgVj0wO1Y8XztWKyspe2lmKEpbVl0hPT0iT04iKWNvbnRpbnVlO2xldCAkPVYrMTt3aGlsZSgkPF8mJkpbJF09PT0iT04iKSQrKztsZXQgdT1WPjA/SltWLTFdOlEscT0kPF8/SlskXTpRLEQ9dSE9PSJMIj8iUiI6IkwiO2lmKEQ9PT0ocSE9PSJMIj8iUiI6IkwiKSlmb3IobGV0IEs9VjtLPCQ7SysrKUpbS109RDtWPSQtMX1mb3IobGV0IFY9MDtWPF87VisrKWlmKEpbVl09PT0iT04iKUpbVl09Wjtmb3IobGV0IFY9MDtWPF87VisrKXtsZXQgJD1KW1ZdO2lmKChSW1ZdJjEpPT09MCl7aWYoJD09PSJSIilSW1ZdKys7ZWxzZSBpZigkPT09IkFOInx8JD09PSJFTiIpUltWXSs9Mn1lbHNlIGlmKCQ9PT0iTCJ8fCQ9PT0iQU4ifHwkPT09IkVOIilSW1ZdKyt9cmV0dXJuIFJ9ZnVuY3Rpb24gdTAoTyxfKXtsZXQgSj1yMChPKTtpZihKPT09bnVsbClyZXR1cm4gbnVsbDtsZXQgWT1uZXcgSW50OEFycmF5KF8ubGVuZ3RoKTtmb3IobGV0IFg9MDtYPF8ubGVuZ3RoO1grKylZW1hdPUpbX1tYXV07cmV0dXJuIFl9dmFyIGEwPS9bIFx0XG5cclxmXSsvZyxzMD0vW1x0XG5cclxmXXwgezIsfXxeIHwgJC87ZnVuY3Rpb24gZDAoTyl7bGV0IF89Tz8/Im5vcm1hbCI7cmV0dXJuIF89PT0icHJlLXdyYXAiP3ttb2RlOl8scHJlc2VydmVPcmRpbmFyeVNwYWNlczohMCxwcmVzZXJ2ZUhhcmRCcmVha3M6ITB9Onttb2RlOl8scHJlc2VydmVPcmRpbmFyeVNwYWNlczohMSxwcmVzZXJ2ZUhhcmRCcmVha3M6ITF9fWZ1bmN0aW9uIGkwKE8pe2lmKCFzMC50ZXN0KE8pKXJldHVybiBPO2xldCBfPU8ucmVwbGFjZShhMCwiICIpO2lmKF8uY2hhckNvZGVBdCgwKT09PTMyKV89Xy5zbGljZSgxKTtpZihfLmxlbmd0aD4wJiZfLmNoYXJDb2RlQXQoXy5sZW5ndGgtMSk9PT0zMilfPV8uc2xpY2UoMCwtMSk7cmV0dXJuIF99ZnVuY3Rpb24gdDAoTyl7aWYoIS9bXHJcZl0vLnRlc3QoTykpcmV0dXJuIE8ucmVwbGFjZSgvXHJcbi9nLGAKYCk7cmV0dXJuIE8ucmVwbGFjZSgvXHJcbi9nLGAKYCkucmVwbGFjZSgvW1xyXGZdL2csYApgKX12YXIgZD1udWxsLFYwO2Z1bmN0aW9uIG4wKCl7aWYoZD09PW51bGwpZD1uZXcgSW50bC5TZWdtZW50ZXIoVjAse2dyYW51bGFyaXR5OiJ3b3JkIn0pO3JldHVybiBkfWZ1bmN0aW9uIHowKCl7ZD1udWxsfWZ1bmN0aW9uIGowKE8pe2xldCBfPU8mJk8ubGVuZ3RoPjA/Tzp2b2lkIDA7aWYoVjA9PT1fKXJldHVybjtWMD1fLGQ9bnVsbH12YXIgZTA9L1xwe1NjcmlwdD1BcmFiaWN9L3UsTzA9L1xwe019L3UsYjA9L1xwe05kfS91O2Z1bmN0aW9uIFgwKE8pe3JldHVybiBlMC50ZXN0KE8pfWZ1bmN0aW9uIHAoTyl7Zm9yKGxldCBfIG9mIE8pe2xldCBKPV8uY29kZVBvaW50QXQoMCk7aWYoSj49MTk5NjgmJko8PTQwOTU5fHxKPj0xMzMxMiYmSjw9MTk5MDN8fEo+PTEzMTA3MiYmSjw9MTczNzkxfHxKPj0xNzM4MjQmJko8PTE3Nzk4M3x8Sj49MTc3OTg0JiZKPD0xNzgyMDd8fEo+PTE3ODIwOCYmSjw9MTgzOTgzfHxKPj0xODM5ODQmJko8PTE5MTQ3MXx8Sj49MTk2NjA4JiZKPD0yMDE1NTF8fEo+PTYzNzQ0JiZKPD02NDI1NXx8Sj49MTk0NTYwJiZKPD0xOTUxMDN8fEo+PTEyMjg4JiZKPD0xMjM1MXx8Sj49MTIzNTImJko8PTEyNDQ3fHxKPj0xMjQ0OCYmSjw9MTI1NDN8fEo+PTQ0MDMyJiZKPD01NTIxNXx8Sj49NjUyODAmJko8PTY1NTE5KXJldHVybiEwfXJldHVybiExfXZhciAkMD1uZXcgU2V0KFsi77yMIiwi77yOIiwi77yBIiwi77yaIiwi77ybIiwi77yfIiwi44CBIiwi44CCIiwi44O7Iiwi77yJIiwi44CVIiwi44CJIiwi44CLIiwi44CNIiwi44CPIiwi44CRIiwi44CXIiwi44CZIiwi44CbIiwi44O8Iiwi44CFIiwi44C7Iiwi44KdIiwi44KeIiwi44O9Iiwi44O+Il0pLGk9bmV3IFNldChbJyInLCIoIiwiWyIsInsiLCLigJwiLCLigJgiLCLCqyIsIuKAuSIsIu+8iCIsIuOAlCIsIuOAiCIsIuOAiiIsIuOAjCIsIuOAjiIsIuOAkCIsIuOAliIsIuOAmCIsIuOAmiJdKSxRMD1uZXcgU2V0KFsiJyIsIuKAmSJdKSxyPW5ldyBTZXQoWyIuIiwiLCIsIiEiLCI/IiwiOiIsIjsiLCLYjCIsItibIiwi2J8iLCLgpaQiLCLgpaUiLCLhgYoiLCLhgYsiLCLhgYwiLCLhgY0iLCLhgY8iLCIpIiwiXSIsIn0iLCIlIiwnIicsIuKAnSIsIuKAmSIsIsK7Iiwi4oC6Iiwi4oCmIl0pLE9PPW5ldyBTZXQoWyI6IiwiLiIsItiMIiwi2JsiXSksX089bmV3IFNldChbIuGBjyJdKSxKTz1uZXcgU2V0KFsi4oCdIiwi4oCZIiwiwrsiLCLigLoiLCLjgI0iLCLjgI8iLCLjgJEiLCLjgIsiLCLjgIkiLCLjgJUiLCLvvIkiXSk7ZnVuY3Rpb24gUk8oTyl7aWYocTAoTykpcmV0dXJuITA7bGV0IF89ITE7Zm9yKGxldCBKIG9mIE8pe2lmKHIuaGFzKEopKXtfPSEwO2NvbnRpbnVlfWlmKF8mJk8wLnRlc3QoSikpY29udGludWU7cmV0dXJuITF9cmV0dXJuIF99ZnVuY3Rpb24gVk8oTyl7Zm9yKGxldCBfIG9mIE8paWYoISQwLmhhcyhfKSYmIXIuaGFzKF8pKXJldHVybiExO3JldHVybiBPLmxlbmd0aD4wfWZ1bmN0aW9uIFhPKE8pe2lmKHEwKE8pKXJldHVybiEwO2ZvcihsZXQgXyBvZiBPKWlmKCFpLmhhcyhfKSYmIVEwLmhhcyhfKSYmIU8wLnRlc3QoXykpcmV0dXJuITE7cmV0dXJuIE8ubGVuZ3RoPjB9ZnVuY3Rpb24gcTAoTyl7bGV0IF89ITE7Zm9yKGxldCBKIG9mIE8pe2lmKEo9PT0iXFwifHxPMC50ZXN0KEopKWNvbnRpbnVlO2lmKGkuaGFzKEopfHxyLmhhcyhKKXx8UTAuaGFzKEopKXtfPSEwO2NvbnRpbnVlfXJldHVybiExfXJldHVybiBffWZ1bmN0aW9uIFlPKE8pe2xldCBfPUFycmF5LmZyb20oTyksSj1fLmxlbmd0aDt3aGlsZShKPjApe2xldCBZPV9bSi0xXTtpZihPMC50ZXN0KFkpKXtKLS07Y29udGludWV9aWYoaS5oYXMoWSl8fFEwLmhhcyhZKSl7Si0tO2NvbnRpbnVlfWJyZWFrfWlmKEo8PTB8fEo9PT1fLmxlbmd0aClyZXR1cm4gbnVsbDtyZXR1cm57aGVhZDpfLnNsaWNlKDAsSikuam9pbigiIiksdGFpbDpfLnNsaWNlKEopLmpvaW4oIiIpfX1mdW5jdGlvbiBaTyhPLF8pe2lmKE8ubGVuZ3RoPT09MClyZXR1cm4hMTtmb3IobGV0IEogb2YgTylpZihKIT09XylyZXR1cm4hMTtyZXR1cm4hMH1mdW5jdGlvbiAkTyhPKXtpZighWDAoTyl8fE8ubGVuZ3RoPT09MClyZXR1cm4hMTtyZXR1cm4gT08uaGFzKE9bTy5sZW5ndGgtMV0pfWZ1bmN0aW9uIFFPKE8pe2lmKE8ubGVuZ3RoPT09MClyZXR1cm4hMTtyZXR1cm4gX08uaGFzKE9bTy5sZW5ndGgtMV0pfWZ1bmN0aW9uIHFPKE8pe2lmKE8ubGVuZ3RoPDJ8fE9bMF0hPT0iICIpcmV0dXJuIG51bGw7bGV0IF89Ty5zbGljZSgxKTtpZigvXlxwe019KyQvdS50ZXN0KF8pKXJldHVybntzcGFjZToiICIsbWFya3M6X307cmV0dXJuIG51bGx9ZnVuY3Rpb24gRDAoTyl7Zm9yKGxldCBfPU8ubGVuZ3RoLTE7Xz49MDtfLS0pe2xldCBKPU9bX107aWYoSk8uaGFzKEopKXJldHVybiEwO2lmKCFyLmhhcyhKKSlyZXR1cm4hMX1yZXR1cm4hMX1mdW5jdGlvbiBETyhPLF8pe2lmKF8ucHJlc2VydmVPcmRpbmFyeVNwYWNlc3x8Xy5wcmVzZXJ2ZUhhcmRCcmVha3Mpe2lmKE89PT0iICIpcmV0dXJuInByZXNlcnZlZC1zcGFjZSI7aWYoTz09PSJcdCIpcmV0dXJuInRhYiI7aWYoXy5wcmVzZXJ2ZUhhcmRCcmVha3MmJk89PT1gCmApcmV0dXJuImhhcmQtYnJlYWsifWlmKE89PT0iICIpcmV0dXJuInNwYWNlIjtpZihPPT09IsKgInx8Tz09PSLigK8ifHxPPT09IuKBoCJ8fE89PT0iXHVGRUZGIilyZXR1cm4iZ2x1ZSI7aWYoTz09PSLigIsiKXJldHVybiJ6ZXJvLXdpZHRoLWJyZWFrIjtpZihPPT09IsKtIilyZXR1cm4ic29mdC1oeXBoZW4iO3JldHVybiJ0ZXh0In1mdW5jdGlvbiBOTyhPLF8sSixZKXtsZXQgWD1bXSxSPW51bGwsWj0iIixRPUosZj0hMSxWPTA7Zm9yKGxldCAkIG9mIE8pe2xldCB1PURPKCQsWSkscT11PT09InRleHQiJiZfO2lmKFIhPT1udWxsJiZ1PT09UiYmcT09PWYpe1orPSQsVis9JC5sZW5ndGg7Y29udGludWV9aWYoUiE9PW51bGwpWC5wdXNoKHt0ZXh0OlosaXNXb3JkTGlrZTpmLGtpbmQ6UixzdGFydDpRfSk7Uj11LFo9JCxRPUorVixmPXEsVis9JC5sZW5ndGh9aWYoUiE9PW51bGwpWC5wdXNoKHt0ZXh0OlosaXNXb3JkTGlrZTpmLGtpbmQ6UixzdGFydDpRfSk7cmV0dXJuIFh9ZnVuY3Rpb24gWTAoTyl7cmV0dXJuIE89PT0ic3BhY2UifHxPPT09InByZXNlcnZlZC1zcGFjZSJ8fE89PT0iemVyby13aWR0aC1icmVhayJ8fE89PT0iaGFyZC1icmVhayJ9dmFyIGZPPS9eW0EtWmEtel1bQS1aYS16MC05Ky4tXSo6JC87ZnVuY3Rpb24gSE8oTyxfKXtsZXQgSj1PLnRleHRzW19dO2lmKEouc3RhcnRzV2l0aCgid3d3LiIpKXJldHVybiEwO3JldHVybiBmTy50ZXN0KEopJiZfKzE8Ty5sZW4mJk8ua2luZHNbXysxXT09PSJ0ZXh0IiYmTy50ZXh0c1tfKzFdPT09Ii8vIn1mdW5jdGlvbiBVTyhPKXtyZXR1cm4gTy5pbmNsdWRlcygiPyIpJiYoTy5pbmNsdWRlcygiOi8vIil8fE8uc3RhcnRzV2l0aCgid3d3LiIpKX1mdW5jdGlvbiBNTyhPKXtsZXQgXz1PLnRleHRzLnNsaWNlKCksSj1PLmlzV29yZExpa2Uuc2xpY2UoKSxZPU8ua2luZHMuc2xpY2UoKSxYPU8uc3RhcnRzLnNsaWNlKCk7Zm9yKGxldCBaPTA7WjxPLmxlbjtaKyspe2lmKFlbWl0hPT0idGV4dCJ8fCFITyhPLFopKWNvbnRpbnVlO2xldCBRPVorMTt3aGlsZShRPE8ubGVuJiYhWTAoWVtRXSkpe19bWl0rPV9bUV0sSltaXT0hMDtsZXQgZj1fW1FdLmluY2x1ZGVzKCI/Iik7aWYoWVtRXT0idGV4dCIsX1tRXT0iIixRKyssZilicmVha319bGV0IFI9MDtmb3IobGV0IFo9MDtaPF8ubGVuZ3RoO1orKyl7bGV0IFE9X1taXTtpZihRLmxlbmd0aD09PTApY29udGludWU7aWYoUiE9PVopX1tSXT1RLEpbUl09SltaXSxZW1JdPVlbWl0sWFtSXT1YW1pdO1IrK31yZXR1cm4gXy5sZW5ndGg9UixKLmxlbmd0aD1SLFkubGVuZ3RoPVIsWC5sZW5ndGg9Uix7bGVuOlIsdGV4dHM6Xyxpc1dvcmRMaWtlOkosa2luZHM6WSxzdGFydHM6WH19ZnVuY3Rpb24gQ08oTyl7bGV0IF89W10sSj1bXSxZPVtdLFg9W107Zm9yKGxldCBSPTA7UjxPLmxlbjtSKyspe2xldCBaPU8udGV4dHNbUl07aWYoXy5wdXNoKFopLEoucHVzaChPLmlzV29yZExpa2VbUl0pLFkucHVzaChPLmtpbmRzW1JdKSxYLnB1c2goTy5zdGFydHNbUl0pLCFVTyhaKSljb250aW51ZTtsZXQgUT1SKzE7aWYoUT49Ty5sZW58fFkwKE8ua2luZHNbUV0pKWNvbnRpbnVlO2xldCBmPSIiLFY9Ty5zdGFydHNbUV0sJD1RO3doaWxlKCQ8Ty5sZW4mJiFZMChPLmtpbmRzWyRdKSlmKz1PLnRleHRzWyRdLCQrKztpZihmLmxlbmd0aD4wKV8ucHVzaChmKSxKLnB1c2goITApLFkucHVzaCgidGV4dCIpLFgucHVzaChWKSxSPSQtMX1yZXR1cm57bGVuOl8ubGVuZ3RoLHRleHRzOl8saXNXb3JkTGlrZTpKLGtpbmRzOlksc3RhcnRzOlh9fXZhciBGTz1uZXcgU2V0KFsiOiIsIi0iLCIvIiwiw5ciLCIsIiwiLiIsIisiLCLigJMiLCLigJQiXSksSzA9L15bQS1aYS16MC05X10rWyw6O10qJC8sdk89L1ssOjtdKyQvO2Z1bmN0aW9uIEUwKE8pe2ZvcihsZXQgXyBvZiBPKWlmKGIwLnRlc3QoXykpcmV0dXJuITA7cmV0dXJuITF9ZnVuY3Rpb24gWjAoTyl7aWYoTy5sZW5ndGg9PT0wKXJldHVybiExO2ZvcihsZXQgXyBvZiBPKXtpZihiMC50ZXN0KF8pfHxGTy5oYXMoXykpY29udGludWU7cmV0dXJuITF9cmV0dXJuITB9ZnVuY3Rpb24gdU8oTyl7bGV0IF89W10sSj1bXSxZPVtdLFg9W107Zm9yKGxldCBSPTA7UjxPLmxlbjtSKyspe2xldCBaPU8udGV4dHNbUl0sUT1PLmtpbmRzW1JdO2lmKFE9PT0idGV4dCImJlowKFopJiZFMChaKSl7bGV0IGY9WixWPVIrMTt3aGlsZShWPE8ubGVuJiZPLmtpbmRzW1ZdPT09InRleHQiJiZaMChPLnRleHRzW1ZdKSlmKz1PLnRleHRzW1ZdLFYrKztfLnB1c2goZiksSi5wdXNoKCEwKSxZLnB1c2goInRleHQiKSxYLnB1c2goTy5zdGFydHNbUl0pLFI9Vi0xO2NvbnRpbnVlfV8ucHVzaChaKSxKLnB1c2goTy5pc1dvcmRMaWtlW1JdKSxZLnB1c2goUSksWC5wdXNoKE8uc3RhcnRzW1JdKX1yZXR1cm57bGVuOl8ubGVuZ3RoLHRleHRzOl8saXNXb3JkTGlrZTpKLGtpbmRzOlksc3RhcnRzOlh9fWZ1bmN0aW9uIEtPKE8pe2xldCBfPVtdLEo9W10sWT1bXSxYPVtdO2ZvcihsZXQgUj0wO1I8Ty5sZW47UisrKXtsZXQgWj1PLnRleHRzW1JdLFE9Ty5raW5kc1tSXSxmPU8uaXNXb3JkTGlrZVtSXTtpZihRPT09InRleHQiJiZmJiZLMC50ZXN0KFopKXtsZXQgVj1aLCQ9UisxO3doaWxlKHZPLnRlc3QoVikmJiQ8Ty5sZW4mJk8ua2luZHNbJF09PT0idGV4dCImJk8uaXNXb3JkTGlrZVskXSYmSzAudGVzdChPLnRleHRzWyRdKSlWKz1PLnRleHRzWyRdLCQrKztfLnB1c2goViksSi5wdXNoKCEwKSxZLnB1c2goInRleHQiKSxYLnB1c2goTy5zdGFydHNbUl0pLFI9JC0xO2NvbnRpbnVlfV8ucHVzaChaKSxKLnB1c2goZiksWS5wdXNoKFEpLFgucHVzaChPLnN0YXJ0c1tSXSl9cmV0dXJue2xlbjpfLmxlbmd0aCx0ZXh0czpfLGlzV29yZExpa2U6SixraW5kczpZLHN0YXJ0czpYfX1mdW5jdGlvbiB6TyhPKXtsZXQgXz1bXSxKPVtdLFk9W10sWD1bXTtmb3IobGV0IFI9MDtSPE8ubGVuO1IrKyl7bGV0IFo9Ty50ZXh0c1tSXTtpZihPLmtpbmRzW1JdPT09InRleHQiJiZaLmluY2x1ZGVzKCItIikpe2xldCBRPVouc3BsaXQoIi0iKSxmPVEubGVuZ3RoPjE7Zm9yKGxldCBWPTA7VjxRLmxlbmd0aDtWKyspe2xldCAkPVFbVl07aWYoIWYpYnJlYWs7aWYoJC5sZW5ndGg9PT0wfHwhRTAoJCl8fCFaMCgkKSlmPSExfWlmKGYpe2xldCBWPTA7Zm9yKGxldCAkPTA7JDxRLmxlbmd0aDskKyspe2xldCB1PVFbJF0scT0kPFEubGVuZ3RoLTE/YCR7dX0tYDp1O18ucHVzaChxKSxKLnB1c2goITApLFkucHVzaCgidGV4dCIpLFgucHVzaChPLnN0YXJ0c1tSXStWKSxWKz1xLmxlbmd0aH1jb250aW51ZX19Xy5wdXNoKFopLEoucHVzaChPLmlzV29yZExpa2VbUl0pLFkucHVzaChPLmtpbmRzW1JdKSxYLnB1c2goTy5zdGFydHNbUl0pfXJldHVybntsZW46Xy5sZW5ndGgsdGV4dHM6Xyxpc1dvcmRMaWtlOkosa2luZHM6WSxzdGFydHM6WH19ZnVuY3Rpb24gak8oTyl7bGV0IF89W10sSj1bXSxZPVtdLFg9W10sUj0wO3doaWxlKFI8Ty5sZW4pe2xldCBaPU8udGV4dHNbUl0sUT1PLmlzV29yZExpa2VbUl0sZj1PLmtpbmRzW1JdLFY9Ty5zdGFydHNbUl07aWYoZj09PSJnbHVlIil7bGV0ICQ9Wix1PVY7UisrO3doaWxlKFI8Ty5sZW4mJk8ua2luZHNbUl09PT0iZ2x1ZSIpJCs9Ty50ZXh0c1tSXSxSKys7aWYoUjxPLmxlbiYmTy5raW5kc1tSXT09PSJ0ZXh0IilaPSQrTy50ZXh0c1tSXSxRPU8uaXNXb3JkTGlrZVtSXSxmPSJ0ZXh0IixWPXUsUisrO2Vsc2V7Xy5wdXNoKCQpLEoucHVzaCghMSksWS5wdXNoKCJnbHVlIiksWC5wdXNoKHUpO2NvbnRpbnVlfX1lbHNlIFIrKztpZihmPT09InRleHQiKXdoaWxlKFI8Ty5sZW4mJk8ua2luZHNbUl09PT0iZ2x1ZSIpe2xldCAkPSIiO3doaWxlKFI8Ty5sZW4mJk8ua2luZHNbUl09PT0iZ2x1ZSIpJCs9Ty50ZXh0c1tSXSxSKys7aWYoUjxPLmxlbiYmTy5raW5kc1tSXT09PSJ0ZXh0Iil7Wis9JCtPLnRleHRzW1JdLFE9UXx8Ty5pc1dvcmRMaWtlW1JdLFIrKztjb250aW51ZX1aKz0kfV8ucHVzaChaKSxKLnB1c2goUSksWS5wdXNoKGYpLFgucHVzaChWKX1yZXR1cm57bGVuOl8ubGVuZ3RoLHRleHRzOl8saXNXb3JkTGlrZTpKLGtpbmRzOlksc3RhcnRzOlh9fWZ1bmN0aW9uIGJPKE8pe2xldCBfPU8udGV4dHMuc2xpY2UoKSxKPU8uaXNXb3JkTGlrZS5zbGljZSgpLFk9Ty5raW5kcy5zbGljZSgpLFg9Ty5zdGFydHMuc2xpY2UoKTtmb3IobGV0IFI9MDtSPF8ubGVuZ3RoLTE7UisrKXtpZihZW1JdIT09InRleHQifHxZW1IrMV0hPT0idGV4dCIpY29udGludWU7aWYoIXAoX1tSXSl8fCFwKF9bUisxXSkpY29udGludWU7bGV0IFo9WU8oX1tSXSk7aWYoWj09PW51bGwpY29udGludWU7X1tSXT1aLmhlYWQsX1tSKzFdPVoudGFpbCtfW1IrMV0sWFtSKzFdPVhbUl0rWi5oZWFkLmxlbmd0aH1yZXR1cm57bGVuOl8ubGVuZ3RoLHRleHRzOl8saXNXb3JkTGlrZTpKLGtpbmRzOlksc3RhcnRzOlh9fWZ1bmN0aW9uIEVPKE8sXyxKKXtsZXQgWT1uMCgpLFg9MCxSPVtdLFo9W10sUT1bXSxmPVtdO2ZvcihsZXQgcSBvZiBZLnNlZ21lbnQoTykpZm9yKGxldCBEIG9mIE5PKHEuc2VnbWVudCxxLmlzV29yZExpa2U/PyExLHEuaW5kZXgsSikpe2xldCBiPUQua2luZD09PSJ0ZXh0IjtpZihfLmNhcnJ5Q0pLQWZ0ZXJDbG9zaW5nUXVvdGUmJmImJlg+MCYmUVtYLTFdPT09InRleHQiJiZwKEQudGV4dCkmJnAoUltYLTFdKSYmRDAoUltYLTFdKSlSW1gtMV0rPUQudGV4dCxaW1gtMV09WltYLTFdfHxELmlzV29yZExpa2U7ZWxzZSBpZihiJiZYPjAmJlFbWC0xXT09PSJ0ZXh0IiYmVk8oRC50ZXh0KSYmcChSW1gtMV0pKVJbWC0xXSs9RC50ZXh0LFpbWC0xXT1aW1gtMV18fEQuaXNXb3JkTGlrZTtlbHNlIGlmKGImJlg+MCYmUVtYLTFdPT09InRleHQiJiZRTyhSW1gtMV0pKVJbWC0xXSs9RC50ZXh0LFpbWC0xXT1aW1gtMV18fEQuaXNXb3JkTGlrZTtlbHNlIGlmKGImJlg+MCYmUVtYLTFdPT09InRleHQiJiZELmlzV29yZExpa2UmJlgwKEQudGV4dCkmJiRPKFJbWC0xXSkpUltYLTFdKz1ELnRleHQsWltYLTFdPSEwO2Vsc2UgaWYoYiYmIUQuaXNXb3JkTGlrZSYmWD4wJiZRW1gtMV09PT0idGV4dCImJkQudGV4dC5sZW5ndGg9PT0xJiZELnRleHQhPT0iLSImJkQudGV4dCE9PSLigJQiJiZaTyhSW1gtMV0sRC50ZXh0KSlSW1gtMV0rPUQudGV4dDtlbHNlIGlmKGImJiFELmlzV29yZExpa2UmJlg+MCYmUVtYLTFdPT09InRleHQiJiYoUk8oRC50ZXh0KXx8RC50ZXh0PT09Ii0iJiZaW1gtMV0pKVJbWC0xXSs9RC50ZXh0O2Vsc2UgUltYXT1ELnRleHQsWltYXT1ELmlzV29yZExpa2UsUVtYXT1ELmtpbmQsZltYXT1ELnN0YXJ0LFgrK31mb3IobGV0IHE9MTtxPFg7cSsrKWlmKFFbcV09PT0idGV4dCImJiFaW3FdJiZxMChSW3FdKSYmUVtxLTFdPT09InRleHQiKVJbcS0xXSs9UltxXSxaW3EtMV09WltxLTFdfHxaW3FdLFJbcV09IiI7Zm9yKGxldCBxPVgtMjtxPj0wO3EtLSlpZihRW3FdPT09InRleHQiJiYhWltxXSYmWE8oUltxXSkpe2xldCBEPXErMTt3aGlsZShEPFgmJlJbRF09PT0iIilEKys7aWYoRDxYJiZRW0RdPT09InRleHQiKVJbRF09UltxXStSW0RdLGZbRF09ZltxXSxSW3FdPSIifWxldCBWPTA7Zm9yKGxldCBxPTA7cTxYO3ErKyl7bGV0IEQ9UltxXTtpZihELmxlbmd0aD09PTApY29udGludWU7aWYoViE9PXEpUltWXT1ELFpbVl09WltxXSxRW1ZdPVFbcV0sZltWXT1mW3FdO1YrK31SLmxlbmd0aD1WLFoubGVuZ3RoPVYsUS5sZW5ndGg9VixmLmxlbmd0aD1WO2xldCAkPWpPKHtsZW46Vix0ZXh0czpSLGlzV29yZExpa2U6WixraW5kczpRLHN0YXJ0czpmfSksdT1iTyhLTyh6Tyh1TyhDTyhNTygkKSkpKSkpO2ZvcihsZXQgcT0wO3E8dS5sZW4tMTtxKyspe2xldCBEPXFPKHUudGV4dHNbcV0pO2lmKEQ9PT1udWxsKWNvbnRpbnVlO2lmKHUua2luZHNbcV0hPT0ic3BhY2UiJiZ1LmtpbmRzW3FdIT09InByZXNlcnZlZC1zcGFjZSJ8fHUua2luZHNbcSsxXSE9PSJ0ZXh0Inx8IVgwKHUudGV4dHNbcSsxXSkpY29udGludWU7dS50ZXh0c1txXT1ELnNwYWNlLHUuaXNXb3JkTGlrZVtxXT0hMSx1LmtpbmRzW3FdPXUua2luZHNbcV09PT0icHJlc2VydmVkLXNwYWNlIj8icHJlc2VydmVkLXNwYWNlIjoic3BhY2UiLHUudGV4dHNbcSsxXT1ELm1hcmtzK3UudGV4dHNbcSsxXSx1LnN0YXJ0c1txKzFdPXUuc3RhcnRzW3FdK0Quc3BhY2UubGVuZ3RofXJldHVybiB1fWZ1bmN0aW9uIEdPKE8sXyl7aWYoTy5sZW49PT0wKXJldHVybltdO2lmKCFfLnByZXNlcnZlSGFyZEJyZWFrcylyZXR1cm5be3N0YXJ0U2VnbWVudEluZGV4OjAsZW5kU2VnbWVudEluZGV4Ok8ubGVuLGNvbnN1bWVkRW5kU2VnbWVudEluZGV4Ok8ubGVufV07bGV0IEo9W10sWT0wO2ZvcihsZXQgWD0wO1g8Ty5sZW47WCsrKXtpZihPLmtpbmRzW1hdIT09ImhhcmQtYnJlYWsiKWNvbnRpbnVlO0oucHVzaCh7c3RhcnRTZWdtZW50SW5kZXg6WSxlbmRTZWdtZW50SW5kZXg6WCxjb25zdW1lZEVuZFNlZ21lbnRJbmRleDpYKzF9KSxZPVgrMX1pZihZPE8ubGVuKUoucHVzaCh7c3RhcnRTZWdtZW50SW5kZXg6WSxlbmRTZWdtZW50SW5kZXg6Ty5sZW4sY29uc3VtZWRFbmRTZWdtZW50SW5kZXg6Ty5sZW59KTtyZXR1cm4gSn1mdW5jdGlvbiBOMChPLF8sSj0ibm9ybWFsIil7bGV0IFk9ZDAoSiksWD1ZLm1vZGU9PT0icHJlLXdyYXAiP3QwKE8pOmkwKE8pO2lmKFgubGVuZ3RoPT09MClyZXR1cm57bm9ybWFsaXplZDpYLGNodW5rczpbXSxsZW46MCx0ZXh0czpbXSxpc1dvcmRMaWtlOltdLGtpbmRzOltdLHN0YXJ0czpbXX07bGV0IFI9RU8oWCxfLFkpO3JldHVybntub3JtYWxpemVkOlgsY2h1bmtzOkdPKFIsWSksLi4uUn19dmFyIGE9bnVsbCxmMD1uZXcgTWFwLHM9bnVsbCxQTz0vXHB7RW1vamlfUHJlc2VudGF0aW9ufS91LEFPPS9bXHB7RW1vamlfUHJlc2VudGF0aW9ufVxwe0V4dGVuZGVkX1BpY3RvZ3JhcGhpY31ccHtSZWdpb25hbF9JbmRpY2F0b3J9XHVGRTBGXHUyMEUzXS91LF8wPW51bGwsSDA9bmV3IE1hcDtmdW5jdGlvbiBVMCgpe2lmKGEhPT1udWxsKXJldHVybiBhO2lmKHR5cGVvZiBPZmZzY3JlZW5DYW52YXM8InUiKXJldHVybiBhPW5ldyBPZmZzY3JlZW5DYW52YXMoMSwxKS5nZXRDb250ZXh0KCIyZCIpLGE7aWYodHlwZW9mIGRvY3VtZW50PCJ1IilyZXR1cm4gYT1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCJjYW52YXMiKS5nZXRDb250ZXh0KCIyZCIpLGE7dGhyb3cgRXJyb3IoIlRleHQgbWVhc3VyZW1lbnQgcmVxdWlyZXMgT2Zmc2NyZWVuQ2FudmFzIG9yIGEgRE9NIGNhbnZhcyBjb250ZXh0LiIpfWZ1bmN0aW9uIEJPKE8pe2xldCBfPWYwLmdldChPKTtpZighXylfPW5ldyBNYXAsZjAuc2V0KE8sXyk7cmV0dXJuIF99ZnVuY3Rpb24geChPLF8pe2xldCBKPV8uZ2V0KE8pO2lmKEo9PT12b2lkIDApSj17d2lkdGg6VTAoKS5tZWFzdXJlVGV4dChPKS53aWR0aCxjb250YWluc0NKSzpwKE8pfSxfLnNldChPLEopO3JldHVybiBKfWZ1bmN0aW9uIGgoKXtpZihzIT09bnVsbClyZXR1cm4gcztpZih0eXBlb2YgbmF2aWdhdG9yPiJ1IilyZXR1cm4gcz17bGluZUZpdEVwc2lsb246MC4wMDUsY2FycnlDSktBZnRlckNsb3NpbmdRdW90ZTohMSxwcmVmZXJQcmVmaXhXaWR0aHNGb3JCcmVha2FibGVSdW5zOiExLHByZWZlckVhcmx5U29mdEh5cGhlbkJyZWFrOiExfSxzO2xldCBPPW5hdmlnYXRvci51c2VyQWdlbnQsSj1uYXZpZ2F0b3IudmVuZG9yPT09IkFwcGxlIENvbXB1dGVyLCBJbmMuIiYmTy5pbmNsdWRlcygiU2FmYXJpLyIpJiYhTy5pbmNsdWRlcygiQ2hyb21lLyIpJiYhTy5pbmNsdWRlcygiQ2hyb21pdW0vIikmJiFPLmluY2x1ZGVzKCJDcmlPUy8iKSYmIU8uaW5jbHVkZXMoIkZ4aU9TLyIpJiYhTy5pbmNsdWRlcygiRWRnaU9TLyIpLFk9Ty5pbmNsdWRlcygiQ2hyb21lLyIpfHxPLmluY2x1ZGVzKCJDaHJvbWl1bS8iKXx8Ty5pbmNsdWRlcygiQ3JpT1MvIil8fE8uaW5jbHVkZXMoIkVkZy8iKTtyZXR1cm4gcz17bGluZUZpdEVwc2lsb246Sj8wLjAxNTYyNTowLjAwNSxjYXJyeUNKS0FmdGVyQ2xvc2luZ1F1b3RlOlkscHJlZmVyUHJlZml4V2lkdGhzRm9yQnJlYWthYmxlUnVuczpKLHByZWZlckVhcmx5U29mdEh5cGhlbkJyZWFrOkp9LHN9ZnVuY3Rpb24gVE8oTyl7bGV0IF89Ty5tYXRjaCgvKFxkKyg/OlwuXGQrKT8pXHMqcHgvKTtyZXR1cm4gXz9wYXJzZUZsb2F0KF9bMV0pOjE2fWZ1bmN0aW9uIE0wKCl7aWYoXzA9PT1udWxsKV8wPW5ldyBJbnRsLlNlZ21lbnRlcih2b2lkIDAse2dyYW51bGFyaXR5OiJncmFwaGVtZSJ9KTtyZXR1cm4gXzB9ZnVuY3Rpb24gd08oTyl7cmV0dXJuIFBPLnRlc3QoTyl8fE8uaW5jbHVkZXMoIu+4jyIpfWZ1bmN0aW9uIEcwKE8pe3JldHVybiBBTy50ZXN0KE8pfWZ1bmN0aW9uIHlPKE8sXyl7bGV0IEo9SDAuZ2V0KE8pO2lmKEohPT12b2lkIDApcmV0dXJuIEo7bGV0IFk9VTAoKTtZLmZvbnQ9TztsZXQgWD1ZLm1lYXN1cmVUZXh0KCJcdUQ4M0RcdURFMDAiKS53aWR0aDtpZihKPTAsWD5fKzAuNSYmdHlwZW9mIGRvY3VtZW50PCJ1IiYmZG9jdW1lbnQuYm9keSE9PW51bGwpe2xldCBSPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInNwYW4iKTtSLnN0eWxlLmZvbnQ9TyxSLnN0eWxlLmRpc3BsYXk9ImlubGluZS1ibG9jayIsUi5zdHlsZS52aXNpYmlsaXR5PSJoaWRkZW4iLFIuc3R5bGUucG9zaXRpb249ImFic29sdXRlIixSLnRleHRDb250ZW50PSJcdUQ4M0RcdURFMDAiLGRvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQoUik7bGV0IFo9Ui5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKS53aWR0aDtpZihkb2N1bWVudC5ib2R5LnJlbW92ZUNoaWxkKFIpLFgtWj4wLjUpSj1YLVp9cmV0dXJuIEgwLnNldChPLEopLEp9ZnVuY3Rpb24gTE8oTyl7bGV0IF89MCxKPU0wKCk7Zm9yKGxldCBZIG9mIEouc2VnbWVudChPKSlpZih3TyhZLnNlZ21lbnQpKV8rKztyZXR1cm4gX31mdW5jdGlvbiBXTyhPLF8pe2lmKF8uZW1vamlDb3VudD09PXZvaWQgMClfLmVtb2ppQ291bnQ9TE8oTyk7cmV0dXJuIF8uZW1vamlDb3VudH1mdW5jdGlvbiBnKE8sXyxKKXtpZihKPT09MClyZXR1cm4gXy53aWR0aDtyZXR1cm4gXy53aWR0aC1XTyhPLF8pKkp9ZnVuY3Rpb24gUDAoTyxfLEosWSl7aWYoXy5ncmFwaGVtZVdpZHRocyE9PXZvaWQgMClyZXR1cm4gXy5ncmFwaGVtZVdpZHRocztsZXQgWD1bXSxSPU0wKCk7Zm9yKGxldCBaIG9mIFIuc2VnbWVudChPKSl7bGV0IFE9eChaLnNlZ21lbnQsSik7WC5wdXNoKGcoWi5zZWdtZW50LFEsWSkpfXJldHVybiBfLmdyYXBoZW1lV2lkdGhzPVgubGVuZ3RoPjE/WDpudWxsLF8uZ3JhcGhlbWVXaWR0aHN9ZnVuY3Rpb24gQTAoTyxfLEosWSl7aWYoXy5ncmFwaGVtZVByZWZpeFdpZHRocyE9PXZvaWQgMClyZXR1cm4gXy5ncmFwaGVtZVByZWZpeFdpZHRocztsZXQgWD1bXSxSPU0wKCksWj0iIjtmb3IobGV0IFEgb2YgUi5zZWdtZW50KE8pKXtaKz1RLnNlZ21lbnQ7bGV0IGY9eChaLEopO1gucHVzaChnKFosZixZKSl9cmV0dXJuIF8uZ3JhcGhlbWVQcmVmaXhXaWR0aHM9WC5sZW5ndGg+MT9YOm51bGwsXy5ncmFwaGVtZVByZWZpeFdpZHRoc31mdW5jdGlvbiBCMChPLF8pe2xldCBKPVUwKCk7Si5mb250PU87bGV0IFk9Qk8oTyksWD1UTyhPKSxSPV8/eU8oTyxYKTowO3JldHVybntjYWNoZTpZLGZvbnRTaXplOlgsZW1vamlDb3JyZWN0aW9uOlJ9fWZ1bmN0aW9uIFQwKCl7ZjAuY2xlYXIoKSxIMC5jbGVhcigpLF8wPW51bGx9ZnVuY3Rpb24gbShPKXtyZXR1cm4gTz09PSJzcGFjZSJ8fE89PT0icHJlc2VydmVkLXNwYWNlInx8Tz09PSJ0YWIifHxPPT09Inplcm8td2lkdGgtYnJlYWsifHxPPT09InNvZnQtaHlwaGVuIn1mdW5jdGlvbiBTTyhPKXtyZXR1cm4gTz09PSJzcGFjZSJ9ZnVuY3Rpb24gdzAoTyxfKXtpZihfPD0wKXJldHVybiAwO2xldCBKPU8lXztpZihNYXRoLmFicyhKKTw9MC4wMDAwMDEpcmV0dXJuIF87cmV0dXJuIF8tSn1mdW5jdGlvbiB0KE8sXyxKLFkpe2lmKCFZfHxfPT09bnVsbClyZXR1cm4gT1tKXTtyZXR1cm4gX1tKXS0oSj4wP19bSi0xXTowKX1mdW5jdGlvbiB5MChPLF8sSixZLFgsUil7bGV0IFo9MCxRPV87d2hpbGUoWjxPLmxlbmd0aCl7bGV0IGY9Uj9fK09bWl06UStPW1pdO2lmKChaKzE8Ty5sZW5ndGg/ZitYOmYpPkorWSlicmVhaztRPWYsWisrfXJldHVybntmaXRDb3VudDpaLGZpdHRlZFdpZHRoOlF9fWZ1bmN0aW9uIEwwKE8sXyl7Zm9yKGxldCBKPTA7SjxPLmNodW5rcy5sZW5ndGg7SisrKXtsZXQgWT1PLmNodW5rc1tKXTtpZihfPFkuY29uc3VtZWRFbmRTZWdtZW50SW5kZXgpcmV0dXJuIEp9cmV0dXJuLTF9ZnVuY3Rpb24ga08oTyxfKXtsZXR7c2VnbWVudEluZGV4OkosZ3JhcGhlbWVJbmRleDpZfT1fO2lmKEo+PU8ud2lkdGhzLmxlbmd0aClyZXR1cm4gbnVsbDtpZihZPjApcmV0dXJuIF87bGV0IFg9TDAoTyxKKTtpZihYPDApcmV0dXJuIG51bGw7bGV0IFI9Ty5jaHVua3NbWF07aWYoUi5zdGFydFNlZ21lbnRJbmRleD09PVIuZW5kU2VnbWVudEluZGV4JiZKPT09Ui5zdGFydFNlZ21lbnRJbmRleClyZXR1cm57c2VnbWVudEluZGV4OkosZ3JhcGhlbWVJbmRleDowfTtpZihKPFIuc3RhcnRTZWdtZW50SW5kZXgpSj1SLnN0YXJ0U2VnbWVudEluZGV4O3doaWxlKEo8Ui5lbmRTZWdtZW50SW5kZXgpe2xldCBaPU8ua2luZHNbSl07aWYoWiE9PSJzcGFjZSImJlohPT0iemVyby13aWR0aC1icmVhayImJlohPT0ic29mdC1oeXBoZW4iKXJldHVybntzZWdtZW50SW5kZXg6SixncmFwaGVtZUluZGV4OjB9O0orK31pZihSLmNvbnN1bWVkRW5kU2VnbWVudEluZGV4Pj1PLndpZHRocy5sZW5ndGgpcmV0dXJuIG51bGw7cmV0dXJue3NlZ21lbnRJbmRleDpSLmNvbnN1bWVkRW5kU2VnbWVudEluZGV4LGdyYXBoZW1lSW5kZXg6MH19ZnVuY3Rpb24gVzAoTyxfKXtpZihPLnNpbXBsZUxpbmVXYWxrRmFzdFBhdGgpcmV0dXJuIElPKE8sXyk7cmV0dXJuIEowKE8sXyl9ZnVuY3Rpb24gSU8oTyxfKXtsZXR7d2lkdGhzOkosa2luZHM6WSxicmVha2FibGVXaWR0aHM6WCxicmVha2FibGVQcmVmaXhXaWR0aHM6Un09TztpZihKLmxlbmd0aD09PTApcmV0dXJuIDA7bGV0IFo9aCgpLFE9Wi5saW5lRml0RXBzaWxvbixmPTAsVj0wLCQ9ITE7ZnVuY3Rpb24gdShxKXtsZXQgRD1KW3FdO2lmKEQ+XyYmWFtxXSE9PW51bGwpe2xldCBiPVhbcV0sSz1SW3FdPz9udWxsO1Y9MDtmb3IobGV0IGo9MDtqPGIubGVuZ3RoO2orKyl7bGV0IEI9dChiLEssaixaLnByZWZlclByZWZpeFdpZHRoc0ZvckJyZWFrYWJsZVJ1bnMpO2lmKFY+MCYmVitCPl8rUSlmKyssVj1CO2Vsc2V7aWYoVj09PTApZisrO1YrPUJ9fX1lbHNlIFY9RCxmKys7JD0hMH1mb3IobGV0IHE9MDtxPEoubGVuZ3RoO3ErKyl7bGV0IEQ9SltxXSxiPVlbcV07aWYoISQpe3UocSk7Y29udGludWV9bGV0IEs9VitEO2lmKEs+XytRKXtpZihTTyhiKSljb250aW51ZTtWPTAsJD0hMSx1KHEpO2NvbnRpbnVlfVY9S31pZighJClyZXR1cm4gZisxO3JldHVybiBmfWZ1bmN0aW9uIGNPKE8sXyxKKXtsZXR7d2lkdGhzOlksa2luZHM6WCxicmVha2FibGVXaWR0aHM6UixicmVha2FibGVQcmVmaXhXaWR0aHM6Wn09TztpZihZLmxlbmd0aD09PTApcmV0dXJuIDA7bGV0IFE9aCgpLGY9US5saW5lRml0RXBzaWxvbixWPTAsJD0wLHU9ITEscT0wLEQ9MCxiPTAsSz0wLGo9LTEsQj0wO2Z1bmN0aW9uIGsoKXtqPS0xLEI9MH1mdW5jdGlvbiB5KEg9Yix6PUssVz0kKXtWKyssSj8uKHtzdGFydFNlZ21lbnRJbmRleDpxLHN0YXJ0R3JhcGhlbWVJbmRleDpELGVuZFNlZ21lbnRJbmRleDpILGVuZEdyYXBoZW1lSW5kZXg6eix3aWR0aDpXfSksJD0wLHU9ITEsaygpfWZ1bmN0aW9uIEEoSCx6KXt1PSEwLHE9SCxEPTAsYj1IKzEsSz0wLCQ9en1mdW5jdGlvbiBUKEgseixXKXt1PSEwLHE9SCxEPXosYj1ILEs9eisxLCQ9V31mdW5jdGlvbiBMKEgseil7aWYoIXUpe0EoSCx6KTtyZXR1cm59JCs9eixiPUgrMSxLPTB9ZnVuY3Rpb24gQyhILHope2lmKCFtKFhbSF0pKXJldHVybjtqPUgrMSxCPSQten1mdW5jdGlvbiBGKEgpe1AoSCwwKX1mdW5jdGlvbiBQKEgseil7bGV0IFc9UltIXSxjPVpbSF0/P251bGw7Zm9yKGxldCBJPXo7STxXLmxlbmd0aDtJKyspe2xldCBvPXQoVyxjLEksUS5wcmVmZXJQcmVmaXhXaWR0aHNGb3JCcmVha2FibGVSdW5zKTtpZighdSl7VChILEksbyk7Y29udGludWV9aWYoJCtvPl8rZil5KCksVChILEksbyk7ZWxzZSAkKz1vLGI9SCxLPUkrMX1pZih1JiZiPT09SCYmSz09PVcubGVuZ3RoKWI9SCsxLEs9MH1sZXQgRT0wO3doaWxlKEU8WS5sZW5ndGgpe2xldCBIPVlbRV0sej1YW0VdO2lmKCF1KXtpZihIPl8mJlJbRV0hPT1udWxsKUYoRSk7ZWxzZSBBKEUsSCk7QyhFLEgpLEUrKztjb250aW51ZX1pZigkK0g+XytmKXtpZihtKHopKXtMKEUsSCkseShFKzEsMCwkLUgpLEUrKztjb250aW51ZX1pZihqPj0wKXt5KGosMCxCKTtjb250aW51ZX1pZihIPl8mJlJbRV0hPT1udWxsKXt5KCksRihFKSxFKys7Y29udGludWV9eSgpO2NvbnRpbnVlfUwoRSxIKSxDKEUsSCksRSsrfWlmKHUpeSgpO3JldHVybiBWfWZ1bmN0aW9uIEowKE8sXyxKKXtpZihPLnNpbXBsZUxpbmVXYWxrRmFzdFBhdGgpcmV0dXJuIGNPKE8sXyxKKTtsZXR7d2lkdGhzOlksbGluZUVuZEZpdEFkdmFuY2VzOlgsbGluZUVuZFBhaW50QWR2YW5jZXM6UixraW5kczpaLGJyZWFrYWJsZVdpZHRoczpRLGJyZWFrYWJsZVByZWZpeFdpZHRoczpmLGRpc2NyZXRpb25hcnlIeXBoZW5XaWR0aDpWLHRhYlN0b3BBZHZhbmNlOiQsY2h1bmtzOnV9PU87aWYoWS5sZW5ndGg9PT0wfHx1Lmxlbmd0aD09PTApcmV0dXJuIDA7bGV0IHE9aCgpLEQ9cS5saW5lRml0RXBzaWxvbixiPTAsSz0wLGo9ITEsQj0wLGs9MCx5PTAsQT0wLFQ9LTEsTD0wLEM9MCxGPW51bGw7ZnVuY3Rpb24gUCgpe1Q9LTEsTD0wLEM9MCxGPW51bGx9ZnVuY3Rpb24gRShOPXksTT1BLHY9Syl7YisrLEo/Lih7c3RhcnRTZWdtZW50SW5kZXg6QixzdGFydEdyYXBoZW1lSW5kZXg6ayxlbmRTZWdtZW50SW5kZXg6TixlbmRHcmFwaGVtZUluZGV4Ok0sd2lkdGg6dn0pLEs9MCxqPSExLFAoKX1mdW5jdGlvbiBIKE4sTSl7aj0hMCxCPU4saz0wLHk9TisxLEE9MCxLPU19ZnVuY3Rpb24geihOLE0sdil7aj0hMCxCPU4saz1NLHk9TixBPU0rMSxLPXZ9ZnVuY3Rpb24gVyhOLE0pe2lmKCFqKXtIKE4sTSk7cmV0dXJufUsrPU0seT1OKzEsQT0wfWZ1bmN0aW9uIGMoTixNKXtpZighbShaW05dKSlyZXR1cm47bGV0IHY9WltOXT09PSJ0YWIiPzA6WFtOXSx3PVpbTl09PT0idGFiIj9NOlJbTl07VD1OKzEsTD1LLU0rdixDPUstTSt3LEY9WltOXX1mdW5jdGlvbiBJKE4pe28oTiwwKX1mdW5jdGlvbiBvKE4sTSl7bGV0IHY9UVtOXSx3PWZbTl0/P251bGw7Zm9yKGxldCBHPU07Rzx2Lmxlbmd0aDtHKyspe2xldCBsPXQodix3LEcscS5wcmVmZXJQcmVmaXhXaWR0aHNGb3JCcmVha2FibGVSdW5zKTtpZighail7eihOLEcsbCk7Y29udGludWV9aWYoSytsPl8rRClFKCkseihOLEcsbCk7ZWxzZSBLKz1sLHk9TixBPUcrMX1pZihqJiZ5PT09TiYmQT09PXYubGVuZ3RoKXk9TisxLEE9MH1mdW5jdGlvbiBTKE4pe2lmKEYhPT0ic29mdC1oeXBoZW4iKXJldHVybiExO2xldCBNPVFbTl07aWYoTT09PW51bGwpcmV0dXJuITE7bGV0IHY9cS5wcmVmZXJQcmVmaXhXaWR0aHNGb3JCcmVha2FibGVSdW5zP2ZbTl0/P006TSx3PXYhPT1NLHtmaXRDb3VudDpHLGZpdHRlZFdpZHRoOmx9PXkwKHYsSyxfLEQsVix3KTtpZihHPT09MClyZXR1cm4hMTtpZihLPWwseT1OLEE9RyxQKCksRz09PU0ubGVuZ3RoKXJldHVybiB5PU4rMSxBPTAsITA7cmV0dXJuIEUoTixHLGwrViksbyhOLEcpLCEwfWZ1bmN0aW9uIFUoTil7YisrLEo/Lih7c3RhcnRTZWdtZW50SW5kZXg6Ti5zdGFydFNlZ21lbnRJbmRleCxzdGFydEdyYXBoZW1lSW5kZXg6MCxlbmRTZWdtZW50SW5kZXg6Ti5jb25zdW1lZEVuZFNlZ21lbnRJbmRleCxlbmRHcmFwaGVtZUluZGV4OjAsd2lkdGg6MH0pLFAoKX1mb3IobGV0IE49MDtOPHUubGVuZ3RoO04rKyl7bGV0IE09dVtOXTtpZihNLnN0YXJ0U2VnbWVudEluZGV4PT09TS5lbmRTZWdtZW50SW5kZXgpe1UoTSk7Y29udGludWV9aj0hMSxLPTAsQj1NLnN0YXJ0U2VnbWVudEluZGV4LGs9MCx5PU0uc3RhcnRTZWdtZW50SW5kZXgsQT0wLFAoKTtsZXQgdj1NLnN0YXJ0U2VnbWVudEluZGV4O3doaWxlKHY8TS5lbmRTZWdtZW50SW5kZXgpe2xldCB3PVpbdl0sRz13PT09InRhYiI/dzAoSywkKTpZW3ZdO2lmKHc9PT0ic29mdC1oeXBoZW4iKXtpZihqKXk9disxLEE9MCxUPXYrMSxMPUsrVixDPUsrVixGPXc7disrO2NvbnRpbnVlfWlmKCFqKXtpZihHPl8mJlFbdl0hPT1udWxsKUkodik7ZWxzZSBIKHYsRyk7Yyh2LEcpLHYrKztjb250aW51ZX1pZihLK0c+XytEKXtsZXQgbj1LKyh3PT09InRhYiI/MDpYW3ZdKSxlPUsrKHc9PT0idGFiIj9HOlJbdl0pO2lmKEY9PT0ic29mdC1oeXBoZW4iJiZxLnByZWZlckVhcmx5U29mdEh5cGhlbkJyZWFrJiZMPD1fK0Qpe0UoVCwwLEMpO2NvbnRpbnVlfWlmKEY9PT0ic29mdC1oeXBoZW4iJiZTKHYpKXt2Kys7Y29udGludWV9aWYobSh3KSYmbjw9XytEKXtXKHYsRyksRSh2KzEsMCxlKSx2Kys7Y29udGludWV9aWYoVD49MCYmTDw9XytEKXtFKFQsMCxDKTtjb250aW51ZX1pZihHPl8mJlFbdl0hPT1udWxsKXtFKCksSSh2KSx2Kys7Y29udGludWV9RSgpO2NvbnRpbnVlfVcodixHKSxjKHYsRyksdisrfWlmKGope2xldCB3PVQ9PT1NLmNvbnN1bWVkRW5kU2VnbWVudEluZGV4P0M6SztFKE0uY29uc3VtZWRFbmRTZWdtZW50SW5kZXgsMCx3KX19cmV0dXJuIGJ9ZnVuY3Rpb24gUzAoTyxfLEope2xldCBZPWtPKE8sXyk7aWYoWT09PW51bGwpcmV0dXJuIG51bGw7aWYoTy5zaW1wbGVMaW5lV2Fsa0Zhc3RQYXRoKXJldHVybiBvTyhPLFksSik7bGV0IFg9TDAoTyxZLnNlZ21lbnRJbmRleCk7aWYoWDwwKXJldHVybiBudWxsO2xldCBSPU8uY2h1bmtzW1hdO2lmKFIuc3RhcnRTZWdtZW50SW5kZXg9PT1SLmVuZFNlZ21lbnRJbmRleClyZXR1cm57c3RhcnRTZWdtZW50SW5kZXg6Ui5zdGFydFNlZ21lbnRJbmRleCxzdGFydEdyYXBoZW1lSW5kZXg6MCxlbmRTZWdtZW50SW5kZXg6Ui5jb25zdW1lZEVuZFNlZ21lbnRJbmRleCxlbmRHcmFwaGVtZUluZGV4OjAsd2lkdGg6MH07bGV0e3dpZHRoczpaLGxpbmVFbmRGaXRBZHZhbmNlczpRLGxpbmVFbmRQYWludEFkdmFuY2VzOmYsa2luZHM6VixicmVha2FibGVXaWR0aHM6JCxicmVha2FibGVQcmVmaXhXaWR0aHM6dSxkaXNjcmV0aW9uYXJ5SHlwaGVuV2lkdGg6cSx0YWJTdG9wQWR2YW5jZTpEfT1PLGI9aCgpLEs9Yi5saW5lRml0RXBzaWxvbixqPTAsQj0hMSxrPVkuc2VnbWVudEluZGV4LHk9WS5ncmFwaGVtZUluZGV4LEE9ayxUPXksTD0tMSxDPTAsRj0wLFA9bnVsbDtmdW5jdGlvbiBFKCl7TD0tMSxDPTAsRj0wLFA9bnVsbH1mdW5jdGlvbiBIKFU9QSxOPVQsTT1qKXtpZighQilyZXR1cm4gbnVsbDtyZXR1cm57c3RhcnRTZWdtZW50SW5kZXg6ayxzdGFydEdyYXBoZW1lSW5kZXg6eSxlbmRTZWdtZW50SW5kZXg6VSxlbmRHcmFwaGVtZUluZGV4Ok4sd2lkdGg6TX19ZnVuY3Rpb24geihVLE4pe0I9ITAsQT1VKzEsVD0wLGo9Tn1mdW5jdGlvbiBXKFUsTixNKXtCPSEwLEE9VSxUPU4rMSxqPU19ZnVuY3Rpb24gYyhVLE4pe2lmKCFCKXt6KFUsTik7cmV0dXJufWorPU4sQT1VKzEsVD0wfWZ1bmN0aW9uIEkoVSxOKXtpZighbShWW1VdKSlyZXR1cm47bGV0IE09VltVXT09PSJ0YWIiPzA6UVtVXSx2PVZbVV09PT0idGFiIj9OOmZbVV07TD1VKzEsQz1qLU4rTSxGPWotTit2LFA9VltVXX1mdW5jdGlvbiBvKFUsTil7bGV0IE09JFtVXSx2PXVbVV0/P251bGw7Zm9yKGxldCB3PU47dzxNLmxlbmd0aDt3Kyspe2xldCBHPXQoTSx2LHcsYi5wcmVmZXJQcmVmaXhXaWR0aHNGb3JCcmVha2FibGVSdW5zKTtpZighQil7VyhVLHcsRyk7Y29udGludWV9aWYoaitHPkorSylyZXR1cm4gSCgpO2orPUcsQT1VLFQ9dysxfWlmKEImJkE9PT1VJiZUPT09TS5sZW5ndGgpQT1VKzEsVD0wO3JldHVybiBudWxsfWZ1bmN0aW9uIFMoVSl7aWYoUCE9PSJzb2Z0LWh5cGhlbiJ8fEw8MClyZXR1cm4gbnVsbDtsZXQgTj0kW1VdPz9udWxsO2lmKE4hPT1udWxsKXtsZXQgTT1iLnByZWZlclByZWZpeFdpZHRoc0ZvckJyZWFrYWJsZVJ1bnM/dVtVXT8/TjpOLHY9TSE9PU4se2ZpdENvdW50OncsZml0dGVkV2lkdGg6R309eTAoTSxqLEosSyxxLHYpO2lmKHc9PT1OLmxlbmd0aClyZXR1cm4gaj1HLEE9VSsxLFQ9MCxFKCksbnVsbDtpZih3PjApcmV0dXJuIEgoVSx3LEcrcSl9aWYoQzw9SitLKXJldHVybiBIKEwsMCxGKTtyZXR1cm4gbnVsbH1mb3IobGV0IFU9WS5zZWdtZW50SW5kZXg7VTxSLmVuZFNlZ21lbnRJbmRleDtVKyspe2xldCBOPVZbVV0sTT1VPT09WS5zZWdtZW50SW5kZXg/WS5ncmFwaGVtZUluZGV4OjAsdj1OPT09InRhYiI/dzAoaixEKTpaW1VdO2lmKE49PT0ic29mdC1oeXBoZW4iJiZNPT09MCl7aWYoQilBPVUrMSxUPTAsTD1VKzEsQz1qK3EsRj1qK3EsUD1OO2NvbnRpbnVlfWlmKCFCKXtpZihNPjApe2xldCBHPW8oVSxNKTtpZihHIT09bnVsbClyZXR1cm4gR31lbHNlIGlmKHY+SiYmJFtVXSE9PW51bGwpe2xldCBHPW8oVSwwKTtpZihHIT09bnVsbClyZXR1cm4gR31lbHNlIHooVSx2KTtJKFUsdik7Y29udGludWV9aWYoait2PkorSyl7bGV0IEc9aisoTj09PSJ0YWIiPzA6UVtVXSksbD1qKyhOPT09InRhYiI/djpmW1VdKTtpZihQPT09InNvZnQtaHlwaGVuIiYmYi5wcmVmZXJFYXJseVNvZnRIeXBoZW5CcmVhayYmQzw9SitLKXJldHVybiBIKEwsMCxGKTtsZXQgbj1TKFUpO2lmKG4hPT1udWxsKXJldHVybiBuO2lmKG0oTikmJkc8PUorSylyZXR1cm4gYyhVLHYpLEgoVSsxLDAsbCk7aWYoTD49MCYmQzw9SitLKXJldHVybiBIKEwsMCxGKTtpZih2PkomJiRbVV0hPT1udWxsKXtsZXQgZT1IKCk7aWYoZSE9PW51bGwpcmV0dXJuIGU7bGV0IHYwPW8oVSwwKTtpZih2MCE9PW51bGwpcmV0dXJuIHYwfXJldHVybiBIKCl9YyhVLHYpLEkoVSx2KX1pZihMPT09Ui5jb25zdW1lZEVuZFNlZ21lbnRJbmRleCYmVD09PTApcmV0dXJuIEgoUi5jb25zdW1lZEVuZFNlZ21lbnRJbmRleCwwLEYpO3JldHVybiBIKFIuY29uc3VtZWRFbmRTZWdtZW50SW5kZXgsMCxqKX1mdW5jdGlvbiBvTyhPLF8sSil7bGV0e3dpZHRoczpZLGtpbmRzOlgsYnJlYWthYmxlV2lkdGhzOlIsYnJlYWthYmxlUHJlZml4V2lkdGhzOlp9PU8sUT1oKCksZj1RLmxpbmVGaXRFcHNpbG9uLFY9MCwkPSExLHU9Xy5zZWdtZW50SW5kZXgscT1fLmdyYXBoZW1lSW5kZXgsRD11LGI9cSxLPS0xLGo9MDtmdW5jdGlvbiBCKEM9RCxGPWIsUD1WKXtpZighJClyZXR1cm4gbnVsbDtyZXR1cm57c3RhcnRTZWdtZW50SW5kZXg6dSxzdGFydEdyYXBoZW1lSW5kZXg6cSxlbmRTZWdtZW50SW5kZXg6QyxlbmRHcmFwaGVtZUluZGV4OkYsd2lkdGg6UH19ZnVuY3Rpb24gayhDLEYpeyQ9ITAsRD1DKzEsYj0wLFY9Rn1mdW5jdGlvbiB5KEMsRixQKXskPSEwLEQ9QyxiPUYrMSxWPVB9ZnVuY3Rpb24gQShDLEYpe2lmKCEkKXtrKEMsRik7cmV0dXJufVYrPUYsRD1DKzEsYj0wfWZ1bmN0aW9uIFQoQyxGKXtpZighbShYW0NdKSlyZXR1cm47Sz1DKzEsaj1WLUZ9ZnVuY3Rpb24gTChDLEYpe2xldCBQPVJbQ10sRT1aW0NdPz9udWxsO2ZvcihsZXQgSD1GO0g8UC5sZW5ndGg7SCsrKXtsZXQgej10KFAsRSxILFEucHJlZmVyUHJlZml4V2lkdGhzRm9yQnJlYWthYmxlUnVucyk7aWYoISQpe3koQyxILHopO2NvbnRpbnVlfWlmKFYrej5KK2YpcmV0dXJuIEIoKTtWKz16LEQ9QyxiPUgrMX1pZigkJiZEPT09QyYmYj09PVAubGVuZ3RoKUQ9QysxLGI9MDtyZXR1cm4gbnVsbH1mb3IobGV0IEM9Xy5zZWdtZW50SW5kZXg7QzxZLmxlbmd0aDtDKyspe2xldCBGPVlbQ10sUD1YW0NdLEU9Qz09PV8uc2VnbWVudEluZGV4P18uZ3JhcGhlbWVJbmRleDowO2lmKCEkKXtpZihFPjApe2xldCB6PUwoQyxFKTtpZih6IT09bnVsbClyZXR1cm4gen1lbHNlIGlmKEY+SiYmUltDXSE9PW51bGwpe2xldCB6PUwoQywwKTtpZih6IT09bnVsbClyZXR1cm4gen1lbHNlIGsoQyxGKTtUKEMsRik7Y29udGludWV9aWYoVitGPkorZil7aWYobShQKSlyZXR1cm4gQShDLEYpLEIoQysxLDAsVi1GKTtpZihLPj0wKXJldHVybiBCKEssMCxqKTtpZihGPkomJlJbQ10hPT1udWxsKXtsZXQgej1CKCk7aWYoeiE9PW51bGwpcmV0dXJuIHo7bGV0IFc9TChDLDApO2lmKFchPT1udWxsKXJldHVybiBXfXJldHVybiBCKCl9QShDLEYpLFQoQyxGKX1yZXR1cm4gQigpfXZhciBSMD1udWxsLEMwPW5ldyBXZWFrTWFwO2Z1bmN0aW9uIEkwKCl7aWYoUjA9PT1udWxsKVIwPW5ldyBJbnRsLlNlZ21lbnRlcih2b2lkIDAse2dyYW51bGFyaXR5OiJncmFwaGVtZSJ9KTtyZXR1cm4gUjB9ZnVuY3Rpb24gbE8oTyl7aWYoTylyZXR1cm57d2lkdGhzOltdLGxpbmVFbmRGaXRBZHZhbmNlczpbXSxsaW5lRW5kUGFpbnRBZHZhbmNlczpbXSxraW5kczpbXSxzaW1wbGVMaW5lV2Fsa0Zhc3RQYXRoOiEwLHNlZ0xldmVsczpudWxsLGJyZWFrYWJsZVdpZHRoczpbXSxicmVha2FibGVQcmVmaXhXaWR0aHM6W10sZGlzY3JldGlvbmFyeUh5cGhlbldpZHRoOjAsdGFiU3RvcEFkdmFuY2U6MCxjaHVua3M6W10sc2VnbWVudHM6W119O3JldHVybnt3aWR0aHM6W10sbGluZUVuZEZpdEFkdmFuY2VzOltdLGxpbmVFbmRQYWludEFkdmFuY2VzOltdLGtpbmRzOltdLHNpbXBsZUxpbmVXYWxrRmFzdFBhdGg6ITAsc2VnTGV2ZWxzOm51bGwsYnJlYWthYmxlV2lkdGhzOltdLGJyZWFrYWJsZVByZWZpeFdpZHRoczpbXSxkaXNjcmV0aW9uYXJ5SHlwaGVuV2lkdGg6MCx0YWJTdG9wQWR2YW5jZTowLGNodW5rczpbXX19ZnVuY3Rpb24gYzAoTyxfLEope2xldCBZPUkwKCksWD1oKCkse2NhY2hlOlIsZW1vamlDb3JyZWN0aW9uOlp9PUIwKF8sRzAoTy5ub3JtYWxpemVkKSksUT1nKCItIix4KCItIixSKSxaKSxWPWcoIiAiLHgoIiAiLFIpLFopKjg7aWYoTy5sZW49PT0wKXJldHVybiBsTyhKKTtsZXQgJD1bXSx1PVtdLHE9W10sRD1bXSxiPU8uY2h1bmtzLmxlbmd0aDw9MSxLPUo/W106bnVsbCxqPVtdLEI9W10saz1KP1tdOm51bGwseT1BcnJheS5mcm9tKHtsZW5ndGg6Ty5sZW59KSxBPUFycmF5LmZyb20oe2xlbmd0aDpPLmxlbn0pO2Z1bmN0aW9uIFQoRixQLEUsSCx6LFcsYyxJKXtpZih6IT09InRleHQiJiZ6IT09InNwYWNlIiYmeiE9PSJ6ZXJvLXdpZHRoLWJyZWFrIiliPSExO2lmKCQucHVzaChQKSx1LnB1c2goRSkscS5wdXNoKEgpLEQucHVzaCh6KSxLPy5wdXNoKFcpLGoucHVzaChjKSxCLnB1c2goSSksayE9PW51bGwpay5wdXNoKEYpfWZvcihsZXQgRj0wO0Y8Ty5sZW47RisrKXt5W0ZdPSQubGVuZ3RoO2xldCBQPU8udGV4dHNbRl0sRT1PLmlzV29yZExpa2VbRl0sSD1PLmtpbmRzW0ZdLHo9Ty5zdGFydHNbRl07aWYoSD09PSJzb2Z0LWh5cGhlbiIpe1QoUCwwLFEsUSxILHosbnVsbCxudWxsKSxBW0ZdPSQubGVuZ3RoO2NvbnRpbnVlfWlmKEg9PT0iaGFyZC1icmVhayIpe1QoUCwwLDAsMCxILHosbnVsbCxudWxsKSxBW0ZdPSQubGVuZ3RoO2NvbnRpbnVlfWlmKEg9PT0idGFiIil7VChQLDAsMCwwLEgseixudWxsLG51bGwpLEFbRl09JC5sZW5ndGg7Y29udGludWV9bGV0IFc9eChQLFIpO2lmKEg9PT0idGV4dCImJlcuY29udGFpbnNDSkspe2xldCBTPSIiLFU9MDtmb3IobGV0IE4gb2YgWS5zZWdtZW50KFApKXtsZXQgTT1OLnNlZ21lbnQ7aWYoUy5sZW5ndGg9PT0wKXtTPU0sVT1OLmluZGV4O2NvbnRpbnVlfWlmKGkuaGFzKFMpfHwkMC5oYXMoTSl8fHIuaGFzKE0pfHxYLmNhcnJ5Q0pLQWZ0ZXJDbG9zaW5nUXVvdGUmJnAoTSkmJkQwKFMpKXtTKz1NO2NvbnRpbnVlfWxldCB2PXgoUyxSKSx3PWcoUyx2LFopO1QoUyx3LHcsdywidGV4dCIseitVLG51bGwsbnVsbCksUz1NLFU9Ti5pbmRleH1pZihTLmxlbmd0aD4wKXtsZXQgTj14KFMsUiksTT1nKFMsTixaKTtUKFMsTSxNLE0sInRleHQiLHorVSxudWxsLG51bGwpfUFbRl09JC5sZW5ndGg7Y29udGludWV9bGV0IGM9ZyhQLFcsWiksST1IPT09InNwYWNlInx8SD09PSJwcmVzZXJ2ZWQtc3BhY2UifHxIPT09Inplcm8td2lkdGgtYnJlYWsiPzA6YyxvPUg9PT0ic3BhY2UifHxIPT09Inplcm8td2lkdGgtYnJlYWsiPzA6YztpZihFJiZQLmxlbmd0aD4xKXtsZXQgUz1QMChQLFcsUixaKSxVPVgucHJlZmVyUHJlZml4V2lkdGhzRm9yQnJlYWthYmxlUnVucz9BMChQLFcsUixaKTpudWxsO1QoUCxjLEksbyxILHosUyxVKX1lbHNlIFQoUCxjLEksbyxILHosbnVsbCxudWxsKTtBW0ZdPSQubGVuZ3RofWxldCBMPWhPKE8uY2h1bmtzLHksQSksQz1LPT09bnVsbD9udWxsOnUwKE8ubm9ybWFsaXplZCxLKTtpZihrIT09bnVsbClyZXR1cm57d2lkdGhzOiQsbGluZUVuZEZpdEFkdmFuY2VzOnUsbGluZUVuZFBhaW50QWR2YW5jZXM6cSxraW5kczpELHNpbXBsZUxpbmVXYWxrRmFzdFBhdGg6YixzZWdMZXZlbHM6QyxicmVha2FibGVXaWR0aHM6aixicmVha2FibGVQcmVmaXhXaWR0aHM6QixkaXNjcmV0aW9uYXJ5SHlwaGVuV2lkdGg6USx0YWJTdG9wQWR2YW5jZTpWLGNodW5rczpMLHNlZ21lbnRzOmt9O3JldHVybnt3aWR0aHM6JCxsaW5lRW5kRml0QWR2YW5jZXM6dSxsaW5lRW5kUGFpbnRBZHZhbmNlczpxLGtpbmRzOkQsc2ltcGxlTGluZVdhbGtGYXN0UGF0aDpiLHNlZ0xldmVsczpDLGJyZWFrYWJsZVdpZHRoczpqLGJyZWFrYWJsZVByZWZpeFdpZHRoczpCLGRpc2NyZXRpb25hcnlIeXBoZW5XaWR0aDpRLHRhYlN0b3BBZHZhbmNlOlYsY2h1bmtzOkx9fWZ1bmN0aW9uIGhPKE8sXyxKKXtsZXQgWT1bXTtmb3IobGV0IFg9MDtYPE8ubGVuZ3RoO1grKyl7bGV0IFI9T1tYXSxaPVIuc3RhcnRTZWdtZW50SW5kZXg8Xy5sZW5ndGg/X1tSLnN0YXJ0U2VnbWVudEluZGV4XTpKW0oubGVuZ3RoLTFdPz8wLFE9Ui5lbmRTZWdtZW50SW5kZXg8Xy5sZW5ndGg/X1tSLmVuZFNlZ21lbnRJbmRleF06SltKLmxlbmd0aC0xXT8/MCxmPVIuY29uc3VtZWRFbmRTZWdtZW50SW5kZXg8Xy5sZW5ndGg/X1tSLmNvbnN1bWVkRW5kU2VnbWVudEluZGV4XTpKW0oubGVuZ3RoLTFdPz8wO1kucHVzaCh7c3RhcnRTZWdtZW50SW5kZXg6WixlbmRTZWdtZW50SW5kZXg6USxjb25zdW1lZEVuZFNlZ21lbnRJbmRleDpmfSl9cmV0dXJuIFl9ZnVuY3Rpb24gbzAoTyxfLEosWSl7bGV0IFg9TjAoTyxoKCksWT8ud2hpdGVTcGFjZSk7cmV0dXJuIGMwKFgsXyxKKX1mdW5jdGlvbiBWMShPLF8sSil7bGV0IFk9cGVyZm9ybWFuY2Uubm93KCksWD1OMChPLGgoKSxKPy53aGl0ZVNwYWNlKSxSPXBlcmZvcm1hbmNlLm5vdygpLFo9YzAoWCxfLCExKSxRPXBlcmZvcm1hbmNlLm5vdygpLGY9MDtmb3IobGV0IFYgb2YgWi5icmVha2FibGVXaWR0aHMpaWYoViE9PW51bGwpZisrO3JldHVybnthbmFseXNpc01zOlItWSxtZWFzdXJlTXM6US1SLHRvdGFsTXM6US1ZLGFuYWx5c2lzU2VnbWVudHM6WC5sZW4scHJlcGFyZWRTZWdtZW50czpaLndpZHRocy5sZW5ndGgsYnJlYWthYmxlU2VnbWVudHM6Zn19ZnVuY3Rpb24gWDEoTyxfLEope3JldHVybiBvMChPLF8sITEsSil9ZnVuY3Rpb24gWTEoTyxfLEope3JldHVybiBvMChPLF8sITAsSil9ZnVuY3Rpb24gRjAoTyl7cmV0dXJuIE99ZnVuY3Rpb24gWjEoTyxfLEope2xldCBZPVcwKEYwKE8pLF8pO3JldHVybntsaW5lQ291bnQ6WSxoZWlnaHQ6WSpKfX1mdW5jdGlvbiBrMChPLF8sSil7bGV0IFk9Si5nZXQoTyk7aWYoWSE9PXZvaWQgMClyZXR1cm4gWTtZPVtdO2xldCBYPUkwKCk7Zm9yKGxldCBSIG9mIFguc2VnbWVudChfW09dKSlZLnB1c2goUi5zZWdtZW50KTtyZXR1cm4gSi5zZXQoTyxZKSxZfWZ1bmN0aW9uIGwwKE8pe2xldCBfPUMwLmdldChPKTtpZihfIT09dm9pZCAwKXJldHVybiBfO3JldHVybiBfPW5ldyBNYXAsQzAuc2V0KE8sXyksX31mdW5jdGlvbiBwTyhPLF8sSixZKXtyZXR1cm4gWT4wJiZPW1ktMV09PT0ic29mdC1oeXBoZW4iJiYhKF89PT1ZJiZKPjApfWZ1bmN0aW9uIHhPKE8sXyxKLFksWCxSLFope2xldCBRPSIiLGY9cE8oXyxZLFgsUik7Zm9yKGxldCBWPVk7VjxSO1YrKyl7aWYoX1tWXT09PSJzb2Z0LWh5cGhlbiJ8fF9bVl09PT0iaGFyZC1icmVhayIpY29udGludWU7aWYoVj09PVkmJlg+MClRKz1rMChWLE8sSikuc2xpY2UoWCkuam9pbigiIik7ZWxzZSBRKz1PW1ZdfWlmKFo+MCl7aWYoZilRKz0iLSI7USs9azAoUixPLEopLnNsaWNlKFk9PT1SP1g6MCxaKS5qb2luKCIiKX1lbHNlIGlmKGYpUSs9Ii0iO3JldHVybiBRfWZ1bmN0aW9uIGgwKE8sXyxKLFksWCxSLFope3JldHVybnt0ZXh0OnhPKE8uc2VnbWVudHMsTy5raW5kcyxfLFksWCxSLFopLHdpZHRoOkosc3RhcnQ6e3NlZ21lbnRJbmRleDpZLGdyYXBoZW1lSW5kZXg6WH0sZW5kOntzZWdtZW50SW5kZXg6UixncmFwaGVtZUluZGV4Olp9fX1mdW5jdGlvbiBnTyhPLF8sSil7cmV0dXJuIGgwKE8sXyxKLndpZHRoLEouc3RhcnRTZWdtZW50SW5kZXgsSi5zdGFydEdyYXBoZW1lSW5kZXgsSi5lbmRTZWdtZW50SW5kZXgsSi5lbmRHcmFwaGVtZUluZGV4KX1mdW5jdGlvbiBwMChPKXtyZXR1cm57d2lkdGg6Ty53aWR0aCxzdGFydDp7c2VnbWVudEluZGV4Ok8uc3RhcnRTZWdtZW50SW5kZXgsZ3JhcGhlbWVJbmRleDpPLnN0YXJ0R3JhcGhlbWVJbmRleH0sZW5kOntzZWdtZW50SW5kZXg6Ty5lbmRTZWdtZW50SW5kZXgsZ3JhcGhlbWVJbmRleDpPLmVuZEdyYXBoZW1lSW5kZXh9fX1mdW5jdGlvbiBtTyhPLF8sSil7bGV0IFk9UzAoTyxfLEopO2lmKFk9PT1udWxsKXJldHVybiBudWxsO3JldHVybiBwMChZKX1mdW5jdGlvbiByTyhPLF8pe3JldHVybiBoMChPLGwwKE8pLF8ud2lkdGgsXy5zdGFydC5zZWdtZW50SW5kZXgsXy5zdGFydC5ncmFwaGVtZUluZGV4LF8uZW5kLnNlZ21lbnRJbmRleCxfLmVuZC5ncmFwaGVtZUluZGV4KX1mdW5jdGlvbiAkMShPLF8sSil7aWYoTy53aWR0aHMubGVuZ3RoPT09MClyZXR1cm4gMDtyZXR1cm4gSjAoRjAoTyksXywoWSk9PntKKHAwKFkpKX0pfWZ1bmN0aW9uIFExKE8sXyxKKXtsZXQgWT1tTyhPLF8sSik7aWYoWT09PW51bGwpcmV0dXJuIG51bGw7cmV0dXJuIHJPKE8sWSl9ZnVuY3Rpb24gcTEoTyxfLEope2xldCBZPVtdO2lmKE8ud2lkdGhzLmxlbmd0aD09PTApcmV0dXJue2xpbmVDb3VudDowLGhlaWdodDowLGxpbmVzOll9O2xldCBYPWwwKE8pLFI9SjAoRjAoTyksXywoWik9PntZLnB1c2goZ08oTyxYLFopKX0pO3JldHVybntsaW5lQ291bnQ6UixoZWlnaHQ6UipKLGxpbmVzOll9fWZ1bmN0aW9uIGFPKCl7ejAoKSxSMD1udWxsLEMwPW5ldyBXZWFrTWFwLFQwKCl9ZnVuY3Rpb24gRDEoTyl7ajAoTyksYU8oKX13aW5kb3cuX19wcmV0ZXh0QXNzaWduZWQ9dHJ1ZTt3aW5kb3cuUHJldGV4dD17cHJlcGFyZTpYMSxsYXlvdXQ6WjEscHJlcGFyZVdpdGhTZWdtZW50czpZMSx3YWxrTGluZVJhbmdlczokMSxsYXlvdXRXaXRoTGluZXM6cTEsbGF5b3V0TmV4dExpbmU6UTF9Ow=="));
-  </script>
-  <script>
-    const MAX_CHARS = 355;
-    const PRIVATE_STORAGE_KEY = 'anecdotes-du-soin.private-notes';
-    const PENDING_STORAGE_KEY = 'anecdotes-du-soin.pending-notes';
-    const SAVED_STORAGE_KEY = 'anecdotes-du-soin.saved-posts';
-    const SHORT_URL_ORIGIN = 'https://anecdotesdusoin.fr';
-    const prepared = new Map();
-    let pretextReady = false;
-    let privateNotes = loadPrivateNotes();
-    let pendingNotes = loadPendingNotes();
-    let savedPosts = loadNotes(SAVED_STORAGE_KEY);
-
-    function loadPrivateNotes() {
-      return loadNotes(PRIVATE_STORAGE_KEY);
-    }
-
-    function loadPendingNotes() {
-      return loadNotes(PENDING_STORAGE_KEY);
-    }
-
-    function loadNotes(key) {
-      try {
-        const stored = JSON.parse(localStorage.getItem(key) || '[]');
-        return Array.isArray(stored) ? stored : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function savePrivateNotes() {
-      try { localStorage.setItem(PRIVATE_STORAGE_KEY, JSON.stringify(privateNotes)); } catch { /* storage unavailable in private preview */ }
-    }
-
-    function savePendingNotes() {
-      try { localStorage.setItem(PENDING_STORAGE_KEY, JSON.stringify(pendingNotes)); } catch { /* storage unavailable in private preview */ }
-    }
-
-    function saveSavedPosts() {
-      try { localStorage.setItem(SAVED_STORAGE_KEY, JSON.stringify(savedPosts)); } catch { /* storage unavailable in private preview */ }
-    }
-
-    function createPrivateId() {
-      return `note-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-    }
-
-    function createShareId() {
-      return Math.random().toString(36).slice(2, 8);
-    }
-
-    function getShortUrl(note) {
-      if (!note.shareId) {
-        note.shareId = createShareId();
-        savePrivateNotes();
-      }
-      return `${SHORT_URL_ORIGIN}/s/${note.shareId}`;
-    }
-
-    function openShareDialog(note) {
-      const dialog = document.querySelector('#share-dialog');
-      const url = getShortUrl(note);
-      document.querySelector('#short-url').value = url;
-      document.querySelector('#whatsapp-share').href = `https://wa.me/?text=${encodeURIComponent(`Une anecdote privée à lire : ${url}`)}`;
-      document.querySelector('#share-status').textContent = '';
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
-    }
-
-    function renderPrivateNotes() {
-      const list = document.querySelector('#private-list');
-      const summary = document.querySelector('#private-summary');
-      if (!list || !summary) return;
-      list.replaceChildren();
-      summary.textContent = privateNotes.length ? `${privateNotes.length} anecdote${privateNotes.length > 1 ? 's' : ''} conservée${privateNotes.length > 1 ? 's' : ''} ici.` : 'Vos anecdotes non publiées restent ici.';
-      if (!privateNotes.length) {
-        const empty = document.createElement('div');
-        empty.className = 'private-empty';
-        empty.textContent = 'Votre carnet est vide pour le moment.';
-        list.append(empty);
-        return;
-      }
-      privateNotes.forEach((note) => {
-        const item = document.createElement('article');
-        item.className = 'private-note';
-        const meta = document.createElement('div');
-        meta.className = 'private-note-meta';
-        meta.textContent = `${note.profession} · Privée`;
-        const copy = document.createElement('p');
-        copy.textContent = note.text;
-        const share = document.createElement('button');
-        share.className = 'private-share';
-        share.type = 'button';
-        share.textContent = note.shareId ? 'Partager le lien court' : 'Créer un lien de partage';
-        share.addEventListener('click', () => openShareDialog(note));
-        item.append(meta, copy, share);
-        list.append(item);
-      });
-    }
-
-    function renderPendingNotes() {
-      const list = document.querySelector('#pending-list');
-      const summary = document.querySelector('#pending-summary');
-      if (!list || !summary) return;
-      list.replaceChildren();
-      summary.textContent = pendingNotes.length ? `${pendingNotes.length} en attente` : 'Aucune soumission en attente';
-      if (!pendingNotes.length) {
-        const empty = document.createElement('div');
-        empty.className = 'private-empty';
-        empty.textContent = 'Vos prochaines soumissions apparaîtront ici.';
-        list.append(empty);
-        return;
-      }
-      pendingNotes.forEach((note) => {
-        const item = document.createElement('article');
-        item.className = 'moderation-item';
-        const title = document.createElement('strong');
-        title.textContent = 'En attente de relecture';
-        const copy = document.createElement('span');
-        copy.textContent = `${note.profession} · ${note.text}`;
-        item.append(title, copy);
-        list.append(item);
-      });
-    }
-
-    function renderSavedPosts() {
-      const list = document.querySelector('#saved-list');
-      const summary = document.querySelector('#saved-summary');
-      if (!list || !summary) return;
-      list.replaceChildren();
-      summary.textContent = savedPosts.length ? `${savedPosts.length} sélection${savedPosts.length > 1 ? 's' : ''}` : 'Aucune sélection';
-      if (!savedPosts.length) {
-        const empty = document.createElement('div');
-        empty.className = 'private-empty';
-        empty.textContent = 'Enregistrez une anecdote depuis le fil pour la retrouver ici.';
-        list.append(empty);
-        return;
-      }
-      savedPosts.forEach((post) => {
-        const item = document.createElement('article');
-        item.className = 'profile-entry';
-        const main = document.createElement('div');
-        main.className = 'profile-entry-main';
-        const meta = document.createElement('div');
-        meta.className = 'profile-entry-meta';
-        meta.textContent = `${post.author} · ${post.meta}`;
-        const copy = document.createElement('p');
-        copy.textContent = post.text;
-        main.append(meta, copy);
-        const foot = document.createElement('div');
-        foot.className = 'profile-entry-foot';
-        const score = document.createElement('span');
-        score.textContent = `${post.score} votes`;
-        const remove = document.createElement('button');
-        remove.className = 'saved-remove';
-        remove.type = 'button';
-        remove.textContent = 'Retirer';
-        remove.addEventListener('click', () => {
-          savedPosts = savedPosts.filter((item) => item.id !== post.id);
-          saveSavedPosts();
-          renderSavedPosts();
-        });
-        foot.append(score, remove);
-        item.append(main, foot);
-        list.append(item);
-      });
-    }
-
-    function fallbackPretext() {
-      return {
-        prepare(text) { return { text }; },
-        layout(handle, width, lineHeight) {
-          const average = Math.max(1, Math.floor(width / 8));
-          const lineCount = Math.max(1, Math.ceil(handle.text.length / average));
-          return { height: lineCount * lineHeight, lineCount };
-        }
-      };
-    }
-
-    async function bootPretext() {
-      await document.fonts.ready;
-      const api = window.Pretext || fallbackPretext();
-      const elements = [...document.querySelectorAll('[data-pretext]')];
-      for (const element of elements) {
-        prepared.set(element, api.prepare(element.textContent, getComputedStyle(element).font));
-      }
-      function relayout() {
-        for (const [element, handle] of prepared) {
-          const lineHeight = parseFloat(getComputedStyle(element).lineHeight) || 24;
-          const result = api.layout(handle, Math.max(1, element.clientWidth), lineHeight);
-          if (element.classList.contains('post-copy')) {
-            const longPost = element.closest('.post-long');
-            const collapsed = longPost && !longPost.classList.contains('expanded');
-            element.style.minHeight = collapsed ? '0px' : `${result.height}px`;
-          }
-        }
-      }
-      const refresh = (element) => {
-        prepared.set(element, api.prepare(element.textContent, getComputedStyle(element).font));
-        relayout();
-      };
-      for (const element of elements) {
-        if (element.contentEditable === 'true') {
-          new MutationObserver(() => refresh(element)).observe(element, { characterData: true, subtree: true, childList: true });
-        }
-      }
-      new ResizeObserver(relayout).observe(document.body);
-      window.addEventListener('load', relayout, { once: true });
-      relayout();
-      pretextReady = true;
-    }
-
-    function bindTabs() {
-      document.querySelectorAll('[data-tab]').forEach((button) => {
-        button.addEventListener('click', () => {
-          document.querySelectorAll('[data-tab]').forEach((item) => {
-            if (item.getAttribute('role') === 'tab') item.setAttribute('aria-selected', item.dataset.tab === button.dataset.tab);
-            else if (item.classList.contains('nav-link')) item.setAttribute('aria-current', item.dataset.tab === button.dataset.tab ? 'page' : 'false');
-          });
-          const posts = [...document.querySelectorAll('.post')];
-          posts.sort((a, b) => button.dataset.tab === 'new' ? a.querySelector('.post-meta').textContent.localeCompare(b.querySelector('.post-meta').textContent) : Number(b.dataset.score) - Number(a.dataset.score));
-          document.querySelector('#feed').prepend(...posts);
-        });
-      });
-    }
-
-    function bindFilters() {
-      const profession = document.querySelector('#profession-filter');
-      const theme = document.querySelector('#theme-filter');
-      const empty = document.querySelector('#feed-empty');
-      function apply() {
-        let visible = 0;
-        document.querySelectorAll('.post').forEach((post) => {
-          const matchProfession = profession.value === 'all' || post.dataset.profession === profession.value;
-          const matchTheme = theme.value === 'all' || post.dataset.theme === theme.value;
-          post.classList.toggle('is-hidden', !(matchProfession && matchTheme));
-          if (matchProfession && matchTheme) visible += 1;
-        });
-        empty.classList.toggle('is-visible', visible === 0);
-      }
-      profession.addEventListener('change', apply);
-      theme.addEventListener('change', apply);
-    }
-
-    function bindComposer() {
-      const editor = document.querySelector('#anecdote-editor');
-      const counter = document.querySelector('#char-counter');
-      const anonymous = document.querySelector('#anonymous-toggle');
-      const anonymousWrap = document.querySelector('#anonymous-toggle-wrap');
-      const note = document.querySelector('#moderation-note');
-      const privateNote = document.querySelector('#private-note');
-      const visibility = document.querySelector('#visibility-choice');
-      const kicker = document.querySelector('#composer-kicker');
-      const submit = document.querySelector('#submit-anecdote');
-      const status = document.querySelector('#form-status');
-      if (new URLSearchParams(window.location.search).get('mode') === 'private') visibility.value = 'private';
-      function updateCount() {
-        const value = editor.textContent.replace(/\u200B/g, '');
-        if (value.length > MAX_CHARS) {
-          editor.textContent = value.slice(0, MAX_CHARS);
-          const range = document.createRange();
-          range.selectNodeContents(editor); range.collapse(false);
-          const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
-        }
-        const count = editor.textContent.length;
-        counter.textContent = `${count}/${MAX_CHARS} caractères`;
-        counter.classList.toggle('near-limit', count > 300 && count < MAX_CHARS);
-        counter.classList.toggle('at-limit', count >= MAX_CHARS);
-      }
-      function updateVisibility() {
-        const privateMode = visibility.value === 'private';
-        kicker.textContent = privateMode ? 'Carnet privé' : 'Publication modérée';
-        submit.textContent = privateMode ? 'Enregistrer' : 'Soumettre';
-        anonymousWrap.hidden = privateMode;
-        if (privateMode) anonymous.checked = false;
-        note.classList.toggle('is-visible', !privateMode && anonymous.checked);
-        privateNote.classList.toggle('is-visible', privateMode);
-      }
-      editor.addEventListener('input', updateCount);
-      anonymous.addEventListener('change', () => note.classList.toggle('is-visible', anonymous.checked));
-      visibility.addEventListener('change', updateVisibility);
-      submit.addEventListener('click', () => {
-        if (!editor.textContent.trim()) { status.textContent = 'Écrivez une anecdote avant de la soumettre.'; editor.focus(); return; }
-        if (visibility.value === 'private') {
-          privateNotes.unshift({ id: createPrivateId(), text: editor.textContent.trim(), profession: document.querySelector('#profession-choice').value, createdAt: Date.now() });
-          savePrivateNotes();
-          renderPrivateNotes();
-          status.textContent = 'Anecdote enregistrée dans votre carnet privé.';
-        } else {
-          status.textContent = 'Anecdote envoyée à la modération. Elle apparaîtra après validation.';
-        }
-        editor.textContent = '';
-        updateCount();
-      });
-      updateCount();
-      updateVisibility();
-    }
-
-    function bindPrivateNotebook() {
-      const dialog = document.querySelector('#share-dialog');
-      document.querySelector('#close-share').addEventListener('click', () => dialog.close());
-      document.querySelector('#copy-short-url').addEventListener('click', async () => {
-        const input = document.querySelector('#short-url');
-        try { await navigator.clipboard.writeText(input.value); } catch { input.select(); document.execCommand('copy'); }
-        document.querySelector('#share-status').textContent = 'Lien court copié, jamais le texte de l’anecdote.';
-      });
-      const add = document.querySelector('#private-add');
-      if (add) add.addEventListener('click', () => { window.location.href = 'finalized.html?mode=private#composer'; });
-      renderPrivateNotes();
-    }
-
-    function bindPosts() {
-      document.querySelectorAll('.post').forEach((post) => {
-        const score = post.querySelector('.vote-score');
-        let value = Number(score.textContent);
-        let vote = 0;
-        post.querySelectorAll('[data-vote]').forEach((button) => button.addEventListener('click', () => {
-          const direction = button.dataset.vote === 'up' ? 1 : -1;
-          value += vote === direction ? -direction : direction - vote;
-          vote = vote === direction ? 0 : direction;
-          score.textContent = value;
-          post.querySelectorAll('[data-vote]').forEach((item) => item.classList.toggle('is-active', item.dataset.vote === (vote === 1 ? 'up' : vote === -1 ? 'down' : '')));
-        }));
-        post.querySelector('.share-button').addEventListener('click', async () => {
-          const message = 'Anecdote du soin · ' + post.querySelector('.post-copy').textContent;
-          try { await navigator.clipboard.writeText(message); } catch { /* clipboard unavailable in local preview */ }
-          post.querySelector('.share-button').textContent = 'Lien copié';
-          setTimeout(() => { post.querySelector('.share-button').textContent = 'Partager'; }, 1800);
-        });
-        post.querySelector('.report-button').addEventListener('click', () => {
-          post.querySelector('.report-button').textContent = 'Signalement reçu';
-          post.querySelector('.report-button').disabled = true;
-        });
-        post.querySelector('.read-more').addEventListener('click', (event) => {
-          const expanded = post.classList.toggle('expanded');
-          const copy = post.querySelector('.post-copy');
-          event.currentTarget.setAttribute('aria-expanded', String(expanded));
-          event.currentTarget.textContent = expanded ? 'Réduire' : 'Voir plus...';
-          copy.style.maxHeight = expanded ? 'none' : '';
-          copy.style.overflow = expanded ? 'visible' : 'hidden';
-          copy.style.minHeight = expanded ? `${copy.scrollHeight}px` : '0px';
-        });
-      });
-    }
-
-    function bindProfileTabs() {
-      const activate = (name) => {
-        document.querySelectorAll('[data-profile-tab]').forEach((item) => item.setAttribute('aria-selected', String(item.dataset.profileTab === name)));
-        document.querySelectorAll('[data-profile-panel]').forEach((panel) => { panel.hidden = panel.dataset.profilePanel !== name; });
-      };
-      document.querySelectorAll('[data-profile-tab]').forEach((tab) => tab.addEventListener('click', () => activate(tab.dataset.profileTab)));
-      const requested = new URLSearchParams(window.location.search).get('tab');
-      if (requested && document.querySelector(`[data-profile-tab="${requested}"]`)) activate(requested);
-    }
-
-    if (document.body.dataset.page === 'profile') {
-      bindProfileTabs(); bindPrivateNotebook(); renderPendingNotes(); renderSavedPosts();
-    } else {
-      document.querySelectorAll('[data-scroll]').forEach((button) => button.addEventListener('click', () => document.querySelector(`#${button.dataset.scroll}`).scrollIntoView({ behavior: 'smooth', block: 'start' })));
-      bindTabs(); bindFilters(); bindComposer(); bindPrivateNotebook(); bindPosts();
-    }
-    bootPretext();
-  </script>
+  <script type="module" src="/assets/profile.js"></script>
   <script type="module" src="/assets/auth.js"></script>
 </body>
 </html>

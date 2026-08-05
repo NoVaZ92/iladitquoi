@@ -1,53 +1,85 @@
 import { readFile } from 'node:fs/promises';
+import { sanitizePublicText } from '../lib/privacy-filter.js';
+import { PROFESSIONS } from '../lib/professions.js';
 
-const files = ['finalized.html', 'profile.html', 'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/submit.js', 'supabase/migrations/0001_initial_schema.sql', 'package.json', 'vercel.json', '.nvmrc', 'lib/supabase-config.js', 'auth.html', 'src/auth.js', 'lib/auth-user.js', 'supabase/migrations/0002_authentication.sql', 'scripts/build-static.mjs'];
-const contents = await Promise.all(files.map((file) => readFile(file, 'utf8')));
-const packageJson = JSON.parse(contents[8]);
-const vercelConfig = JSON.parse(contents[9]);
+const names = [
+  'finalized.html', 'profile.html', 'auth.html', 'rules.html',
+  'src/feed.js', 'src/profile.js', 'src/auth.js',
+  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js',
+  'lib/supabase-config.js', 'lib/auth-user.js',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql',
+  'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
+];
+const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
+const packageJson = JSON.parse(source['package.json']);
+const vercelConfig = JSON.parse(source['vercel.json']);
 
 const contracts = [
-  [contents[0], 'id="anecdote-editor"', 'composeur'],
-  [contents[0], "fetch('/api/submit'", 'soumission cloud'],
-  [contents[0], "fetch('/api/feed'", 'chargement du fil cloud'],
-  [contents[1], 'data-profile-tab="pending"', 'suivi de modération'],
-  [contents[2], "status: 'ok'", 'health check'],
-  [contents[3], 'configuration_required', 'vérification de disponibilité'],
-  [contents[4], 'configured', 'configuration publique'],
-  [contents[5], 'moderation_status', 'fil public cloud'],
-  [contents[6], 'sanitizePublicText', 'filtre de confidentialité serveur'],
-  [contents[6], 'authenticateRequest', 'identité de soumission'],
-  [contents[7], 'enable row level security', 'RLS Supabase'],
-  [contents[11], 'SUPABASE_SECRET_KEY', 'clé secrète Supabase actuelle'],
-  [contents[11], 'SUPABASE_SERVICE_ROLE_KEY', 'compatibilité clé Supabase historique'],
-  [contents[12], 'id="signup-form"', 'formulaire de création de compte'],
-  [contents[12], 'id="google-login"', 'connexion Google'],
-  [contents[13], 'signInWithPassword', 'connexion par mot de passe'],
-  [contents[13], 'signInWithOAuth', 'authentification OAuth'],
-  [contents[13], 'resetPasswordForEmail', 'récupération du mot de passe'],
-  [contents[14], '/auth/v1/user', 'validation de session serveur'],
-  [contents[15], 'protect_profile_privileges', 'protection des rôles et XP'],
-  [contents[16], '--bundle', 'bundle navigateur local']
+  ['finalized.html', 'id="anecdote-editor"', 'composeur'],
+  ['finalized.html', 'src="/assets/feed.js"', 'bundle du fil'],
+  ['finalized.html', '>iladitquoi<', 'marque'],
+  ['finalized.html', '@media (max-width: 800px)', 'mise en page mobile'],
+  ['finalized.html', 'grid-template-columns: 256px minmax(620px, 1fr) 344px', 'mise en page grand écran'],
+  ['finalized.html', 'href="/rules.html"', 'lien vers les règles'],
+  ['profile.html', 'data-profile-tab="pending"', 'suivi de modération'],
+  ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
+  ['rules.html', 'Filtre automatique', 'règles de confidentialité'],
+  ['src/feed.js', "fetch('/api/submit'", 'soumission cloud'],
+  ['src/feed.js', 'fetch(`/api/feed?sort=${sort}`', 'fil Supabase trié'],
+  ['src/feed.js', '`${location.origin}/a/${anecdote.id}`', 'lien de partage du déploiement courant'],
+  ['src/feed.js', "location.pathname.match(/^\\/a\\/", 'lecture de la route courte dans le navigateur'],
+  ['src/feed.js', "fetch('/api/report'", 'signalement cloud'],
+  ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
+  ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
+  ['api/health.js', "status: 'ok'", 'health check'],
+  ['api/ready.js', 'configuration_required', 'readiness'],
+  ['api/config.js', 'configured', 'configuration publique'],
+  ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
+  ['api/anecdote.js', 'anecdote_not_found', 'anecdote partagée'],
+  ['api/report.js', '/rest/v1/reports', 'persistance du signalement'],
+  ['api/submit.js', 'sanitizePublicText', 'filtre serveur'],
+  ['api/submit.js', 'profile.profession', 'métier du profil'],
+  ['lib/supabase-config.js', 'SUPABASE_SECRET_KEY', 'clé secrète actuelle'],
+  ['lib/supabase-config.js', 'SUPABASE_SERVICE_ROLE_KEY', 'compatibilité clé historique'],
+  ['lib/auth-user.js', '/auth/v1/user', 'validation de session'],
+  ['supabase/migrations/0001_initial_schema.sql', 'enable row level security', 'RLS Supabase'],
+  ['supabase/migrations/0002_authentication.sql', 'protect_profile_privileges', 'protection des rôles'],
+  ['supabase/migrations/0003_publication_timestamp.sql', 'anecdotes_publication_timestamp', 'date de publication automatique'],
+  ['scripts/build-static.mjs', "const bundles = ['auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 
-for (const [content, needle, label] of contracts) {
-  if (!content.includes(needle)) throw new Error(`Contrat manquant: ${label}`);
+for (const [file, needle, label] of contracts) {
+  if (!source[file].includes(needle)) throw new Error(`Contrat manquant: ${label}`);
 }
 
+for (const file of ['finalized.html', 'profile.html', 'auth.html', 'src/auth.js', 'src/feed.js']) {
+  if (/google-login|signInWithOAuth|anecdotesdusoin\.fr|GardeDeNuit/.test(source[file])) {
+    throw new Error(`Ancien contenu détecté dans ${file}`);
+  }
+}
+if (/data-demo|À 3 h 12|Le stylo qui a sauvé/.test(source['finalized.html'])) throw new Error('Une anecdote de démonstration reste dans la page publique');
+if (PROFESSIONS.length < 40 || !PROFESSIONS.includes('Orthophoniste') || !PROFESSIONS.includes('Dentiste')) throw new Error('Liste des métiers incomplète');
+
+const privacy = sanitizePublicText("Amine envoie alors l'argent à son pote Mouloude !");
+if (!privacy.changed || privacy.text.includes('Amine') || privacy.text.includes('Mouloude') || !privacy.flags.includes('prénom potentiel')) {
+  throw new Error('Le filtre ne masque pas les prénoms potentiels');
+}
+
+if (packageJson.name !== 'iladitquoi') throw new Error('Nom du package incorrect');
 if (packageJson.engines?.node !== '24.x') throw new Error('Runtime Node 24 non verrouillée');
 if (packageJson.dependencies?.['@supabase/supabase-js'] !== '2.112.1') throw new Error('Version Supabase JS non verrouillée');
+if (packageJson.dependencies?.lucide !== '1.27.0') throw new Error('Version Lucide non verrouillée');
 if (packageJson.devDependencies?.esbuild !== '0.28.1') throw new Error('Version esbuild non verrouillée');
-if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) {
-  throw new Error('Les runtimes Node officiels doivent être détectés depuis package.json, pas déclarés dans vercel.json');
-}
-if (contents[10].trim() !== '24') throw new Error('.nvmrc doit cibler Node 24');
-if (contents[0].includes('content: "Bonjour, GardeDeNuit"')) throw new Error('Le compte de démonstration ne doit pas être présenté comme la session courante');
-if (!contents[0].includes('data-auth-link') || !contents[1].includes('data-profile-pseudonym')) throw new Error('Points de montage de session manquants');
+if (source['.nvmrc'].trim() !== '24') throw new Error('.nvmrc doit cibler Node 24');
+if (vercelConfig.outputDirectory !== 'public') throw new Error('Dossier de sortie Vercel incorrect');
+if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.destination.includes('anecdote=:id'))) throw new Error('Route courte de partage absente');
+if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
 
-const authSource = contents[13];
+const authSource = source['src/auth.js'];
 for (const [formId, readStatement] of [
   ['signin-form', 'const values = new FormData(form);'],
   ['signup-form', 'const values = new FormData(form);'],
-  ['reset-form', 'const email = String(new FormData(form).get(\'email\')).trim();']
+  ['reset-form', "const email = String(new FormData(form).get('email')).trim();"]
 ]) {
   const handlerStart = authSource.indexOf(`document.querySelector('#${formId}')`);
   const nextHandler = authSource.indexOf("document.querySelector('#", handlerStart + 1);
@@ -58,4 +90,4 @@ for (const [formId, readStatement] of [
   }
 }
 
-console.log(`${contracts.length + 10} contrats de livraison vérifiés.`);
+console.log(`${contracts.length + 15} contrats de livraison vérifiés.`);

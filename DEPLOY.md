@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre `supabase/migrations/0001_initial_schema.sql`, puis `supabase/migrations/0002_authentication.sql`. Pour la base v0.0.1 deja initialisee, executer uniquement `0002_authentication.sql`.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001`, `0002`, puis `0003`. Pour la base v0.0.1 deja initialisee, executer les migrations manquantes jusqu'a `0003_publication_timestamp.sql`.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -15,20 +15,10 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ```sql
 update public.profiles
 set role = 'admin'
-where id = 'UUID_DE_VOTRE_UTILISATEUR';
+where id = (select id from auth.users where email = 'votre@email.fr');
 ```
 
 Ne jamais mettre la cle `secret` ou `service_role` dans le navigateur, dans Git ou dans une capture d'ecran.
-
-### Activer la connexion Google
-
-1. Dans Google Auth Platform, creer un client OAuth de type `Web application`.
-2. Ajouter `https://iladitquoi.vercel.app` dans `Authorized JavaScript origins`.
-3. Copier depuis `Supabase > Authentication > Providers > Google` l'URL de callback du projet, puis l'ajouter telle quelle dans `Authorized redirect URIs` chez Google.
-4. Copier le Client ID et le Client Secret Google dans le fournisseur Google de Supabase, puis activer ce fournisseur.
-5. Configurer l'audience Google sur `External`. Tant que l'application OAuth reste en mode test, ajouter chaque testeur dans la liste Google des utilisateurs de test.
-
-Au premier acces Google, Supabase cree automatiquement le compte. Le site demande ensuite un pseudonyme et le metier avant d'ouvrir le profil.
 
 ## 2. Creer Vercel
 
@@ -44,23 +34,22 @@ Au premier acces Google, Supabase cree automatiquement le compte. Le site demand
 2. Ouvrir `https://votre-url/ready` : la reponse doit etre `status: ready` et `configured: true`. `configuration_required` indique des variables manquantes, `credentials_invalid` une cle incorrecte et `schema_required` que la migration SQL n'a pas ete appliquee.
 3. Soumettre une anecdote publique : elle doit etre creee avec le statut `pending` dans la table `anecdotes`.
 4. Creer un compte e-mail, confirmer l'adresse, puis verifier la creation automatique de la ligne correspondante dans `profiles`.
-5. Se connecter avec Google et finaliser le pseudonyme et le metier.
-6. Publier sans cocher l'anonymat : `author_id` doit contenir l'identifiant du compte et l'anecdote doit apparaitre dans le suivi de moderation du profil.
-7. Depuis Supabase, passer une anecdote de test a `published` et definir `published_at = now()` ; elle doit remplacer les cartes de demonstration du fil.
+5. Publier sans cocher l'anonymat : `author_id` doit contenir l'identifiant du compte et l'anecdote doit apparaitre dans le suivi de moderation du profil.
+6. Depuis Supabase, passer une anecdote de test a `published`. La migration `0003` renseigne automatiquement `published_at` et l'anecdote apparait dans les fils Top et Nouvelles.
 
 ```sql
 update public.anecdotes
-set moderation_status = 'published', published_at = now()
+set moderation_status = 'published'
 where id = 'UUID_DE_L_ANECDOTE';
 ```
 
-8. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
+7. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
 
 ## 4. Limites de cette beta
 
 - Vercel Hobby est destine a un projet personnel non commercial. Ne pas activer publicite ou partenariats avant de passer a Vercel Pro.
 - Supabase Free peut mettre le projet en pause apres une periode d'inactivite. Exporter la base regulierement avant toute campagne ou test important.
-- Les comptes, profils et soumissions publiques sont synchronises avec Supabase. Les votes, signalements, selections et carnet prive restent encore locaux dans cette version.
+- Les comptes, profils, soumissions publiques et signalements sont synchronises avec Supabase. Les votes, selections et carnet prive restent encore locaux dans cette version.
 - Toute anecdote publique reste `pending` jusqu'a une validation humaine. Le filtrage automatique masque quelques motifs evidents, mais ne remplace pas la moderation.
 
 ## Verifications locales

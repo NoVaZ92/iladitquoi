@@ -4,13 +4,16 @@ export default async function handler(request, response) {
   if (request.method !== 'GET') return response.status(405).json({ error: 'method_not_allowed' });
   const { url, secretKey } = getSupabaseConfig();
   if (!url || !secretKey) return response.status(503).json({ error: 'service_not_configured' });
+  const sort = request.query?.sort === 'new' ? 'new' : 'top';
 
   const query = new URLSearchParams({
-    select: 'id,author_label,profession,theme,body,vote_score,published_at',
+    select: 'id,author_label,profession,theme,body,vote_score,published_at,submitted_at',
     visibility: 'eq.public',
     moderation_status: 'eq.published',
-    order: 'vote_score.desc,published_at.desc',
-    limit: '50'
+    order: sort === 'new'
+      ? 'published_at.desc.nullslast,submitted_at.desc'
+      : 'vote_score.desc,published_at.desc.nullslast,submitted_at.desc',
+    limit: '100'
   });
   let upstream;
   try {
@@ -22,6 +25,6 @@ export default async function handler(request, response) {
     return response.status(502).json({ error: 'feed_unavailable' });
   }
   if (!upstream.ok) return response.status(502).json({ error: 'feed_unavailable' });
-  response.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  response.setHeader('Cache-Control', 'no-store');
   return response.status(200).json({ anecdotes: await upstream.json() });
 }

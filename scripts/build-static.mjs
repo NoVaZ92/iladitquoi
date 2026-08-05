@@ -12,8 +12,10 @@ const files = [
   ['finalized.html', 'index.html'],
   ['finalized.html', 'finalized.html'],
   ['profile.html', 'profile.html'],
-  ['auth.html', 'auth.html']
+  ['auth.html', 'auth.html'],
+  ['rules.html', 'rules.html']
 ];
+const bundles = ['auth', 'feed', 'profile'];
 
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });
@@ -22,15 +24,15 @@ await Promise.all([
   ...files.map(([source, destination]) =>
     copyFile(join(projectRoot, source), join(outputDirectory, destination))
   ),
-  execFileAsync(esbuildExecutable, [
-    join(projectRoot, 'src/auth.js'),
-    '--bundle',
-    '--format=esm',
-    '--minify',
-    '--platform=browser',
-    '--target=es2022',
-    `--outfile=${join(outputDirectory, 'assets/auth.js')}`
-  ])
+  ...bundles.map((name) => execFileAsync(esbuildExecutable, [
+      join(projectRoot, `src/${name}.js`),
+      '--bundle',
+      '--format=esm',
+      '--minify',
+      '--platform=browser',
+      '--target=es2022',
+      `--outfile=${join(outputDirectory, `assets/${name}.js`)}`
+    ]))
 ]);
 
-console.log(`Static output generated: public/ (${files.length} pages and 1 bundle).`);
+console.log(`Static output generated: public/ (${files.length} pages and ${bundles.length} bundles).`);

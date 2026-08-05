@@ -2,7 +2,19 @@
 
 ## Etat du MVP
 
-`finalized.html` et `profile.html` sont un prototype navigable. Les interactions de vote, de signalement et le carnet prive sont locales au navigateur. Ce comportement est utile pour valider le produit, mais il ne constitue pas une application de production : les donnees ne sont pas partagees entre appareils et un lien court ne peut pas proteger une anecdote sans serveur.
+Le fil, les comptes, les soumissions publiques et les signalements utilisent Supabase. Les votes, les selections et le carnet prive restent locaux au navigateur dans cette version et ne sont donc pas partages entre appareils.
+
+## Donner le role administrateur
+
+Creer d'abord le compte depuis le site, puis executer cette requete dans le SQL Editor Supabase :
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (select id from auth.users where email = 'votre@email.fr');
+```
+
+Verifier ensuite avec `select pseudonym, role from public.profiles;`. Le role `moderator` peut etre attribue de la meme maniere aux benevoles.
 
 ## Architecture recommandee
 

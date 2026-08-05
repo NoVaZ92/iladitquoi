@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const outputDirectory = join(projectRoot, 'public');
-const expectedFiles = ['assets', 'auth.html', 'finalized.html', 'index.html', 'profile.html'];
+const expectedFiles = ['assets', 'auth.html', 'finalized.html', 'index.html', 'profile.html', 'rules.html'];
 const vercelConfig = JSON.parse(await readFile(join(projectRoot, 'vercel.json'), 'utf8'));
 
 if (vercelConfig.outputDirectory !== 'public') {
@@ -20,7 +20,8 @@ const copies = [
   ['finalized.html', 'index.html'],
   ['finalized.html', 'finalized.html'],
   ['profile.html', 'profile.html'],
-  ['auth.html', 'auth.html']
+  ['auth.html', 'auth.html'],
+  ['rules.html', 'rules.html']
 ];
 
 for (const [source, destination] of copies) {
@@ -34,12 +35,14 @@ for (const [source, destination] of copies) {
 }
 
 const assetFiles = await readdir(join(outputDirectory, 'assets'));
-if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['auth.js'])) {
+if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['auth.js', 'feed.js', 'profile.js'])) {
   throw new Error(`Bundles inattendus: ${assetFiles.join(', ')}`);
 }
-const authBundle = await readFile(join(outputDirectory, 'assets/auth.js'), 'utf8');
-if (authBundle.length < 10000 || authBundle.includes('SUPABASE_SECRET_KEY')) {
-  throw new Error('Bundle d’authentification invalide');
+for (const asset of assetFiles) {
+  const bundle = await readFile(join(outputDirectory, 'assets', asset), 'utf8');
+  if (bundle.length < 1000 || bundle.includes('SUPABASE_SECRET_KEY')) {
+    throw new Error(`Bundle navigateur invalide: ${asset}`);
+  }
 }
 
-console.log('Sortie Vercel vérifiée: 4 pages et le bundle d’authentification présents.');
+console.log('Sortie Vercel vérifiée: 5 pages et 3 bundles navigateur présents.');

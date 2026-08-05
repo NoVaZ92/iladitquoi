@@ -3,13 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Créer un compte ou se connecter à Anecdotes du soin.">
-  <title>Connexion · Anecdotes du soin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Créer un compte ou se connecter à iladitquoi.">
+  <title>Connexion · iladitquoi</title>
   <style>
-    :root { color-scheme: light; --page: #f6f7fb; --surface: #fff; --line: #dbe1ee; --text: #172033; --muted: #64708a; --blue: #1658f5; --blue-dark: #0f45d5; --error: #b83c2e; font-family: "Manrope", system-ui, sans-serif; }
+    :root { color-scheme: light; --page: #f6f7fb; --surface: #fff; --line: #dbe1ee; --text: #172033; --muted: #64708a; --blue: #1658f5; --blue-dark: #0f45d5; --error: #b83c2e; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
     * { box-sizing: border-box; }
     body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--page); color: var(--text); }
     button, input, select { font: inherit; }
@@ -30,11 +27,7 @@
     .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
     .auth-tab { border: 0; border-bottom: 3px solid transparent; padding: 11px 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; }
     .auth-tab[aria-selected="true"] { border-color: var(--blue); color: var(--text); }
-    .google-button, .primary-button, .secondary-button { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; border-radius: 6px; padding: 10px 14px; font-weight: 700; text-decoration: none; }
-    .google-button { gap: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
-    .google-mark { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 50%; color: #4285f4; font-weight: 800; }
-    .separator { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: 11px; }
-    .separator::before, .separator::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .primary-button, .secondary-button { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; border-radius: 6px; padding: 10px 14px; font-weight: 700; text-decoration: none; }
     .auth-form { display: grid; gap: 14px; }
     .field { display: grid; gap: 6px; color: var(--text); font-size: 12px; font-weight: 700; }
     .field input, .field select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; background: #fff; color: var(--text); font-size: 14px; }
@@ -61,7 +54,7 @@
 <body data-page="auth">
   <header class="auth-header">
     <div class="auth-header-inner">
-      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">&#8220;</span><span>Anecdotes du soin</span></a>
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">&#8220;</span><span>iladitquoi</span></a>
       <a class="back-link" href="/">Retour au fil</a>
     </div>
   </header>
@@ -72,9 +65,6 @@
         <button class="auth-tab" type="button" role="tab" aria-selected="true" data-auth-tab="signin">Connexion</button>
         <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="signup">Créer un compte</button>
       </div>
-      <button class="google-button" id="google-login" type="button" data-auth-entry><span class="google-mark" aria-hidden="true">G</span>Continuer avec Google</button>
-      <div class="separator" data-auth-entry>ou par e-mail</div>
-
       <form class="auth-form" id="signin-form" data-auth-view="signin">
         <label class="field">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
         <label class="field">Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
@@ -85,7 +75,7 @@
       <form class="auth-form" id="signup-form" data-auth-view="signup" hidden>
         <label class="field">Pseudonyme<input name="pseudonym" type="text" minlength="3" maxlength="32" autocomplete="nickname" required></label>
         <label class="field">Métier
-          <select name="profession" required><option value="">Choisir</option><option>Infirmière</option><option>Infirmier</option><option>Aide-soignante</option><option>Aide-soignant</option><option>Médecin</option><option>Ambulancier</option><option>Dentiste</option><option>Orthophoniste</option><option>Kinésithérapeute</option><option>Sage-femme</option><option>Psychologue</option><option>Pharmacien</option><option>Éducateur spécialisé</option><option>Autre métier du soin</option></select>
+          <select name="profession" required><option value="">Chargement…</option></select>
         </label>
         <label class="field">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
         <label class="field">Mot de passe<input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
@@ -109,7 +99,7 @@
       <form class="auth-form" id="profile-form" data-auth-view="profile" hidden>
         <label class="field">Pseudonyme<input name="pseudonym" type="text" minlength="3" maxlength="32" autocomplete="nickname" required></label>
         <label class="field">Métier
-          <select name="profession" required><option value="">Choisir</option><option>Infirmière</option><option>Infirmier</option><option>Aide-soignante</option><option>Aide-soignant</option><option>Médecin</option><option>Ambulancier</option><option>Dentiste</option><option>Orthophoniste</option><option>Kinésithérapeute</option><option>Sage-femme</option><option>Psychologue</option><option>Pharmacien</option><option>Éducateur spécialisé</option><option>Autre métier du soin</option></select>
+          <select name="profession" required><option value="">Chargement…</option></select>
         </label>
         <button class="primary-button" type="submit">Terminer mon profil</button>
       </form>

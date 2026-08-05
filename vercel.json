@@ -7,6 +7,8 @@
     { "source": "/connexion", "destination": "/auth.html" },
     { "source": "/compte", "destination": "/profile.html" },
     { "source": "/profil", "destination": "/profile.html" },
+    { "source": "/regles", "destination": "/rules.html" },
+    { "source": "/a/:id", "destination": "/?anecdote=:id" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/ready", "destination": "/api/ready" },
     { "source": "/api/configuration", "destination": "/api/config" }
