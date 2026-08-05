@@ -1,13 +1,22 @@
+import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+
 export default async function handler(_request, response) {
-  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY } = process.env;
-  const configured = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && SUPABASE_ANON_KEY);
+  const { url, publishableKey, secretKey } = getSupabaseConfig();
+  const configured = Boolean(url && publishableKey && secretKey);
   response.setHeader('Cache-Control', 'no-store');
   if (!configured) return response.status(503).json({ status: 'configuration_required', configured: false });
 
   try {
-    const upstream = await fetch(`${SUPABASE_URL}/rest/v1/anecdotes?select=id&limit=1`, {
-      headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` }
+    const upstream = await fetch(`${url}/rest/v1/anecdotes?select=id&limit=1`, {
+      headers: getSupabaseAdminHeaders(secretKey),
+      signal: AbortSignal.timeout(5000)
     });
+    if (upstream.status === 401 || upstream.status === 403) {
+      return response.status(503).json({ status: 'credentials_invalid', configured: true });
+    }
+    if (upstream.status === 404) {
+      return response.status(503).json({ status: 'schema_required', configured: true });
+    }
     if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
   } catch {
     return response.status(503).json({ status: 'dependency_unavailable', configured: true });

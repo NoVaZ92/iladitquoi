@@ -1,5 +1,6 @@
 import health from '../api/health.js';
 import ready from '../api/ready.js';
+import publicConfig from '../api/config.js';
 import feed from '../api/feed.js';
 import submit from '../api/submit.js';
 
@@ -24,22 +25,44 @@ try {
   if (response.statusCode !== 200 || response.body.status !== 'ok') throw new Error('Health check invalide');
 
   delete process.env.SUPABASE_URL;
+  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+  delete process.env.SUPABASE_SECRET_KEY;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  delete process.env.SUPABASE_PUBLISHABLE_KEY;
+  delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   delete process.env.SUPABASE_ANON_KEY;
+  delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   response = createResponse();
-  ready({}, response);
+  await ready({}, response);
   if (response.statusCode !== 503 || response.body.configured !== false) throw new Error('Readiness non configurée invalide');
 
   process.env.SUPABASE_URL = 'https://example.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
-  process.env.SUPABASE_ANON_KEY = 'anon-key';
+  process.env.SUPABASE_SECRET_KEY = 'sb_secret_example';
+  process.env.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_example';
   process.env.PUBLIC_APP_ORIGIN = 'https://anecdotes.example';
-  globalThis.fetch = async () => ({ ok: true, async json() { return []; } });
+  let lastRequest;
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    return { ok: true, async json() { return []; } };
+  };
   response = createResponse();
   await ready({}, response);
   if (response.statusCode !== 200 || response.body.configured !== true) throw new Error('Readiness configurée invalide');
+  if (lastRequest.options.headers.apikey !== 'sb_secret_example' || lastRequest.options.headers.authorization) {
+    throw new Error('En-têtes de clé secrète Supabase invalides');
+  }
 
-  let lastRequest;
+  globalThis.fetch = async () => ({ ok: false, status: 404 });
+  response = createResponse();
+  await ready({}, response);
+  if (response.statusCode !== 503 || response.body.status !== 'schema_required') throw new Error('Diagnostic de migration Supabase invalide');
+
+  response = createResponse();
+  publicConfig({}, response);
+  if (response.statusCode !== 200 || response.body.supabasePublishableKey !== 'sb_publishable_example') {
+    throw new Error('Configuration publique Supabase invalide');
+  }
+
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
     return {
@@ -55,9 +78,12 @@ try {
   }, response);
   const submission = JSON.parse(lastRequest.options.body);
   if (response.statusCode !== 201 || !submission.body.includes('[coordonnée masquée]')) throw new Error('Soumission ou masquage invalide');
+  if (lastRequest.options.headers.authorization) throw new Error('Une clé secrète Supabase ne doit pas être envoyée comme Bearer JWT');
 
-  globalThis.fetch = async (url) => {
-    lastRequest = { url: String(url) };
+  delete process.env.SUPABASE_SECRET_KEY;
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-role-key';
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
     return {
       ok: true,
       async json() { return [{ id: 'published-1' }]; }
@@ -66,8 +92,9 @@ try {
   response = createResponse();
   await feed({ method: 'GET' }, response);
   if (response.statusCode !== 200 || !lastRequest.url.includes('moderation_status=eq.published')) throw new Error('Fil public invalide');
+  if (lastRequest.options.headers.authorization !== 'Bearer legacy-service-role-key') throw new Error('Compatibilité service_role invalide');
 
-  console.log('4 contrats API vérifiés.');
+  console.log('7 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

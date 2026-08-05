@@ -1,5 +1,12 @@
-const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'PUBLIC_APP_ORIGIN'];
-const missing = required.filter((name) => !process.env[name]);
+import { getSupabaseConfig } from '../lib/supabase-config.js';
+
+const { url, publishableKey, secretKey } = getSupabaseConfig();
+const missing = [
+  !url && 'SUPABASE_URL',
+  !secretKey && 'SUPABASE_SECRET_KEY (ou SUPABASE_SERVICE_ROLE_KEY)',
+  !publishableKey && 'SUPABASE_PUBLISHABLE_KEY (ou SUPABASE_ANON_KEY)',
+  !process.env.PUBLIC_APP_ORIGIN && 'PUBLIC_APP_ORIGIN'
+].filter(Boolean);
 
 if (missing.length) {
   console.error(`Variables manquantes : ${missing.join(', ')}`);
@@ -9,7 +16,7 @@ if (missing.length) {
 
 try {
   const origin = new URL(process.env.PUBLIC_APP_ORIGIN);
-  const supabase = new URL(process.env.SUPABASE_URL);
+  const supabase = new URL(url);
   if (origin.protocol !== 'https:' || supabase.protocol !== 'https:') throw new Error('HTTPS requis');
   if (origin.pathname !== '/' || supabase.pathname !== '/') throw new Error('Les URLs ne doivent pas contenir de chemin');
 } catch (error) {

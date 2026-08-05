@@ -1,3 +1,5 @@
+import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+
 const MAX_CHARS = 355;
 
 function sanitizePublicText(value) {
@@ -20,8 +22,8 @@ export default async function handler(request, response) {
   if (request.method === 'OPTIONS') return response.status(204).end();
   if (request.method !== 'POST') return response.status(405).json({ error: 'method_not_allowed' });
 
-  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return response.status(503).json({ error: 'service_not_configured' });
+  const { url, secretKey } = getSupabaseConfig();
+  if (!url || !secretKey) return response.status(503).json({ error: 'service_not_configured' });
 
   const body = typeof request.body === 'object' && request.body ? request.body : {};
   const text = typeof body.text === 'string' ? body.text.trim() : '';
@@ -38,16 +40,21 @@ export default async function handler(request, response) {
     moderation_status: 'pending',
     author_label: anonymous ? 'Anonyme' : 'Membre'
   };
-  const upstream = await fetch(`${SUPABASE_URL}/rest/v1/anecdotes`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      'content-type': 'application/json',
-      prefer: 'return=representation'
-    },
-    body: JSON.stringify(payload)
-  });
+  let upstream;
+  try {
+    upstream = await fetch(`${url}/rest/v1/anecdotes`, {
+      method: 'POST',
+      headers: {
+        ...getSupabaseAdminHeaders(secretKey),
+        'content-type': 'application/json',
+        prefer: 'return=representation'
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch {
+    return response.status(502).json({ error: 'persistence_failed' });
+  }
   if (!upstream.ok) return response.status(502).json({ error: 'persistence_failed' });
   const [anecdote] = await upstream.json();
   return response.status(201).json({ id: anecdote.id, status: anecdote.moderation_status });
