@@ -264,7 +264,7 @@
     .section-intro { align-items: start; margin-bottom: 24px; }
     .eyebrow { color: var(--teal); font-size: 10px; letter-spacing: .08em; }
     h1 { max-width: 680px; color: var(--text); font-size: clamp(32px, 4vw, 48px); font-weight: 800; line-height: 1.04; }
-    .section-intro h1::before { content: "Bonjour, GardeDeNuit"; display: block; margin-bottom: 10px; color: var(--text); font-size: 13px; font-weight: 700; line-height: 1; }
+    .section-intro h1::before { content: "Le fil des professionnels du soin"; display: block; margin-bottom: 10px; color: var(--text); font-size: 13px; font-weight: 700; line-height: 1; }
     .intro-meta { padding: 7px 0; color: var(--muted); font-size: 11px; }
 
     .feed-toolbar { gap: 8px; border: 0; padding: 0 0 22px; }
@@ -385,9 +385,9 @@
         <button class="nav-link" type="button" data-random-post>Au hasard</button>
         <button class="nav-link" data-scroll="filters">Catégories</button>
       </nav>
-      <a class="user-menu" href="profile.html" aria-label="Ouvrir le profil de GardeDeNuit">
-        <span class="user-avatar" aria-hidden="true">G</span>
-        <span class="user-copy"><span>GardeDeNuit</span><small>Niveau 9 · 420 XP</small></span>
+      <a class="user-menu" href="auth.html" data-auth-link aria-label="Se connecter ou créer un compte">
+        <span class="user-avatar" data-auth-avatar aria-hidden="true">→</span>
+        <span class="user-copy"><span data-auth-name>Se connecter</span><small data-auth-meta>Créer un compte</small></span>
       </a>
     </div>
   </header>
@@ -468,8 +468,9 @@
     </main>
 
     <aside class="side-rail" aria-label="Votre espace">
-      <section class="rail-block"><h2>GardeDeNuit</h2><p>Ambulancier · Niveau 9</p><div class="profile-summary"><div class="profile-row"><span>420 XP</span><strong>Prochaine étape</strong></div><div class="badge-list"><span class="badge">28 publications</span><span class="badge">2 badges</span></div></div><a class="rail-link" href="profile.html">Voir mon profil</a><a class="rail-link" href="profile.html?tab=saved"><span data-saved-count>0</span> sélection</a></section>
-      <section class="rail-block"><h2>Mon carnet privé <span class="private-lock">· verrouillé</span></h2><p>Vos notes restent à vous jusqu'à la création d'un lien.</p><div class="private-empty">Retrouvez vos anecdotes, idées et brouillons au même endroit.</div><a class="rail-link" href="profile.html">Ouvrir le carnet</a></section>
+      <section class="rail-block" data-auth-guest><h2>Votre espace</h2><p>Créez un compte pour publier sous pseudonyme et suivre la modération de vos anecdotes.</p><a class="rail-link" href="auth.html?mode=signup">Créer un compte</a><a class="rail-link" href="auth.html">Se connecter</a></section>
+      <section class="rail-block" data-auth-member hidden><h2 data-auth-name>Mon compte</h2><p data-auth-meta>Profil à compléter</p><div class="profile-summary"><div class="profile-row"><span>Votre activité</span><strong>Compte connecté</strong></div><div class="badge-list"><span class="badge"><span data-saved-count>0</span> sélection</span></div></div><a class="rail-link" href="profile.html">Voir mon profil</a><a class="rail-link" href="profile.html?tab=saved">Ouvrir mes sélections</a></section>
+      <section class="rail-block" data-auth-member hidden><h2>Mon carnet privé <span class="private-lock">· verrouillé</span></h2><p>Vos notes restent à vous jusqu'à la création d'un lien.</p><div class="private-empty">Retrouvez vos anecdotes, idées et brouillons au même endroit.</div><a class="rail-link" href="profile.html?tab=private">Ouvrir le carnet</a></section>
       <section class="rail-block"><h2>Avant de publier</h2><p>Ne mentionnez pas de nom, de lieu précis ni de détail permettant d'identifier une personne.</p><a class="rail-link" href="#composer-title">Lire les règles</a></section>
     </aside>
   </div>
@@ -544,16 +545,20 @@
     }
 
     async function syncPublicSubmission(payload) {
-      if (window.location.protocol === 'file:' || ['127.0.0.1', 'localhost'].includes(window.location.hostname)) return false;
+      if (window.location.protocol === 'file:' || ['127.0.0.1', 'localhost'].includes(window.location.hostname)) return { ok: true, local: true };
       try {
+        const token = await window.AnecdotesAuth?.getAccessToken();
+        const headers = { 'content-type': 'application/json' };
+        if (token) headers.authorization = `Bearer ${token}`;
         const response = await fetch('/api/submit', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
         });
-        return response.ok;
+        const data = await response.json().catch(() => ({}));
+        return { ok: response.ok, status: response.status, data };
       } catch {
-        return false;
+        return { ok: false, status: 0, data: { error: 'network_error' } };
       }
     }
 
@@ -813,27 +818,41 @@
         const rawText = editor.textContent.trim();
         const inspection = sanitizePublicText(rawText);
         if (visibility.value === 'private') {
+          const session = await window.AnecdotesAuth?.getSession();
+          if (!session) {
+            status.textContent = 'Connectez-vous pour utiliser le carnet privé.';
+            return;
+          }
           privateNotes.unshift({ id: createPrivateId(), text: rawText, profession: profession.value, createdAt: Date.now() });
           savePrivateNotes();
           renderPrivateNotes();
           status.textContent = 'Anecdote enregistrée dans votre carnet privé.';
         } else {
-          if (anonymous.checked) {
-            status.textContent = `${inspection.changed ? 'Données identifiantes masquées. ' : ''}Anecdote anonyme envoyée à la modération. Elle apparaîtra après validation.`;
-          } else {
-            pendingNotes.unshift({ id: createPrivateId(), text: inspection.text, profession: profession.value, createdAt: Date.now() });
-            savePendingNotes();
-            renderPendingNotes();
-            status.textContent = `${inspection.changed ? 'Données identifiantes masquées. ' : ''}Anecdote envoyée à la modération. Suivez son statut sur votre profil.`;
+          const session = await window.AnecdotesAuth?.getSession();
+          if (!anonymous.checked && !session) {
+            status.textContent = 'Connectez-vous pour publier sous votre pseudonyme. Votre brouillon reste enregistré.';
+            return;
           }
-          clearDraft();
-          draftStatus.textContent = '';
-          const persisted = await syncPublicSubmission({
+          submit.disabled = true;
+          status.textContent = 'Envoi en cours…';
+          const result = await syncPublicSubmission({
             text: rawText,
             profession: profession.value,
             anonymous: anonymous.checked
           });
-          if (persisted) status.textContent = `${inspection.changed ? 'Données identifiantes masquées. ' : ''}Anecdote envoyée à la modération.`;
+          submit.disabled = false;
+          if (!result.ok) {
+            status.textContent = result.status === 401
+              ? 'Votre session a expiré. Reconnectez-vous avant de publier.'
+              : 'L’envoi a échoué. Votre brouillon est conservé, réessayez dans un instant.';
+            return;
+          }
+          if (!anonymous.checked && result.local) {
+            pendingNotes.unshift({ id: createPrivateId(), text: inspection.text, profession: profession.value, createdAt: Date.now() });
+            savePendingNotes();
+            renderPendingNotes();
+          }
+          status.textContent = `${inspection.changed ? 'Données identifiantes masquées. ' : ''}Anecdote envoyée à la modération.${anonymous.checked ? '' : ' Suivez son statut sur votre profil.'}`;
         }
         editor.textContent = '';
         updateCount();
@@ -1032,5 +1051,6 @@
     document.querySelectorAll('[data-scroll]').forEach((button) => button.addEventListener('click', () => document.querySelector(`#${button.dataset.scroll}`).scrollIntoView({ behavior: 'smooth', block: 'start' })));
     bindTabs(); bindFilters(); bindComposer(); bindPrivateNotebook(); bindPosts(); bindRandomPost(); updateSavedCount(); loadCloudFeed(); bootPretext();
   </script>
+  <script type="module" src="/assets/auth.js"></script>
 </body>
 </html>

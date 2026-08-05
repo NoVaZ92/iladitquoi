@@ -193,6 +193,8 @@
     .profile-action { display: block; width: 100%; border: 1px solid var(--yellow); padding: 10px 12px; background: var(--yellow); color: var(--yellow-ink); font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
     .profile-action + .profile-action { margin-top: 8px; border-color: var(--line); background: transparent; color: var(--text); }
     .profile-action + .profile-action:hover { border-color: var(--teal); }
+    .profile-status { min-height: 18px; margin: 0 0 14px; color: var(--coral); font-size: 12px; }
+    html:not(.auth-ready) body[data-page="profile"] .profile-page { visibility: hidden; }
     .saved-remove { border: 0; padding: 0; background: transparent; color: var(--teal); font: inherit; font-size: 11px; font-weight: 700; }
     .saved-remove:hover { color: var(--coral); }
     .profile-private-list .private-note { padding: 14px; }
@@ -396,9 +398,9 @@
         <a class="nav-link" href="finalized.html?sort=new">Récentes</a>
         <a class="nav-link" aria-current="page" href="profile.html">Mon profil</a>
       </nav>
-      <a class="user-menu" href="profile.html" aria-current="page" aria-label="Ouvrir le profil de GardeDeNuit">
-        <span class="user-avatar" aria-hidden="true">G</span>
-        <span class="user-copy"><span>GardeDeNuit</span><small>Niveau 9 · 420 XP</small></span>
+      <a class="user-menu" href="auth.html" data-auth-link aria-current="page" aria-label="Se connecter ou créer un compte">
+        <span class="user-avatar" data-auth-avatar aria-hidden="true">→</span>
+        <span class="user-copy"><span data-auth-name>Connexion</span><small data-auth-meta>Chargement du compte</small></span>
       </a>
     </div>
   </header>
@@ -483,9 +485,10 @@
   </div>
 
   <main class="profile-page" id="top">
+    <p class="profile-status" data-profile-status role="status" aria-live="polite"></p>
     <section class="profile-hero" aria-labelledby="profile-title">
-      <div class="profile-identity"><span class="profile-avatar-large" aria-hidden="true">G</span><div><p class="eyebrow">Profil personnel</p><h1 id="profile-title">GardeDeNuit</h1><p class="profile-subtitle">Ambulancier · Niveau 9</p></div></div>
-      <div class="profile-stats" aria-label="Statistiques du profil"><div class="profile-stat"><strong>420</strong><span>XP</span></div><div class="profile-stat"><strong>28</strong><span>publiées</span></div><div class="profile-stat"><strong>2</strong><span>badges</span></div></div>
+      <div class="profile-identity"><span class="profile-avatar-large" data-profile-avatar aria-hidden="true">·</span><div><p class="eyebrow">Profil personnel</p><h1 id="profile-title" data-profile-pseudonym>Mon profil</h1><p class="profile-subtitle" data-profile-profession>Chargement…</p></div></div>
+      <div class="profile-stats" aria-label="Statistiques du profil"><div class="profile-stat"><strong data-profile-xp>0</strong><span>XP</span></div><div class="profile-stat"><strong data-profile-published-count>0</strong><span>publiées</span></div><div class="profile-stat"><strong data-profile-badge-count>0</strong><span>badges</span></div></div>
     </section>
 
     <div class="profile-tabs" role="tablist" aria-label="Contenu du profil">
@@ -497,9 +500,8 @@
 
     <div class="profile-workspace">
       <section class="profile-panel" data-profile-panel="published" aria-labelledby="published-title">
-        <div class="profile-panel-head"><div><h2 id="published-title">Vos publications</h2><p>Les anecdotes validées et visibles dans le fil.</p></div><span class="intro-meta">28 au total</span></div>
-        <article class="profile-entry"><div class="profile-entry-main"><div class="profile-entry-meta"><span>Ambulancier</span><span>·</span><span>Absurde</span><span>·</span><span>il y a 2 h</span></div><p>À 3 h 12, le patient m'a demandé si l'ambulance avait une option « retour à la maison après la pub ».</p></div><div class="profile-entry-foot"><span>312 votes</span><span>Validée</span></div></article>
-        <article class="profile-entry"><div class="profile-entry-main"><div class="profile-entry-meta"><span>Ambulancier</span><span>·</span><span>Léger</span><span>·</span><span>il y a 3 jours</span></div><p>Le GPS annonçait « vous êtes arrivé ». Nous étions devant la laverie, et personne n'a osé le contredire pendant dix secondes.</p></div><div class="profile-entry-foot"><span>146 votes</span><span>Validée</span></div></article>
+        <div class="profile-panel-head"><div><h2 id="published-title">Vos publications</h2><p>Les anecdotes validées et visibles dans le fil.</p></div><span class="intro-meta" data-profile-published-summary>0 au total</span></div>
+        <div id="published-list"><div class="private-empty">Chargement de vos publications…</div></div>
       </section>
 
       <section class="profile-panel" data-profile-panel="saved" aria-labelledby="saved-title" hidden>
@@ -519,7 +521,8 @@
 
       <aside class="profile-side" aria-label="Actions du profil">
         <section class="rail-block"><h2>Écrire</h2><a class="profile-action" href="finalized.html#composer">Nouvelle anecdote</a><a class="profile-action" id="private-add" href="finalized.html?mode=private#composer">Ajouter au carnet privé</a></section>
-        <section class="rail-block"><h2>Badges</h2><div class="badge-list"><span class="badge">Première garde</span><span class="badge">Top 100</span></div><p>Les badges récompensent les contributions appréciées, sans classement public.</p></section>
+        <section class="rail-block"><h2>Badges</h2><div class="badge-list" data-profile-badges></div><p>Les badges récompensent les contributions appréciées, sans classement public.</p></section>
+        <section class="rail-block"><h2>Compte</h2><a class="profile-action" href="auth.html?mode=profile&next=%2Fprofile.html">Modifier mon profil</a><button class="profile-action" type="button" data-auth-signout>Se déconnecter</button></section>
         <section class="rail-block"><h2>Confidentialité</h2><p>Les liens privés sont créés individuellement depuis le carnet et leur contenu ne figure pas dans le message WhatsApp.</p></section>
       </aside>
     </div>
@@ -896,5 +899,6 @@
     }
     bootPretext();
   </script>
+  <script type="module" src="/assets/auth.js"></script>
 </body>
 </html>

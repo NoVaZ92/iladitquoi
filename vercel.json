@@ -4,6 +4,8 @@
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/", "destination": "/finalized.html" },
+    { "source": "/connexion", "destination": "/auth.html" },
+    { "source": "/compte", "destination": "/profile.html" },
     { "source": "/profil", "destination": "/profile.html" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/ready", "destination": "/api/ready" },

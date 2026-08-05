@@ -9,5 +9,11 @@
     "build": "node scripts/verify-static.mjs && node tests/smoke.mjs && node tests/api-smoke.mjs && node scripts/build-static.mjs && node tests/build-output.mjs",
     "check:env": "node scripts/check-env.mjs",
     "test": "node tests/smoke.mjs && node tests/api-smoke.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
   }
 }
