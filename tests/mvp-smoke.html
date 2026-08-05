@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smoke tests - Anecdotes du soin</title>
+  <style>
+    body { margin: 32px; background: #f8f8f5; color: #111827; font: 16px/1.5 system-ui, sans-serif; }
+    #result { white-space: pre-wrap; }
+    .ok { color: #237a35; }
+    .fail { color: #bf2020; }
+    iframe { width: 1px; height: 1px; border: 0; opacity: 0; }
+  </style>
+</head>
+<body>
+  <h1>Smoke tests</h1>
+  <pre id="result">Initialisation...</pre>
+  <script>
+    const result = document.querySelector('#result');
+    const lines = [];
+
+    function assert(condition, label) {
+      if (!condition) throw new Error(label);
+      lines.push(`OK ${label}`);
+    }
+
+    function event(type) {
+      return new Event(type, { bubbles: true });
+    }
+
+    function loadFrame(src) {
+      return new Promise((resolve, reject) => {
+        const frame = document.createElement('iframe');
+        frame.src = src;
+        frame.addEventListener('load', () => setTimeout(() => resolve(frame), 100));
+        frame.addEventListener('error', () => reject(new Error(`Impossible de charger ${src}`)));
+        document.body.append(frame);
+      });
+    }
+
+    async function run() {
+      const home = await loadFrame('../finalized.html');
+      const doc = home.contentDocument;
+      const win = home.contentWindow;
+      const editor = doc.querySelector('#anecdote-editor');
+      const counter = doc.querySelector('#char-counter');
+
+      editor.textContent = 'x'.repeat(360);
+      editor.dispatchEvent(event('input'));
+      assert(editor.textContent.length === 355, 'Le composeur limite le texte a 355 caracteres');
+      assert(counter.textContent === '355/355 caracteres' || counter.textContent === '355/355 caractères', 'Le compteur suit la limite');
+      assert(JSON.parse(win.localStorage.getItem('anecdotes-du-soin.composer-draft')).text.length === 355, 'Le brouillon est sauvegarde automatiquement');
+      const restoredHome = await loadFrame('../finalized.html');
+      assert(restoredHome.contentDocument.querySelector('#anecdote-editor').textContent.length === 355, 'Le brouillon est restaure au retour sur le fil');
+      restoredHome.remove();
+
+      const search = doc.querySelector('#search-filter');
+      search.value = 'orthophoniste';
+      search.dispatchEvent(event('input'));
+      const visible = [...doc.querySelectorAll('.post:not(.is-hidden)')];
+      assert(visible.length === 1 && visible[0].dataset.profession === 'orthophoniste', 'La recherche filtre les anecdotes');
+      search.value = '';
+      search.dispatchEvent(event('input'));
+
+      const firstPost = doc.querySelector('.post');
+      const score = firstPost.querySelector('.vote-score');
+      const initialScore = Number(score.textContent);
+      firstPost.querySelector('[data-vote="up"]').click();
+      assert(Number(score.textContent) === initialScore + 1, 'Le vote positif met a jour le score');
+
+      firstPost.querySelector('[data-save]').click();
+      const savedPosts = JSON.parse(win.localStorage.getItem('anecdotes-du-soin.saved-posts'));
+      assert(savedPosts.some((post) => post.id === 'garde-312'), 'Une anecdote peut etre enregistree');
+
+      firstPost.querySelector('.share-button').click();
+      const shareDialog = doc.querySelector('#share-dialog');
+      const publicShortUrl = doc.querySelector('#short-url').value;
+      const whatsappUrl = doc.querySelector('#whatsapp-share').href;
+      assert(shareDialog.open && publicShortUrl.endsWith('/a/garde-312'), 'Le partage public ouvre un lien court');
+      assert(!whatsappUrl.includes('retour') && whatsappUrl.includes(encodeURIComponent(publicShortUrl)), 'WhatsApp ne partage pas le texte de l anecdote');
+      shareDialog.close();
+
+      const longPost = doc.querySelector('.post-long');
+      longPost.querySelector('.read-more').click();
+      assert(longPost.classList.contains('expanded'), 'Voir plus developpe une anecdote longue');
+
+      const visibility = doc.querySelector('#visibility-choice');
+      visibility.value = 'private';
+      visibility.dispatchEvent(event('change'));
+      editor.textContent = 'Note privee de test';
+      editor.dispatchEvent(event('input'));
+      doc.querySelector('#submit-anecdote').click();
+      const privateNotes = JSON.parse(win.localStorage.getItem('anecdotes-du-soin.private-notes'));
+      assert(privateNotes.some((note) => note.text === 'Note privee de test'), 'Le carnet prive conserve une anecdote');
+
+      visibility.value = 'public';
+      visibility.dispatchEvent(event('change'));
+      editor.textContent = 'Dr Martin a laisse son numero 06 12 34 56 78';
+      editor.dispatchEvent(event('input'));
+      assert(doc.querySelector('#privacy-status').classList.contains('is-attention'), 'Le composeur signale une mention identifiable');
+      doc.querySelector('#submit-anecdote').click();
+      const pendingNotes = JSON.parse(win.localStorage.getItem('anecdotes-du-soin.pending-notes'));
+      assert(pendingNotes.some((note) => note.text.includes('[personne]') && note.text.includes('[coordonnée masquée]')), 'La publication publique masque les donnees identifiables');
+      assert(win.localStorage.getItem('anecdotes-du-soin.composer-draft') === null, 'Le brouillon est efface apres envoi');
+
+      const profile = await loadFrame('../profile.html');
+      const profileDoc = profile.contentDocument;
+      profileDoc.querySelector('[data-profile-tab="saved"]').click();
+      assert(profileDoc.querySelector('#saved-list').textContent.includes('retour'), 'Le profil restitue les selections');
+      profileDoc.querySelector('[data-profile-tab="private"]').click();
+      assert(profileDoc.querySelector('#private-list').textContent.includes('Note privee de test'), 'Le profil restitue le carnet prive');
+      profileDoc.querySelector('[data-profile-tab="pending"]').click();
+      assert(profileDoc.querySelector('#pending-list').textContent.includes('[personne]'), 'Le profil restitue le suivi de moderation');
+
+      result.className = 'ok';
+      result.textContent = `${lines.join('\n')}\n\n${lines.length} tests passes.`;
+    }
+
+    run().catch((error) => {
+      result.className = 'fail';
+      result.textContent = `${lines.join('\n')}\nECHEC: ${error.message}`;
+      throw error;
+    });
+  </script>
+</body>
+</html>

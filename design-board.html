@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anecdotes du soin · Design shotgun</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9edf1; color: #17202a; }
+    .board-head { padding: 28px 32px 22px; background: #17202a; color: #f8fbfc; border-bottom: 4px solid #f2785c; }
+    .board-head h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: 0; }
+    .board-head p { margin: 0; color: #c8d0d6; max-width: 760px; font-size: 14px; }
+    .board { display: grid; grid-template-columns: repeat(3, minmax(330px, 1fr)); gap: 18px; padding: 22px; align-items: start; }
+    .variant { min-width: 0; background: #fff; border: 1px solid #cbd3d9; box-shadow: 0 10px 28px rgba(17, 28, 38, .12); }
+    .variant-label { padding: 12px 14px; border-bottom: 1px solid #d6dce0; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .variant-label strong { font-size: 14px; }
+    .variant-label span { font-size: 11px; color: #697781; text-align: right; }
+    .app { min-height: 670px; }
+    .app-header { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid currentColor; }
+    .brand { font-weight: 800; font-size: 15px; }
+    .brand em { font-style: normal; color: var(--accent); }
+    .header-actions { display: flex; gap: 8px; align-items: center; font-size: 11px; }
+    .small-btn { border: 1px solid currentColor; padding: 6px 9px; background: transparent; font: inherit; }
+    .app-main { display: grid; grid-template-columns: minmax(0, 1fr) 116px; gap: 16px; padding: 16px; }
+    .feed-tools { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter { border: 1px solid currentColor; padding: 5px 8px; font-size: 11px; background: transparent; }
+    .filter.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .post { border: 1px solid currentColor; padding: 14px; margin-bottom: 12px; background: var(--surface); }
+    .post-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--muted); margin-bottom: 9px; }
+    .post p { margin: 0; font-size: 14px; line-height: 1.45; }
+    .post-foot { display: flex; align-items: center; gap: 9px; margin-top: 14px; font-size: 11px; color: var(--muted); }
+    .vote { display: inline-flex; gap: 4px; align-items: center; color: var(--ink); font-weight: 700; }
+    .vote button { border: 0; background: transparent; color: inherit; font-size: 14px; padding: 0; }
+    .profile { margin-top: 8px; font-size: 10px; color: var(--muted); }
+    .publish { border: 1px solid currentColor; padding: 13px; margin-bottom: 16px; background: var(--surface); }
+    .publish h2 { margin: 0 0 9px; font-size: 13px; }
+    .publish textarea { width: 100%; min-height: 54px; resize: none; border: 1px solid currentColor; background: transparent; padding: 8px; font: inherit; font-size: 11px; }
+    .publish-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 10px; }
+    .publish button { border: 0; padding: 7px 10px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 10px; }
+    .ad-rail { border-left: 1px solid currentColor; padding-left: 12px; color: var(--muted); font-size: 10px; }
+    .ad-box { min-height: 160px; border: 1px dashed currentColor; padding: 10px; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .rail-label { margin: 0 0 8px; font-weight: 800; color: var(--ink); }
+
+    .clinical { --ink: #17202a; --muted: #687782; --accent: #14a7a0; --accent-ink: #fff; --surface: #f7fafb; background: #fff; color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    .clinical .app-header { background: #f7fafb; border-color: #d8e0e5; }
+    .clinical .post, .clinical .publish { border-color: #d7e0e4; }
+    .clinical .ad-box { background: #fff7f2; border-color: #f2785c; }
+    .clinical .app-header .brand em { color: #f2785c; }
+
+    .night { --ink: #f4f2e8; --muted: #a9b2b3; --accent: #e7c34e; --accent-ink: #17202a; --surface: #202b35; background: #111a22; color: var(--ink); font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    .night .app-header { background: #17232d; }
+    .night .post, .night .publish { border-color: #3b4a53; }
+    .night .filter.active { background: #e7c34e; }
+    .night .ad-box { border-color: #2ba9a2; background: #17232d; }
+    .night .app-header .brand em { color: #2ba9a2; }
+
+    .editorial { --ink: #1c1a18; --muted: #756d65; --accent: #d34b38; --accent-ink: #fff; --surface: #fffdf7; background: #f5eee3; color: var(--ink); font-family: "Work Sans", ui-sans-serif, system-ui, sans-serif; }
+    .editorial .app { background: #f5eee3; }
+    .editorial .app-header { background: #1c1a18; color: #fffdf7; border-color: #1c1a18; }
+    .editorial .brand { font-family: Georgia, serif; font-size: 17px; }
+    .editorial .brand em { color: #55aaa0; }
+    .editorial .post:first-of-type { border-left: 5px solid #d34b38; }
+    .editorial .post, .editorial .publish { border-color: #b9aa9a; }
+    .editorial .ad-rail { background: #1c1a18; color: #d7cfc3; padding: 12px; border: 0; }
+    .editorial .ad-rail .rail-label { color: #fffdf7; }
+    .editorial .ad-box { border-color: #d34b38; }
+    .editorial .filter.active { background: #d34b38; }
+
+    @media (max-width: 1080px) { .board { grid-template-columns: 1fr; max-width: 620px; margin: 0 auto; } }
+    @media (max-width: 520px) { .board { padding: 10px; } .app-main { grid-template-columns: 1fr; } .ad-rail { display: none; } .board-head { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <header class="board-head">
+    <h1>Anecdotes du soin · fusion A + B + C</h1>
+    <p>Trois équilibres d'une même direction : clarté clinique, contraste de garde et détails éditoriaux. Chaque panneau montre le fil principal, la publication courte et la colonne réservée aux partenariats.</p>
+  </header>
+  <main class="board">
+    <section class="variant">
+      <div class="variant-label"><strong>A · Clinique claire</strong><span>Lisibilité prioritaire</span></div>
+      <div class="app clinical">
+        <header class="app-header"><div class="brand">Anecdotes <em>du soin</em></div><div class="header-actions"><span>Niveau 7</span><button class="small-btn">Publier</button></div></header>
+        <div class="app-main">
+          <div>
+            <div class="feed-tools"><button class="filter active">Top</button><button class="filter">Nouvelles</button><button class="filter">Infirmiers</button><button class="filter">Léger</button></div>
+            <div class="publish"><h2>Une anecdote à partager ?</h2><textarea placeholder="Racontez votre moment de soin..."></textarea><div class="publish-row"><span>15/355 caractères</span><button>Envoyer pour validation</button></div></div>
+            <article class="post"><div class="post-meta"><span>Infirmière · Patient</span><span>Validée</span></div><p>Aujourd'hui, le patient me demande si le tensiomètre fonctionne aussi sur les pensées négatives.</p><div class="post-foot"><span class="vote"><button>▲</button> 248 <button>▼</button></span><span>Partager</span><span class="profile">Anonyme · Niveau 0</span></div></article>
+            <article class="post"><div class="post-meta"><span>Orthophoniste · Léger</span><span>+ 184</span></div><p>Mon patient a parfaitement prononcé « orthophoniste ». Il a ensuite demandé si je pouvais lui apprendre « mercredi ».</p><div class="post-foot"><span class="vote"><button>▲</button> 184 <button>▼</button></span><span class="profile">MotsEnBouche · Niveau 4</span></div></article>
+          </div>
+          <aside class="ad-rail"><p class="rail-label">Partenaire</p><div class="ad-box">Espace marque santé</div></aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant">
+      <div class="variant-label"><strong>B · Nuit de garde</strong><span>Contraste et densité</span></div>
+      <div class="app night">
+        <header class="app-header"><div class="brand">Anecdotes <em>du soin</em></div><div class="header-actions"><span>XP 420</span><button class="small-btn">Publier</button></div></header>
+        <div class="app-main">
+          <div>
+            <div class="feed-tools"><button class="filter active">Top de garde</button><button class="filter">Récent</button><button class="filter">Urgences</button><button class="filter">Par métier</button></div>
+            <div class="publish"><h2>Le moment que vous n'oublierez pas</h2><textarea placeholder="Texte libre, 355 caractères maximum..."></textarea><div class="publish-row"><span>15/355 caractères</span><button>Soumettre</button></div></div>
+            <article class="post"><div class="post-meta"><span>Ambulancier · Absurde</span><span>+ 312</span></div><p>À 3 h 12, le patient m'a demandé si l'ambulance avait une option « retour à la maison après la pub ».</p><div class="post-foot"><span class="vote"><button>▲</button> 312 <button>▼</button></span><span>Partager</span><span class="profile">GardeDeNuit · Niveau 9</span></div></article>
+            <article class="post"><div class="post-meta"><span>Dentiste · Patient</span><span>+ 221</span></div><p>Le patient ouvre grand la bouche, puis chuchote : « Je peux quand même parler avec les yeux ? »</p><div class="post-foot"><span class="vote"><button>▲</button> 221 <button>▼</button></span><span class="profile">Anonyme · Validée</span></div></article>
+          </div>
+          <aside class="ad-rail"><p class="rail-label">À découvrir</p><div class="ad-box">Partenariat discret<br>avec une marque santé</div></aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="variant">
+      <div class="variant-label"><strong>C · Carnet de service</strong><span>Éditorial et chaleureux</span></div>
+      <div class="app editorial">
+        <header class="app-header"><div class="brand">Anecdotes <em>du soin</em></div><div class="header-actions"><span>Badge : Relève</span><button class="small-btn">+ Anecdote</button></div></header>
+        <div class="app-main">
+          <div>
+            <div class="feed-tools"><button class="filter active">Les mieux votées</button><button class="filter">Aujourd'hui</button><button class="filter">Métiers</button><button class="filter">Thèmes</button></div>
+            <div class="publish"><h2>Le carnet est ouvert</h2><textarea placeholder="Une scène, une phrase, un souvenir..."></textarea><div class="publish-row"><span>15/355 caractères</span><button>Soumettre l'anecdote</button></div></div>
+            <article class="post"><div class="post-meta"><span>Médecin · Moment touchant</span><span>+ 406</span></div><p>Le petit garçon m'a demandé si je pouvais écrire « courage » sur son plâtre, mais en lettres qui ne font pas mal.</p><div class="post-foot"><span class="vote"><button>▲</button> 406 <button>▼</button></span><span>Partager</span><span class="profile">DrEnPause · Niveau 12</span></div></article>
+            <article class="post"><div class="post-meta"><span>Aide-soignante · Collègue</span><span>+ 159</span></div><p>Ma collègue annonce qu'elle prend sa pause. Le service entier applaudit. Elle revient avec six cafés.</p><div class="post-foot"><span class="vote"><button>▲</button> 159 <button>▼</button></span><span class="profile">Anonyme · Validée</span></div></article>
+          </div>
+          <aside class="ad-rail"><p class="rail-label">Le coin partenaire</p><div class="ad-box">Une place calme<br>pour une marque utile</div></aside>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

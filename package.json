@@ -1,0 +1,13 @@
+{
+  "name": "anecdotes-du-soin",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/verify-static.mjs",
+    "check:env": "bun scripts/check-env.mjs",
+    "test": "bun run tests/smoke.mjs && bun run tests/api-smoke.mjs"
+  }
+}

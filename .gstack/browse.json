@@ -1,0 +1,9 @@
+{
+  "pid": 4953,
+  "port": 22768,
+  "token": "949df185-efdc-45d7-8485-717b9b73060f",
+  "startedAt": "2026-08-04T19:40:28.268Z",
+  "serverPath": "/home/nova/gstack-main/browse/src/server.ts",
+  "mode": "launched",
+  "configHash": "303a7eeccc03078b"
+}

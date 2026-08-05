@@ -1,0 +1,33 @@
+{
+  "screen": "anecdotes-feed",
+  "variant": "B",
+  "title": "Anecdotes du soin",
+  "date": "2026-07-13",
+  "source": "design-board.html",
+  "mode": "approved-mockup",
+  "implementation": "vanilla-html",
+  "artifact": ["finalized.html", "profile.html"],
+  "visual_direction": "Interface claire, éditoriale et utilitaire : navigation latérale, bleu franc, accent lime, cartes blanches fines et espaces dédiés au profil, au carnet et aux partenariats.",
+  "features": [
+    "fil Top et Nouvelles",
+    "filtres métier et thème",
+    "recherche instantanée dans le fil",
+    "publication texte libre limitée à 355 caractères",
+    "brouillon local restauré automatiquement dans le composeur",
+    "masquage local des coordonnées et civilités suivies d'un nom avant publication publique",
+    "carnet privé visible depuis le profil",
+    "liens courts privés partageables",
+    "partage public et WhatsApp avec lien court seul, sans texte de l'anecdote",
+    "publication anonyme avec avertissement de modération",
+    "suivi local des soumissions avec profil dans l'onglet Modération",
+    "votes, partage et signalement",
+    "sélections privées d'anecdotes, accessibles depuis le profil",
+    "profil en page dédiée avec publications, sélections, carnet privé et suivi de modération",
+    "Pretext inline pour le calcul de hauteur responsive"
+  ],
+  "verification": {
+    "viewports": ["1440x1100", "1024x1000", "390x844"],
+    "runtime": "scripts compilés avec Bun ; smoke tests navigateur isolé",
+    "interaction_flow": "17 parcours vérifiés: limite, sauvegarde et restauration de brouillon, recherche, vote, lecture étendue, sélection, lien court, WhatsApp sans texte, carnet privé, masquage local, modération et restitution sur le profil ; captures bureau/mobile contrôlées"
+  }
+}
