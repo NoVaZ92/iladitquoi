@@ -6,8 +6,9 @@
 
 ## Architecture recommandee
 
-- Frontend : Next.js avec routes publiques (`/`, `/p/[pseudo]`) et routes privees protegees (`/profil`, `/s/[token]`).
-- Donnees et authentification : PostgreSQL et authentification par lien magique. Une session est necessaire pour enregistrer un carnet, voter, signaler et suivre une moderation.
+- Frontend : HTML, CSS et JavaScript statiques servis par Vercel, avec routes publiques (`/`, `/profil`) et fonctions Node.js sous `/api/*`.
+- Runtime : Node.js 24 pour les builds et fonctions Vercel. Le build execute les contrats statiques et API avant de deploiement.
+- Donnees et authentification : Supabase Postgres et authentification par lien magique. Une session sera necessaire pour enregistrer un carnet, voter, signaler et suivre une moderation.
 - Roles : `member`, `moderator`, `admin`. Les moderateurs ne voient que la file qui leur est attribuee ; chaque action est journalisee.
 - Media et partage : les liens prives sont des jetons aleatoires, stockes hashes, revocables et eventuellement expires. Le texte de l'anecdote ne doit jamais apparaitre dans l'URL, dans le titre partage ni dans le message WhatsApp.
 

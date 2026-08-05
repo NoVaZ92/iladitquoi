@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises';
 
-const files = ['finalized.html', 'profile.html', 'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/submit.js', 'supabase/migrations/0001_initial_schema.sql'];
+const files = ['finalized.html', 'profile.html', 'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/submit.js', 'supabase/migrations/0001_initial_schema.sql', 'package.json', 'vercel.json', '.nvmrc'];
 const contents = await Promise.all(files.map((file) => readFile(file, 'utf8')));
+const packageJson = JSON.parse(contents[8]);
+const vercelConfig = JSON.parse(contents[9]);
 
 const contracts = [
   [contents[0], 'id="anecdote-editor"', 'composeur'],
@@ -20,4 +22,8 @@ for (const [content, needle, label] of contracts) {
   if (!content.includes(needle)) throw new Error(`Contrat manquant: ${label}`);
 }
 
-console.log(`${contracts.length} contrats de livraison vérifiés.`);
+if (packageJson.engines?.node !== '24.x') throw new Error('Runtime Node 24 non verrouillée');
+if (vercelConfig.functions?.['api/*.js']?.runtime !== 'nodejs24.x') throw new Error('Runtime Vercel Functions non verrouillée');
+if (contents[10].trim() !== '24') throw new Error('.nvmrc doit cibler Node 24');
+
+console.log(`${contracts.length + 3} contrats de livraison vérifiés.`);

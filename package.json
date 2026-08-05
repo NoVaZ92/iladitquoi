@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "scripts": {
-    "build": "node scripts/verify-static.mjs",
-    "check:env": "bun scripts/check-env.mjs",
-    "test": "bun run tests/smoke.mjs && bun run tests/api-smoke.mjs"
+    "build": "node scripts/verify-static.mjs && node tests/smoke.mjs && node tests/api-smoke.mjs",
+    "check:env": "node scripts/check-env.mjs",
+    "test": "node tests/smoke.mjs && node tests/api-smoke.mjs"
   }
 }

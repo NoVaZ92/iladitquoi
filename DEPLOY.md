@@ -20,10 +20,11 @@ Ne jamais mettre la cle `service_role` dans le navigateur, dans Git ou dans une 
 
 ## 2. Creer Vercel
 
-1. Creer un compte Vercel Hobby et importer ce depot Git.
-2. Dans `Settings > Environment Variables`, ajouter les quatre valeurs de `.env.example` pour les environnements `Production` et `Preview`.
-3. Pour la premiere mise en ligne, renseigner l'URL Vercel finale dans `PUBLIC_APP_ORIGIN`, sans slash final. Remplacer cette valeur par le domaine final lorsqu'il sera connecte.
-4. Deployer. Vercel execute `npm run build` automatiquement.
+1. Creer un compte Vercel Hobby et importer ce depot Git. Le deploiement Production doit suivre la branche `main`.
+2. Dans `Settings > General > Node.js Version`, choisir `24.x`. Le projet le declare aussi dans `package.json` et `.nvmrc`, et les fonctions `api/*.js` sont explicitement epinglees sur `nodejs24.x` dans `vercel.json`.
+3. Dans `Settings > Environment Variables`, ajouter les quatre valeurs de `.env.example` pour les environnements `Production` et `Preview`.
+4. Pour la premiere mise en ligne, renseigner l'URL Vercel finale dans `PUBLIC_APP_ORIGIN`, sans slash final. Remplacer cette valeur par le domaine final lorsqu'il sera connecte.
+5. A chaque push sur `main`, Vercel execute `npm run build`. Ce build lance les controles statiques et les contrats API avant d'autoriser le deploiement.
 
 ## 3. Verifier apres le premier deploiement
 
@@ -50,8 +51,7 @@ where id = 'UUID_DE_L_ANECDOTE';
 ## Verifications locales
 
 ```bash
-bun scripts/verify-static.mjs
-bun run test
+npm run build
 ```
 
 Pour verifier des valeurs de production avant de les copier dans Vercel :
@@ -61,5 +61,12 @@ SUPABASE_URL=https://votre-projet.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=... \
 SUPABASE_ANON_KEY=... \
 PUBLIC_APP_ORIGIN=https://votre-domaine.example \
-bun run check:env
+npm run check:env
 ```
+
+## Versions verifiees
+
+- Node.js : `24.x` pour les builds et fonctions Vercel. Node 20 n'est plus compatible avec les bibliotheques Supabase recentes.
+- Vercel Functions : runtime Node standard, sans package ou runtime Edge obsolete.
+- Supabase : Postgres et Auth geres par la plateforme ; les routes API utilisent uniquement l'API REST native avec `fetch`, sans SDK ni CLI a maintenir.
+- Bun : facultatif pour le developpement local uniquement. Il n'est pas requis par la CI ni par Vercel.
