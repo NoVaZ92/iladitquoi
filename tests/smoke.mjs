@@ -5,8 +5,8 @@ import { PROFESSIONS } from '../lib/professions.js';
 const names = [
   'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
-  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/vote.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
-  'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js',
+  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
+  'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/vote-handler.js',
   'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
@@ -61,7 +61,7 @@ const contracts = [
   ['api/submit.js', 'profile.profession', 'métier du profil'],
   ['api/private.js', "visibility: 'private'", 'persistance du carnet privé'],
   ['api/private-share.js', 'tokenHash', 'jeton privé haché'],
-  ['api/vote.js', 'cast_anecdote_vote', 'vote atomique'],
+  ['lib/vote-handler.js', 'cast_anecdote_vote', 'vote atomique'],
   ['lib/supabase-config.js', 'SUPABASE_SECRET_KEY', 'clé secrète actuelle'],
   ['lib/supabase-config.js', 'SUPABASE_SERVICE_ROLE_KEY', 'compatibilité clé historique'],
   ['lib/auth-user.js', '/auth/v1/user', 'validation de session'],
@@ -99,6 +99,7 @@ if (source['.nvmrc'].trim() !== '24') throw new Error('.nvmrc doit cibler Node 2
 if (vercelConfig.outputDirectory !== 'public') throw new Error('Dossier de sortie Vercel incorrect');
 if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.destination.includes('anecdote=:id'))) throw new Error('Route courte de partage absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route.destination.includes('private=:token'))) throw new Error('Route courte privée absente');
+if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route.destination.includes('action=vote'))) throw new Error('Route de vote regroupée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
 

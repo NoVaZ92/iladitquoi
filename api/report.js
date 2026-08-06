@@ -1,9 +1,11 @@
 import { authenticateRequest } from '../lib/auth-user.js';
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import voteHandler from '../lib/vote-handler.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function handler(request, response) {
+  if (request.query?.action === 'vote') return voteHandler(request, response);
   if (request.method !== 'POST') return response.status(405).json({ error: 'method_not_allowed' });
   const { url, publishableKey, secretKey } = getSupabaseConfig();
   if (!url || !secretKey) return response.status(503).json({ error: 'service_not_configured' });

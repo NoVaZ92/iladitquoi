@@ -10,7 +10,7 @@ import report from '../api/report.js';
 import privateAnecdote from '../api/private.js';
 import privateShare from '../api/private-share.js';
 import submit from '../api/submit.js';
-import vote from '../api/vote.js';
+import vote from '../lib/vote-handler.js';
 
 function createResponse() {
   return {

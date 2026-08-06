@@ -13,7 +13,8 @@
     { "source": "/p/:token", "destination": "/?private=:token" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/ready", "destination": "/api/ready" },
-    { "source": "/api/configuration", "destination": "/api/config" }
+    { "source": "/api/configuration", "destination": "/api/config" },
+    { "source": "/api/vote", "destination": "/api/report?action=vote" }
   ],
   "headers": [
     {
