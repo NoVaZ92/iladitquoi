@@ -5,7 +5,7 @@ import { PROFESSIONS } from '../lib/professions.js';
 const names = [
   'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
-  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
+  'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
   'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
@@ -61,9 +61,9 @@ const contracts = [
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
   ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
-  ['api/ready.js', 'configuration_required', 'readiness'],
-  ['api/ready.js', '/rest/v1/rpc/rate_limit_ready', 'readiness de la protection anti-abus'],
-  ['api/ready.js', '/rest/v1/rpc/account_deletion_ready', 'readiness de la suppression de compte'],
+  ['api/health.js', 'configuration_required', 'readiness'],
+  ['api/health.js', 'rate_limit_ready', 'readiness de la protection anti-abus'],
+  ['api/health.js', 'account_deletion_ready', 'readiness de la suppression de compte'],
   ['api/config.js', 'configured', 'configuration publique'],
   ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
   ['api/anecdote.js', 'anecdote_not_found', 'anecdote partagée'],
@@ -139,6 +139,7 @@ if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.de
 if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route.destination.includes('private=:token'))) throw new Error('Route courte privée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route.destination.includes('action=vote'))) throw new Error('Route de vote regroupée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
+if (!vercelConfig.rewrites.some((route) => route.source === '/ready' && route.destination === '/api/health?ready=1')) throw new Error('Route readiness groupée absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
 const globalHeaders = vercelConfig.headers?.find((entry) => entry.source === '/(.*)')?.headers || [];
 if (!globalHeaders.some((header) => header.key === 'Content-Security-Policy' && header.value.includes("default-src 'self'"))) throw new Error('Politique de sécurité du navigateur absente');

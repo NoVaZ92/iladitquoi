@@ -12,7 +12,7 @@
     { "source": "/a/:id", "destination": "/?anecdote=:id" },
     { "source": "/p/:token", "destination": "/?private=:token" },
     { "source": "/health", "destination": "/api/health" },
-    { "source": "/ready", "destination": "/api/ready" },
+    { "source": "/ready", "destination": "/api/health?ready=1" },
     { "source": "/api/configuration", "destination": "/api/config" },
     { "source": "/api/vote", "destination": "/api/report?action=vote" }
   ],

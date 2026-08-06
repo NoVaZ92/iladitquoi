@@ -1,5 +1,4 @@
 import health from '../api/health.js';
-import ready from '../api/ready.js';
 import publicConfig from '../api/config.js';
 import anecdote from '../api/anecdote.js';
 import account from '../api/account.js';
@@ -48,7 +47,7 @@ try {
   delete process.env.SUPABASE_ANON_KEY;
   delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   response = createResponse();
-  await ready({}, response);
+  await health({ query: { ready: '1' } }, response);
   if (response.statusCode !== 503 || response.body.configured !== false) throw new Error('Readiness non configurée invalide');
 
   process.env.SUPABASE_URL = 'https://example.supabase.co';
@@ -64,7 +63,7 @@ try {
     return { ok: true, async json() { return []; } };
   };
   response = createResponse();
-  await ready({}, response);
+  await health({ query: { ready: '1' } }, response);
   if (response.statusCode !== 200 || response.body.configured !== true) throw new Error('Readiness configurée invalide');
   if (lastRequest.options.headers.apikey !== 'sb_secret_example' || lastRequest.options.headers.authorization) {
     throw new Error('En-têtes de clé secrète Supabase invalides');
@@ -72,14 +71,14 @@ try {
 
   globalThis.fetch = async () => ({ ok: false, status: 404 });
   response = createResponse();
-  await ready({}, response);
+  await health({ query: { ready: '1' } }, response);
   if (response.statusCode !== 503 || response.body.status !== 'schema_required') throw new Error('Diagnostic de migration Supabase invalide');
 
   globalThis.fetch = async (url) => String(url).endsWith('/rest/v1/rpc/rate_limit_ready')
     ? { ok: false, status: 404, async json() { return {}; } }
     : { ok: true, status: 200, async json() { return []; } };
   response = createResponse();
-  await ready({}, response);
+  await health({ query: { ready: '1' } }, response);
   if (response.statusCode !== 503 || response.body.status !== 'schema_required') {
     throw new Error('La readiness doit détecter une migration anti-abus absente');
   }
