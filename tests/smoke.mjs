@@ -28,6 +28,7 @@ const contracts = [
   ['admin.html', 'src="/assets/admin.js"', 'page administration'],
   ['admin.html', 'id="queue-list"', 'file de validation'],
   ['admin.html', 'id="admin-app" aria-busy="true"', 'état de chargement visible'],
+  ['src/admin.js', 'ClipboardCheck, createIcons, Eye', 'moteur des icônes de la modération'],
   ['src/admin.js', "fetch('/api/admin/decision'", 'décision de modération'],
   ['src/admin.js', "Rechargez la page ou reconnectez-vous", 'erreur administrateur visible'],
   ['src/admin.js', "fetch('/api/admin/report'", 'résolution de signalement'],
