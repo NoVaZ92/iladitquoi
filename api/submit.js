@@ -1,6 +1,7 @@
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
 import { authenticateRequest } from '../lib/auth-user.js';
 import { sanitizePublicText } from '../lib/privacy-filter.js';
+import { enforceRateLimit, RATE_LIMITS } from '../lib/rate-limit.js';
 
 const MAX_CHARS = 355;
 const ALLOWED_THEMES = new Set(['leger', 'drole', 'touchant', 'epuisant', 'surprenant', 'apprentissage']);
@@ -33,6 +34,12 @@ export default async function handler(request, response) {
   if (identity.status === 'invalid') return response.status(401).json({ error: 'invalid_session' });
   if (identity.status === 'unavailable') return response.status(502).json({ error: 'authentication_unavailable' });
   if (!anonymous && identity.status !== 'authenticated') return response.status(401).json({ error: 'authentication_required' });
+  if (!await enforceRateLimit(request, response, {
+    url,
+    secretKey,
+    userId: identity.user?.id,
+    rule: RATE_LIMITS.publicSubmission
+  })) return;
 
   let profile = null;
   if (identity.user) {

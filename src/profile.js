@@ -66,8 +66,11 @@ function bindPrivateShare() {
   const dialog = document.querySelector('#private-share-dialog');
   const urlInput = document.querySelector('#private-share-url');
   const status = document.querySelector('#private-share-status');
+  const copyButton = document.querySelector('#copy-private-share');
+  const whatsapp = document.querySelector('#private-whatsapp-share');
   document.querySelector('#close-private-share').addEventListener('click', () => dialog.close());
-  document.querySelector('#copy-private-share').addEventListener('click', async () => {
+  copyButton.addEventListener('click', async () => {
+    if (!urlInput.value) return;
     try { await navigator.clipboard.writeText(urlInput.value); } catch {
       urlInput.select();
       document.execCommand('copy');
@@ -77,7 +80,11 @@ function bindPrivateShare() {
   window.addEventListener('anecdotes:private-share', async (event) => {
     const token = await window.AnecdotesAuth?.getAccessToken?.();
     if (!token) return;
+    urlInput.value = '';
+    copyButton.disabled = true;
+    whatsapp.hidden = true;
     status.textContent = 'Création du lien privé…';
+    if (!dialog.open) dialog.showModal();
     try {
       const response = await fetch('/api/private-share', {
         method: 'POST',
@@ -85,14 +92,22 @@ function bindPrivateShare() {
         body: JSON.stringify({ anecdoteId: event.detail.anecdoteId })
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.token) throw new Error('share_failed');
+      if (!response.ok || !data.token) {
+        const error = new Error(data.error || 'share_failed');
+        error.retryAfter = Number(data.retryAfter) || 0;
+        throw error;
+      }
       const url = `${location.origin}/p/${data.token}`;
       urlInput.value = url;
-      document.querySelector('#private-whatsapp-share').href = `https://wa.me/?text=${encodeURIComponent(`Je t’envoie une note privée : ${url}`)}`;
+      whatsapp.href = `https://wa.me/?text=${encodeURIComponent(`Je t’envoie une note privée : ${url}`)}`;
+      whatsapp.hidden = false;
+      copyButton.disabled = false;
       status.textContent = '';
-      dialog.showModal();
-    } catch {
-      status.textContent = 'Le lien privé n’a pas pu être créé. Réessayez.';
+    } catch (error) {
+      const minutes = Math.max(1, Math.ceil((error.retryAfter || 1) / 60));
+      status.textContent = error.message === 'rate_limit_exceeded'
+        ? `Trop de liens créés récemment. Réessayez dans ${minutes} min.`
+        : 'Le lien privé n’a pas pu être créé. Réessayez.';
     }
   });
 }

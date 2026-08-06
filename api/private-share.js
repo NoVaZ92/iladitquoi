@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { authenticateRequest } from '../lib/auth-user.js';
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import { enforceRateLimit, RATE_LIMITS } from '../lib/rate-limit.js';
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{24,128}$/;
 
@@ -20,6 +21,12 @@ export default async function handler(request, response) {
     if (identity.status === 'unavailable') return response.status(502).json({ error: 'authentication_unavailable' });
     const anecdoteId = typeof request.body?.anecdoteId === 'string' ? request.body.anecdoteId : '';
     if (!anecdoteId) return response.status(422).json({ error: 'invalid_anecdote' });
+    if (!await enforceRateLimit(request, response, {
+      url,
+      secretKey,
+      userId: identity.user.id,
+      rule: RATE_LIMITS.privateShare
+    })) return;
 
     const anecdoteQuery = new URLSearchParams({
       id: `eq.${anecdoteId}`,

@@ -1,5 +1,6 @@
 import { authenticateRequest } from '../lib/auth-user.js';
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import { enforceRateLimit, RATE_LIMITS } from '../lib/rate-limit.js';
 import voteHandler from '../lib/vote-handler.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -20,6 +21,12 @@ export default async function handler(request, response) {
   const identity = await authenticateRequest(request, { url, publishableKey });
   if (identity.status === 'invalid') return response.status(401).json({ error: 'invalid_session' });
   if (identity.status === 'unavailable') return response.status(502).json({ error: 'authentication_unavailable' });
+  if (!await enforceRateLimit(request, response, {
+    url,
+    secretKey,
+    userId: identity.user?.id,
+    rule: RATE_LIMITS.report
+  })) return;
 
   const anecdoteQuery = new URLSearchParams({
     id: `eq.${anecdoteId}`,

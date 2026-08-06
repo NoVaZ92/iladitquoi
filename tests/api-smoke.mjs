@@ -24,6 +24,12 @@ function createResponse() {
   };
 }
 
+function allowedRateLimitResponse(url) {
+  return String(url).endsWith('/rest/v1/rpc/consume_rate_limit')
+    ? { ok: true, status: 200, async json() { return [{ allowed: true, retry_after_seconds: 0 }]; } }
+    : null;
+}
+
 const originalEnv = { ...process.env };
 const originalFetch = globalThis.fetch;
 
@@ -51,6 +57,9 @@ try {
   let lastRequest;
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    if (lastRequest.url.endsWith('/rest/v1/rpc/rate_limit_ready')) {
+      return { ok: true, status: 200, async json() { return true; } };
+    }
     return { ok: true, async json() { return []; } };
   };
   response = createResponse();
@@ -65,14 +74,56 @@ try {
   await ready({}, response);
   if (response.statusCode !== 503 || response.body.status !== 'schema_required') throw new Error('Diagnostic de migration Supabase invalide');
 
+  globalThis.fetch = async (url) => String(url).endsWith('/rest/v1/rpc/rate_limit_ready')
+    ? { ok: false, status: 404, async json() { return {}; } }
+    : { ok: true, status: 200, async json() { return []; } };
+  response = createResponse();
+  await ready({}, response);
+  if (response.statusCode !== 503 || response.body.status !== 'schema_required') {
+    throw new Error('La readiness doit détecter une migration anti-abus absente');
+  }
+
   response = createResponse();
   publicConfig({}, response);
   if (response.statusCode !== 200 || response.body.supabasePublishableKey !== 'sb_publishable_example') {
     throw new Error('Configuration publique Supabase invalide');
   }
 
+  let rateLimitCalls = 0;
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    rateLimitCalls += 1;
+    return { ok: true, status: 200, async json() { return [{ allowed: false, retry_after_seconds: 45 }]; } };
+  };
+  response = createResponse();
+  await submit({
+    method: 'POST',
+    headers: { origin: 'https://anecdotes.example', 'x-vercel-forwarded-for': '203.0.113.42' },
+    body: { text: 'Une soumission trop rapprochée', profession: 'Infirmière', theme: 'leger', anonymous: true }
+  }, response);
+  const rateLimitPayload = JSON.parse(lastRequest.options.body);
+  if (response.statusCode !== 429 || response.headers['Retry-After'] !== '45' || rateLimitCalls !== 1) {
+    throw new Error('Limitation de débit invalide');
+  }
+  if (!/^[0-9a-f]{64}$/.test(rateLimitPayload.p_subject_hash) || lastRequest.options.body.includes('203.0.113.42')) {
+    throw new Error('Une adresse IP ne doit jamais être stockée en clair par la limitation');
+  }
+
+  globalThis.fetch = async () => ({ ok: false, status: 404, async json() { return {}; } });
+  response = createResponse();
+  await submit({
+    method: 'POST',
+    headers: { origin: 'https://anecdotes.example', 'x-vercel-forwarded-for': '203.0.113.43' },
+    body: { text: 'Une soumission sans limiteur disponible', profession: 'Infirmière', theme: 'leger', anonymous: true }
+  }, response);
+  if (response.statusCode !== 503 || response.body.error !== 'rate_limit_unavailable') {
+    throw new Error('Une écriture doit échouer si le limiteur est indisponible');
+  }
+
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     return {
       ok: true,
       async json() { return [{ id: 'anecdote-1', moderation_status: 'pending' }]; }
@@ -90,6 +141,8 @@ try {
 
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     return { ok: true, async json() { return [{ id: 'privacy-test', moderation_status: 'pending' }]; } };
   };
   response = createResponse();
@@ -126,6 +179,8 @@ try {
 
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     if (lastRequest.url.endsWith('/auth/v1/user')) {
       return { ok: true, status: 200, async json() { return { id: 'user-123', email: 'membre@example.com' }; } };
     }
@@ -162,6 +217,8 @@ try {
 
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
     if (lastRequest.url.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ pseudonym: 'NuitCalme', profession: 'Orthophoniste' }]; } };
     return { ok: true, status: 201, async json() { return [{ id: 'private-1', submitted_at: '2026-08-06T10:00:00Z' }]; } };
@@ -176,6 +233,8 @@ try {
   const privateId = '623e4567-e89b-42d3-a456-426614174005';
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
     if (lastRequest.url.includes('/rest/v1/anecdotes?')) return { ok: true, status: 200, async json() { return [{ id: privateId }]; } };
     if (lastRequest.url.endsWith('/rest/v1/private_share_links')) return { ok: true, status: 201, async json() { return []; } };
@@ -202,6 +261,8 @@ try {
   const votedId = '723e4567-e89b-42d3-a456-426614174006';
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
     if (lastRequest.url.endsWith('/rest/v1/rpc/cast_anecdote_vote')) return { ok: true, status: 200, async json() { return [{ vote_score: 12, user_vote: 1 }]; } };
     return { ok: false, status: 500, async json() { return []; } };
@@ -245,6 +306,8 @@ try {
 
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
     if (lastRequest.url.includes('/rest/v1/anecdotes?')) {
       return { ok: true, status: 200, async json() { return [{ id: sharedId }]; } };
     }
@@ -349,7 +412,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('26 contrats API vérifiés.');
+  console.log('29 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

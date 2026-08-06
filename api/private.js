@@ -1,6 +1,7 @@
 import { authenticateRequest } from '../lib/auth-user.js';
 import { sanitizePublicText } from '../lib/privacy-filter.js';
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import { enforceRateLimit, RATE_LIMITS } from '../lib/rate-limit.js';
 
 const MAX_CHARS = 355;
 const ALLOWED_THEMES = new Set(['leger', 'drole', 'touchant', 'epuisant', 'surprenant', 'apprentissage']);
@@ -20,6 +21,12 @@ export default async function handler(request, response) {
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   const requestedTheme = typeof body.theme === 'string' ? body.theme.trim().toLocaleLowerCase() : 'leger';
   if (!text || text.length > MAX_CHARS) return response.status(422).json({ error: 'invalid_submission' });
+  if (!await enforceRateLimit(request, response, {
+    url,
+    secretKey,
+    userId: identity.user.id,
+    rule: RATE_LIMITS.privateNote
+  })) return;
 
   const profileQuery = new URLSearchParams({ id: `eq.${identity.user.id}`, select: 'pseudonym,profession', limit: '1' });
   let profile;

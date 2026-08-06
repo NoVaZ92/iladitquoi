@@ -24,6 +24,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 - L’onglet **Signalements** affiche les signalements non resolus. Conserver cloture le signalement. Masquer et refuser retire l’anecdote publiee du fil et cloture le signalement associe.
 - Chaque validation ou refus est enregistre dans `moderation_decisions` avec le moderateur, le message auteur et la note interne facultative.
 - L’auteur peut supprimer une anecdote refusee depuis son profil. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour celles dont le refus date de plus de 30 jours ; les decisions, votes et signalements associes sont supprimes en cascade.
+- Les publications, notes privees, votes, signalements et liens prives sont limites par IP et par compte. Les sujets sont haches par HMAC avant stockage dans `private.rate_limit_buckets`, puis les compteurs expires sont purges quotidiennement.
 
 ## Architecture recommandee
 
@@ -45,7 +46,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 ## Garanties avant ouverture publique
 
 1. Filtre cote serveur pour emails, telephones et noms precedes d'une civilite, complete par une file de moderation humaine pour les autres identifiants. Le filtre ne suffit pas a rendre une publication sure.
-2. Limites de debit par IP et compte pour les soumissions, votes, signalements et creation de liens. Ajouter CAPTCHA seulement quand le risque d'abus le justifie.
+2. Limites de debit par IP et compte pour les soumissions, votes, signalements et creation de liens. Elles sont actives ; ajouter CAPTCHA seulement si les alertes de volume montrent qu’elles ne suffisent plus.
 3. Journal d'audit, chiffrement en transit, sauvegardes, suppression de compte et export des donnees. Ne pas conserver les textes de brouillon dans des logs applicatifs.
 4. Politique de confidentialite, CGU, regles de publication et canal de contact moderation accessibles avant toute soumission.
 5. Tests automatises pour les permissions, l'anonymat, la revocation d'un lien prive, le filtrage PII et le cycle de moderation.
@@ -53,7 +54,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 ## Plan de livraison
 
 1. Brancher l'authentification et le schema de donnees, puis migrer le carnet local vers les notes privees serveur.
-2. Le workflow de moderation et le back-office pour les benevoles sont implementes. Ajouter ensuite les limites de debit et les alertes de volume.
-3. Ajouter les liens courts prives et leur revocation, puis les mesures anti-abus.
+2. Le workflow de moderation, le back-office et les limites de debit sont implementes. Ajouter ensuite les alertes de volume.
+3. Les liens courts prives, leur revocation et la suppression des notes du carnet sont implementes.
 4. Connecter votes, profils et XP a la base de donnees, avec metriques et alertes de moderation.
 5. Faire une beta fermee avec des professionnels volontaires avant de vendre des emplacements partenaires.

@@ -81,6 +81,19 @@ function formatDate(value) {
   return days === 1 ? 'hier' : `il y a ${days} j`;
 }
 
+function apiError(data, fallback) {
+  const error = new Error(data?.error || fallback);
+  error.retryAfter = Number(data?.retryAfter) || 0;
+  return error;
+}
+
+function actionErrorMessage(error, fallback) {
+  if (error?.message !== 'rate_limit_exceeded') return fallback;
+  const seconds = Math.max(1, error.retryAfter || 1);
+  const delay = seconds < 60 ? 'moins d’une minute' : `${Math.ceil(seconds / 60)} min`;
+  return `Trop de tentatives rapprochées. Réessayez dans ${delay}.`;
+}
+
 function sharedAnecdoteId() {
   const queryId = new URLSearchParams(location.search).get('anecdote');
   if (queryId) return queryId;
@@ -161,14 +174,14 @@ function createPost(anecdote) {
         body: JSON.stringify({ anecdoteId: anecdote.id, value: direction })
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'vote_failed');
+      if (!response.ok) throw apiError(data, 'vote_failed');
       article.dataset.score = String(Number(data.voteScore) || 0);
       anecdote.vote_score = Number(data.voteScore) || 0;
       localVote = Number(data.userVote) || 0;
       anecdote.user_vote = localVote;
       renderVote();
-    } catch {
-      article.title = 'Votre vote n’a pas pu être enregistré.';
+    } catch (error) {
+      article.title = actionErrorMessage(error, 'Votre vote n’a pas pu être enregistré.');
     } finally {
       up.disabled = false;
       down.disabled = false;
@@ -272,11 +285,13 @@ function createPost(anecdote) {
         headers,
         body: JSON.stringify({ anecdoteId: anecdote.id, reason: 'Contenu signalé depuis le fil public.' })
       });
-      if (!response.ok) throw new Error('report_failed');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw apiError(data, 'report_failed');
       report.querySelector('span').textContent = 'Signalé';
-    } catch {
+    } catch (error) {
       report.disabled = false;
-      report.querySelector('span').textContent = 'Réessayer';
+      report.title = actionErrorMessage(error, 'Le signalement n’a pas pu être envoyé.');
+      report.querySelector('span').textContent = error.message === 'rate_limit_exceeded' ? 'Limite atteinte' : 'Réessayer';
     }
   });
   if (!isPrivateShare) actions.append(share, report);
@@ -519,7 +534,7 @@ function bindComposer() {
           body: JSON.stringify({ text, theme: document.querySelector('#theme-choice').value })
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'private_submission_failed');
+        if (!response.ok) throw apiError(data, 'private_submission_failed');
         privateNoteCount += 1;
         updateNotebookSummary();
         editor.value = '';
@@ -527,8 +542,8 @@ function bindComposer() {
         status.textContent = data.privacy?.changed
           ? `Note enregistrée. Le filtre a masqué : ${data.privacy.flags.join(', ')}.`
           : 'Note enregistrée dans votre carnet privé.';
-      } catch {
-        status.textContent = 'L’enregistrement a échoué. Le brouillon est conservé.';
+      } catch (error) {
+        status.textContent = actionErrorMessage(error, 'L’enregistrement a échoué. Le brouillon est conservé.');
       } finally {
         submit.disabled = false;
       }
@@ -556,7 +571,7 @@ function bindComposer() {
         })
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'submission_failed');
+      if (!response.ok) throw apiError(data, 'submission_failed');
       editor.value = '';
       refresh();
       status.textContent = data.privacy?.changed
@@ -565,7 +580,7 @@ function bindComposer() {
     } catch (error) {
       status.textContent = error.message === 'authentication_required'
         ? 'Votre session a expiré. Reconnectez-vous.'
-        : 'L’envoi a échoué. Le brouillon est conservé.';
+        : actionErrorMessage(error, 'L’envoi a échoué. Le brouillon est conservé.');
     } finally {
       submit.disabled = false;
     }

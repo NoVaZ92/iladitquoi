@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0006`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0006_refused_anecdote_retention.sql` avant de deployer cette version. La migration `0006` active Supabase Cron et programme la purge quotidienne des anecdotes refusees depuis plus de 30 jours.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0008`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0008_private_note_management.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, et `0008` ajoute la gestion des liens et notes prives. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -45,7 +45,9 @@ where id = 'UUID_DE_L_ANECDOTE';
 
 7. Promouvoir un compte `admin`, ouvrir `https://votre-url/admin`, puis traiter une anecdote `pending` et un signalement de test.
 8. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
-9. Refuser une anecdote liee a un compte, puis verifier que son auteur peut la supprimer depuis l'onglet `Moderation` de son profil. Dans `Supabase > Integrations > Cron`, le job `purge-refused-anecdotes-after-30-days` doit etre actif.
+9. Refuser une anecdote liee a un compte, puis verifier que son auteur peut la supprimer depuis l'onglet `Moderation` de son profil. Dans `Supabase > Integrations > Cron`, les jobs `purge-refused-anecdotes-after-30-days` et `purge-expired-rate-limit-buckets` doivent etre actifs.
+10. Verifier dans le SQL Editor que `private.rate_limit_buckets` existe. Les colonnes ne doivent contenir que des empreintes SHA-256 et jamais une adresse IP ou un identifiant de compte en clair.
+11. Creer un lien prive depuis le carnet, verifier sa lecture, puis le revoquer. Le lien doit alors repondre `share_not_found`. Supprimer ensuite la note pour verifier la suppression en cascade de ses liens.
 
 ## 4. Limites de cette beta
 

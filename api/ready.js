@@ -18,6 +18,22 @@ export default async function handler(_request, response) {
       return response.status(503).json({ status: 'schema_required', configured: true });
     }
     if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
+
+    const rateLimitHealth = await fetch(`${url}/rest/v1/rpc/rate_limit_ready`, {
+      method: 'POST',
+      headers: { ...getSupabaseAdminHeaders(secretKey), 'content-type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000)
+    });
+    if (rateLimitHealth.status === 401 || rateLimitHealth.status === 403) {
+      return response.status(503).json({ status: 'credentials_invalid', configured: true });
+    }
+    if (rateLimitHealth.status === 404) {
+      return response.status(503).json({ status: 'schema_required', configured: true });
+    }
+    if (!rateLimitHealth.ok || await rateLimitHealth.json() !== true) {
+      return response.status(503).json({ status: 'dependency_unavailable', configured: true });
+    }
   } catch {
     return response.status(503).json({ status: 'dependency_unavailable', configured: true });
   }

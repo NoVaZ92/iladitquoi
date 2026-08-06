@@ -146,13 +146,13 @@ function showProfileStatus(message, success = false) {
   status.classList.toggle('is-success', success);
 }
 
-function confirmRefusedDeletion() {
-  const dialog = document.querySelector('#delete-refused-dialog');
-  const cancel = document.querySelector('#cancel-refused-delete');
-  const close = document.querySelector('#close-refused-delete');
-  const confirm = document.querySelector('#confirm-refused-delete');
+function confirmProfileAction({ dialogId, cancelId, closeId, confirmId, fallback }) {
+  const dialog = document.querySelector(dialogId);
+  const cancel = document.querySelector(cancelId);
+  const close = document.querySelector(closeId);
+  const confirm = document.querySelector(confirmId);
   if (!dialog?.showModal || !cancel || !close || !confirm) {
-    return Promise.resolve(window.confirm('Supprimer définitivement cette anecdote refusée ?'));
+    return Promise.resolve(window.confirm(fallback));
   }
 
   return new Promise((resolve) => {
@@ -171,6 +171,36 @@ function confirmRefusedDeletion() {
       finish(false);
     }, options);
     dialog.showModal();
+  });
+}
+
+function confirmRefusedDeletion() {
+  return confirmProfileAction({
+    dialogId: '#delete-refused-dialog',
+    cancelId: '#cancel-refused-delete',
+    closeId: '#close-refused-delete',
+    confirmId: '#confirm-refused-delete',
+    fallback: 'Supprimer définitivement cette anecdote refusée ?'
+  });
+}
+
+function confirmPrivateDeletion() {
+  return confirmProfileAction({
+    dialogId: '#delete-private-note-dialog',
+    cancelId: '#cancel-private-note-delete',
+    closeId: '#close-private-note-delete',
+    confirmId: '#confirm-private-note-delete',
+    fallback: 'Supprimer définitivement cette note privée ?'
+  });
+}
+
+function confirmPrivateLinkRevocation() {
+  return confirmProfileAction({
+    dialogId: '#revoke-private-links-dialog',
+    cancelId: '#cancel-private-link-revoke',
+    closeId: '#close-private-link-revoke',
+    confirmId: '#confirm-private-link-revoke',
+    fallback: 'Révoquer les liens de partage de cette note ?'
   });
 }
 
@@ -193,6 +223,47 @@ async function deleteRefusedAnecdote(anecdote, button) {
   } catch {
     button.disabled = false;
     showProfileStatus('Cette anecdote n’a pas pu être supprimée. Rechargez la page puis réessayez.');
+  }
+}
+
+async function deletePrivateAnecdote(anecdote, button) {
+  if (!currentSession || !await confirmPrivateDeletion()) return;
+  button.disabled = true;
+  showProfileStatus('Suppression de la note privée…');
+  try {
+    const { data, error } = await supabase
+      .from('anecdotes')
+      .delete()
+      .eq('id', anecdote.id)
+      .eq('author_id', currentSession.user.id)
+      .eq('visibility', 'private')
+      .select('id');
+    if (error || !data?.length) throw error || new Error('private_note_not_deleted');
+    showProfileStatus('La note privée et ses liens ont été supprimés.', true);
+    await renderProfilePage(currentSession, currentProfile);
+  } catch {
+    button.disabled = false;
+    showProfileStatus('Cette note privée n’a pas pu être supprimée. Rechargez la page puis réessayez.');
+  }
+}
+
+async function revokePrivateLinks(anecdote, button) {
+  if (!currentSession || !await confirmPrivateLinkRevocation()) return;
+  button.disabled = true;
+  showProfileStatus('Révocation des liens privés…');
+  try {
+    const { data, error } = await supabase
+      .from('private_share_links')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('anecdote_id', anecdote.id)
+      .is('revoked_at', null)
+      .select('id');
+    if (error) throw error;
+    showProfileStatus(data?.length ? 'Les liens privés ont été révoqués.' : 'Aucun lien privé actif à révoquer.', true);
+    await renderProfilePage(currentSession, currentProfile);
+  } catch {
+    button.disabled = false;
+    showProfileStatus('Les liens privés n’ont pas pu être révoqués. Rechargez la page puis réessayez.');
   }
 }
 
@@ -262,6 +333,26 @@ function profileEntry(anecdote) {
     share.textContent = 'Créer un lien privé';
     share.addEventListener('click', () => window.dispatchEvent(new CustomEvent('anecdotes:private-share', { detail: { anecdoteId: anecdote.id } })));
     foot.append(share);
+    if (Number(anecdote.activeShareCount) > 0) {
+      const revoke = document.createElement('button');
+      revoke.type = 'button';
+      revoke.className = 'private-revoke-button';
+      revoke.textContent = `Révoquer ${anecdote.activeShareCount} lien${anecdote.activeShareCount > 1 ? 's' : ''}`;
+      revoke.addEventListener('click', () => revokePrivateLinks(anecdote, revoke));
+      foot.append(revoke);
+    }
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'private-delete-button';
+    remove.title = 'Supprimer définitivement cette note privée';
+    const icon = document.createElement('i');
+    icon.dataset.lucide = 'trash-2';
+    icon.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = 'Supprimer';
+    remove.append(icon, label);
+    remove.addEventListener('click', () => deletePrivateAnecdote(anecdote, remove));
+    foot.append(remove);
   } else if (status === 'published') {
     const votes = document.createElement('span');
     votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
@@ -325,11 +416,17 @@ async function renderProfilePage(session, profile) {
   document.querySelectorAll('[data-profile-avatar]').forEach((element) => setAvatar(element, profile.pseudonym, profile.avatar_url));
   setText('[data-profile-xp]', Number(profile.xp) || 0);
 
-  const { data: anecdotes, error } = await supabase
-    .from('anecdotes')
-    .select('id,profession,theme,body,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at,visibility')
-    .eq('author_id', session.user.id)
-    .order('submitted_at', { ascending: false });
+  const [{ data: anecdotes, error }, { data: activeShareLinks, error: linksError }] = await Promise.all([
+    supabase
+      .from('anecdotes')
+      .select('id,profession,theme,body,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at,visibility')
+      .eq('author_id', session.user.id)
+      .order('submitted_at', { ascending: false }),
+    supabase
+      .from('private_share_links')
+      .select('anecdote_id')
+      .is('revoked_at', null)
+  ]);
 
   const publishedList = document.querySelector('#published-list');
   const moderationList = document.querySelector('#pending-list');
@@ -341,8 +438,16 @@ async function renderProfilePage(session, profile) {
     return;
   }
 
+  if (linksError) showProfileStatus('Les liens privés ne sont pas disponibles pour le moment.');
+  const activeShareCounts = new Map();
+  (activeShareLinks || []).forEach((link) => {
+    activeShareCounts.set(link.anecdote_id, (activeShareCounts.get(link.anecdote_id) || 0) + 1);
+  });
+
   const publicAnecdotes = (anecdotes || []).filter((item) => item.visibility === 'public');
-  const privateAnecdotes = (anecdotes || []).filter((item) => item.visibility === 'private');
+  const privateAnecdotes = (anecdotes || [])
+    .filter((item) => item.visibility === 'private')
+    .map((item) => ({ ...item, activeShareCount: activeShareCounts.get(item.id) || 0 }));
   const published = publicAnecdotes.filter((item) => item.moderation_status === 'published');
   const moderation = publicAnecdotes.filter((item) => item.moderation_status !== 'published');
   setText('[data-profile-published-count]', published.length);
