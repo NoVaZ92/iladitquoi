@@ -17,6 +17,7 @@ function setText(selector, value) {
 
 function setStatus(message = '', error = false) {
   const element = document.querySelector('#admin-status');
+  if (!element) return;
   element.textContent = message;
   element.classList.toggle('is-error', error);
 }
@@ -227,7 +228,7 @@ async function loadQueue() {
 }
 
 async function waitForAuth() {
-  for (let attempts = 0; attempts < 80; attempts += 1) {
+  for (let attempts = 0; attempts < 400; attempts += 1) {
     if (window.AnecdotesAuth) return window.AnecdotesAuth;
     await new Promise((resolve) => window.setTimeout(resolve, 25));
   }
@@ -243,13 +244,12 @@ async function initialize() {
   }
   const profile = await auth.getProfile();
   if (!profile || !['moderator', 'admin'].includes(profile.role)) {
-    document.documentElement.classList.add('admin-ready');
+    document.querySelector('#admin-app').hidden = true;
     document.querySelector('#admin-denied').hidden = false;
     return;
   }
   token = await auth.getAccessToken();
-  document.documentElement.classList.add('admin-ready');
-  document.querySelector('#admin-app').hidden = false;
+  document.querySelector('#admin-app').setAttribute('aria-busy', 'false');
   document.querySelectorAll('[data-admin-tab]').forEach((button) => button.addEventListener('click', () => setActiveTab(button.dataset.adminTab)));
   document.querySelector('#refresh-queue').addEventListener('click', loadQueue);
   setActiveTab(activeTab);
@@ -258,6 +258,7 @@ async function initialize() {
 
 renderIcons();
 initialize().catch(() => {
-  document.documentElement.classList.add('admin-ready');
-  setStatus('Impossible de vérifier la session administrateur.', true);
+  const app = document.querySelector('#admin-app');
+  app.setAttribute('aria-busy', 'false');
+  setStatus('Impossible de vérifier la session administrateur. Rechargez la page ou reconnectez-vous.', true);
 });
