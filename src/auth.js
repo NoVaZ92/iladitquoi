@@ -126,7 +126,10 @@ function emptyState(message) {
 
 function profileEntry(anecdote) {
   const article = document.createElement('article');
-  article.className = 'profile-entry';
+  const status = anecdote.moderation_status || 'pending';
+  article.className = `profile-entry is-${status}`;
+  const header = document.createElement('div');
+  header.className = 'profile-entry-top';
   const main = document.createElement('div');
   main.className = 'profile-entry-main';
   const meta = document.createElement('div');
@@ -135,19 +138,37 @@ function profileEntry(anecdote) {
   const copy = document.createElement('p');
   copy.textContent = anecdote.body;
   main.append(meta, copy);
+  const state = document.createElement('span');
+  state.className = `moderation-state is-${status}`;
+  state.textContent = status === 'published' ? 'Validée' : status === 'refused' ? 'Refusée' : 'En cours d’examen';
+  header.append(main, state);
   const foot = document.createElement('div');
   foot.className = 'profile-entry-foot';
-  const votes = document.createElement('span');
-  votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
-  const state = document.createElement('span');
-  state.textContent = anecdote.moderation_status === 'published' ? 'Validée' : anecdote.moderation_status === 'refused' ? 'Refusée' : 'En attente';
-  foot.append(votes, state);
-  if (anecdote.moderation_reason) {
-    const reason = document.createElement('span');
-    reason.textContent = anecdote.moderation_reason;
-    foot.append(reason);
+  const submitted = document.createElement('span');
+  submitted.textContent = `Soumise le ${formatDate(anecdote.submitted_at)}`;
+  foot.append(submitted);
+  if (status === 'published') {
+    const votes = document.createElement('span');
+    votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
+    foot.append(votes);
   }
-  article.append(main, foot);
+  article.append(header);
+  if (status === 'refused') {
+    const decision = document.createElement('div');
+    decision.className = 'moderation-decision is-refused';
+    const title = document.createElement('strong');
+    title.textContent = 'Motif du refus';
+    const reason = document.createElement('span');
+    reason.textContent = anecdote.moderation_reason || 'Cette anecdote ne respecte pas les règles de publication.';
+    decision.append(title, reason);
+    article.append(decision);
+  } else if (status === 'pending') {
+    const decision = document.createElement('div');
+    decision.className = 'moderation-decision is-pending';
+    decision.textContent = anecdote.moderation_reason || 'Votre anecdote est en attente de validation par la modération.';
+    article.append(decision);
+  }
+  article.append(foot);
   return article;
 }
 
@@ -191,10 +212,16 @@ async function renderProfilePage(session, profile) {
   const moderation = publicAnecdotes.filter((item) => item.moderation_status !== 'published');
   setText('[data-profile-published-count]', published.length);
   setText('[data-profile-published-summary]', `${published.length} au total`);
-  setText('#pending-summary', moderation.length ? `${moderation.length} décision${moderation.length > 1 ? 's' : ''}` : 'Aucune soumission en attente');
+  const pendingCount = moderation.filter((item) => item.moderation_status === 'pending').length;
+  const refusedCount = moderation.filter((item) => item.moderation_status === 'refused').length;
+  const moderationSummary = [
+    pendingCount ? `${pendingCount} en cours` : '',
+    refusedCount ? `${refusedCount} refusée${refusedCount > 1 ? 's' : ''}` : ''
+  ].filter(Boolean).join(' · ');
+  setText('#pending-summary', moderationSummary || 'Aucune décision en attente');
 
   if (publishedList) publishedList.replaceChildren(...(published.length ? published.map(profileEntry) : [emptyState('Aucune anecdote publiée pour le moment.') ]));
-  if (moderationList) moderationList.replaceChildren(...(moderation.length ? moderation.map(profileEntry) : [emptyState('Vos prochaines soumissions apparaîtront ici.') ]));
+  if (moderationList) moderationList.replaceChildren(...(moderation.length ? moderation.map(profileEntry) : [emptyState('Aucune anecdote n’attend de décision.') ]));
 
   const badges = [];
   if (published.length >= 1) badges.push('Première publication');

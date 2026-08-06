@@ -6,7 +6,7 @@
   <meta name="description" content="Votre profil iladitquoi, vos publications et votre carnet privé.">
   <title>Mon profil · iladitquoi</title>
   <style>
-    :root { color-scheme: light; --page: #f7f8fb; --surface: #fff; --soft: #f0f3f8; --line: #dfe4ed; --text: #101522; --muted: #687187; --blue: #155cff; --lime: #b8f000; --danger: #b9362b; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    :root { color-scheme: light; --page: #f7f8fb; --surface: #fff; --soft: #f0f3f8; --line: #dfe4ed; --text: #101522; --muted: #687187; --blue: #155cff; --lime: #b8f000; --danger: #b9362b; --warning: #9a5b00; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
     body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--page); color: var(--text); }
     button, a { font: inherit; }
@@ -52,9 +52,21 @@
     .panel-summary { color: var(--muted); font-size: 10px; }
     #published-list, #pending-list, #saved-list, #private-list { display: grid; gap: 10px; }
     .profile-entry, .notebook-entry { border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: white; }
+    .profile-entry { display: grid; gap: 12px; }
+    .profile-entry.is-pending { border-color: #f0d292; background: #fffdf8; box-shadow: inset 3px 0 0 #e59a12; }
+    .profile-entry.is-refused { border-color: #efc8c3; background: #fffafa; box-shadow: inset 3px 0 0 var(--danger); }
+    .profile-entry-top { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
     .profile-entry-main p, .notebook-entry p { margin: 8px 0 0; font-size: 13px; line-height: 1.55; }
     .profile-entry-meta, .notebook-entry > span { color: var(--muted); font-size: 9px; }
-    .profile-entry-foot { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 9px; }
+    .moderation-state { display: inline-flex; flex: none; align-items: center; min-height: 25px; border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; font-size: 9px; font-weight: 800; white-space: nowrap; }
+    .moderation-state.is-pending { border-color: #edcf8c; background: #fff4d9; color: var(--warning); }
+    .moderation-state.is-refused { border-color: #efc8c3; background: #ffebe8; color: var(--danger); }
+    .moderation-state.is-published { border-color: #b9dfc8; background: #ebf8f0; color: #16794f; }
+    .moderation-decision { display: grid; gap: 4px; border-radius: 6px; padding: 11px 12px; font-size: 11px; line-height: 1.5; }
+    .moderation-decision strong { font-size: 10px; }
+    .moderation-decision.is-pending { border: 1px solid #f0d292; background: #fff6df; color: #765116; }
+    .moderation-decision.is-refused { border: 1px solid #efc8c3; background: #ffebe8; color: #852d25; }
+    .profile-entry-foot { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 1px; color: var(--muted); font-size: 9px; }
     .private-empty { display: grid; place-items: center; min-height: 150px; border: 1px dashed var(--line); border-radius: 8px; padding: 24px; color: var(--muted); font-size: 11px; text-align: center; }
     .profile-aside { display: grid; align-content: start; gap: 0; border-left: 1px solid var(--line); padding-left: 24px; }
     .aside-section { border-bottom: 1px solid var(--line); padding: 0 0 20px; }
@@ -69,7 +81,7 @@
     .badge { border-radius: 5px; padding: 6px 8px; background: #eef3ff; color: var(--blue); font-size: 9px; font-weight: 750; }
     @media (max-width: 980px) { .profile-workspace { grid-template-columns: 1fr; } .profile-aside { grid-template-columns: repeat(3, 1fr); gap: 18px; border: 0; border-top: 1px solid var(--line); padding: 22px 0 0; } .aside-section, .aside-section + .aside-section { border: 0; padding: 0; } }
     @media (max-width: 760px) { .profile-shell { display: block; } .profile-sidebar { display: none; } .mobile-head { display: flex; align-items: center; justify-content: space-between; min-height: 62px; border-bottom: 1px solid var(--line); padding: 10px 16px; background: white; } .mobile-head .brand-mark { width: 34px; height: 34px; font-size: 29px; } .mobile-head .brand strong { font-size: 18px; } .profile-inner { padding: 26px 16px 50px; } .profile-hero { align-items: start; flex-direction: column; } .profile-stats { width: 100%; } .profile-stat { flex: 1; min-width: 0; padding-inline: 10px; } .profile-stat:first-child { border-left: 0; } .profile-aside { grid-template-columns: 1fr; } }
-    @media (max-width: 430px) { .profile-inner { padding-inline: 12px; } .profile-avatar-large { width: 58px; height: 58px; } h1 { font-size: 25px; } .profile-stat strong { font-size: 19px; } }
+    @media (max-width: 430px) { .profile-inner { padding-inline: 12px; } .profile-avatar-large { width: 58px; height: 58px; } h1 { font-size: 25px; } .profile-stat strong { font-size: 19px; } .profile-entry-top { display: grid; } .moderation-state { width: max-content; } }
   </style>
 </head>
 <body data-page="profile">
@@ -93,7 +105,7 @@
             <section class="profile-panel" data-profile-panel="published"><div class="panel-head"><div><h2>Vos publications</h2><p>Les anecdotes validées et visibles dans le fil.</p></div><span class="panel-summary" data-profile-published-summary>0 au total</span></div><div id="published-list"><div class="private-empty">Chargement des publications…</div></div></section>
             <section class="profile-panel" data-profile-panel="saved" hidden><div class="panel-head"><div><h2>Vos sélections</h2><p>Les histoires gardées pour plus tard.</p></div><span class="panel-summary" id="saved-summary">Aucune sélection</span></div><div id="saved-list"></div></section>
             <section class="profile-panel" data-profile-panel="private" hidden><div class="panel-head"><div><h2>Carnet privé</h2><p>Ces notes restent sur cet appareil dans cette version.</p></div><span class="panel-summary" id="private-summary">Aucune note privée</span></div><div id="private-list"></div></section>
-            <section class="profile-panel" data-profile-panel="pending" hidden><div class="panel-head"><div><h2>Suivi de modération</h2><p>Décisions humaines et alertes du filtre automatique.</p></div><span class="panel-summary" id="pending-summary">Aucune soumission</span></div><div id="pending-list"><div class="private-empty">Chargement de la modération…</div></div></section>
+            <section class="profile-panel" data-profile-panel="pending" hidden><div class="panel-head"><div><h2>Décisions de modération</h2><p>Le statut et le motif de chaque décision sur vos anecdotes.</p></div><span class="panel-summary" id="pending-summary">Aucune décision</span></div><div id="pending-list"><div class="private-empty">Chargement des décisions…</div></div></section>
           </div>
           <aside class="profile-aside">
             <section class="aside-section"><h2><i data-lucide="pen-line"></i>Écrire</h2><p>Ajoutez une anecdote publique ou une note privée.</p><a class="profile-action" href="/#composer"><i data-lucide="pen-line"></i>Nouvelle anecdote</a></section>
