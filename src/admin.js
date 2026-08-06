@@ -155,8 +155,13 @@ function renderPending(items) {
   renderIcons(list);
 }
 
-function renderReports(items) {
+function renderReports(items, reportsAvailable = true) {
   const list = document.querySelector('#reports-list');
+  if (!reportsAvailable) {
+    list.replaceChildren(emptyState('Les signalements ne sont pas disponibles pour le moment. La file d’anecdotes reste utilisable.'));
+    renderIcons(list);
+    return;
+  }
   if (!items.length) {
     list.replaceChildren(emptyState('Aucun signalement ouvert.'));
     renderIcons(list);
@@ -218,7 +223,8 @@ async function loadQueue() {
     setText('#pending-count', data.pending.length);
     setText('#reports-count', data.reports.length);
     renderPending(data.pending);
-    renderReports(data.reports);
+    renderReports(data.reports, data.reportsAvailable !== false);
+    if (data.reportsAvailable === false) setStatus('Les anecdotes à valider sont chargées. Les signalements sont temporairement indisponibles.', true);
   } catch (error) {
     const message = error.message === 'forbidden' ? 'Votre compte ne possède pas les droits de modération.' : 'La file de modération est indisponible.';
     setStatus(message, true);

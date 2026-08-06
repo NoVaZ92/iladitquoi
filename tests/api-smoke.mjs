@@ -222,6 +222,19 @@ try {
     throw new Error('Un membre ne doit pas accéder à la modération');
   }
 
+  globalThis.fetch = async (url) => {
+    const value = String(url);
+    if (value.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: '323e4567-e89b-42d3-a456-426614174002' }; } };
+    if (value.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ id: '323e4567-e89b-42d3-a456-426614174002', pseudonym: 'Admin', role: 'admin' }]; } };
+    if (value.includes('/rest/v1/reports?')) return { ok: false, status: 404, async json() { return { error: 'missing_table' }; } };
+    return { ok: true, status: 200, async json() { return [{ id: '423e4567-e89b-42d3-a456-426614174003', body: 'Anecdote en attente' }]; } };
+  };
+  response = createResponse();
+  await adminQueue({ method: 'GET', headers: { authorization: 'Bearer moderator-token' } }, response);
+  if (response.statusCode !== 200 || response.body.pending.length !== 1 || response.body.reportsAvailable !== false) {
+    throw new Error('Une panne de signalements ne doit pas bloquer la file de modération');
+  }
+
   const moderatorId = '323e4567-e89b-42d3-a456-426614174002';
   const pendingId = '423e4567-e89b-42d3-a456-426614174003';
   const reportId = '523e4567-e89b-42d3-a456-426614174004';
@@ -281,7 +294,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('21 contrats API vérifiés.');
+  console.log('22 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

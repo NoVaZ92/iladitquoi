@@ -26,13 +26,27 @@ export default async function handler(request, response) {
     limit: '100'
   });
 
+  let pending;
   try {
-    const [pendingResponse, reportsResponse] = await Promise.all([
-      fetch(`${config.url}/rest/v1/anecdotes?${pendingQuery}`, { headers, signal: AbortSignal.timeout(5000) }),
-      fetch(`${config.url}/rest/v1/reports?${reportsQuery}`, { headers, signal: AbortSignal.timeout(5000) })
-    ]);
-    if (!pendingResponse.ok || !reportsResponse.ok) return response.status(502).json({ error: 'queue_unavailable' });
-    const [pending, reports] = await Promise.all([pendingResponse.json(), reportsResponse.json()]);
+    const pendingResponse = await fetch(`${config.url}/rest/v1/anecdotes?${pendingQuery}`, {
+      headers,
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!pendingResponse.ok) return response.status(502).json({ error: 'queue_unavailable' });
+    pending = await pendingResponse.json();
+  } catch {
+    return response.status(502).json({ error: 'queue_unavailable' });
+  }
+
+  let reports = [];
+  let reportsAvailable = true;
+  try {
+    const reportsResponse = await fetch(`${config.url}/rest/v1/reports?${reportsQuery}`, {
+      headers,
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!reportsResponse.ok) throw new Error('reports_unavailable');
+    reports = await reportsResponse.json();
     const anecdoteIds = [...new Set(reports.map((report) => report.anecdote_id).filter(Boolean))];
     const reporterIds = [...new Set(reports.map((report) => report.reporter_id).filter(Boolean))];
     const [anecdotesResponse, reportersResponse] = await Promise.all([
@@ -43,21 +57,24 @@ export default async function handler(request, response) {
         ? fetch(`${config.url}/rest/v1/profiles?${new URLSearchParams({ select: 'id,pseudonym', id: idsFilter(reporterIds) })}`, { headers, signal: AbortSignal.timeout(5000) })
         : Promise.resolve({ ok: true, json: async () => [] })
     ]);
-    if (!anecdotesResponse.ok || !reportersResponse.ok) return response.status(502).json({ error: 'queue_unavailable' });
+    if (!anecdotesResponse.ok || !reportersResponse.ok) throw new Error('reports_unavailable');
     const [reportedAnecdotes, reporters] = await Promise.all([anecdotesResponse.json(), reportersResponse.json()]);
     const anecdotesById = new Map(reportedAnecdotes.map((anecdote) => [anecdote.id, anecdote]));
     const reportersById = new Map(reporters.map((reporter) => [reporter.id, reporter.pseudonym]));
-    response.setHeader('Cache-Control', 'no-store');
-    return response.status(200).json({
-      moderator: { pseudonym: profile.pseudonym, role: profile.role },
-      pending,
-      reports: reports.map((report) => ({
+    reports = reports.map((report) => ({
         ...report,
         anecdote: anecdotesById.get(report.anecdote_id) || null,
         reporter_label: report.reporter_id ? reportersById.get(report.reporter_id) || 'Compte supprimé' : 'Visiteur anonyme'
-      }))
-    });
+      }));
   } catch {
-    return response.status(502).json({ error: 'queue_unavailable' });
+    reports = [];
+    reportsAvailable = false;
   }
+  response.setHeader('Cache-Control', 'no-store');
+  return response.status(200).json({
+    moderator: { pseudonym: profile.pseudonym, role: profile.role },
+    pending,
+    reports,
+    reportsAvailable
+  });
 }
