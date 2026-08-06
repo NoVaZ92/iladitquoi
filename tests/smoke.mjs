@@ -5,7 +5,7 @@ import { PROFESSIONS } from '../lib/professions.js';
 const names = [
   'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
-  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
+  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js',
   'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
@@ -42,9 +42,12 @@ const contracts = [
   ['src/feed.js', '`${location.origin}/a/${anecdote.id}`', 'lien de partage du déploiement courant'],
   ['src/feed.js', "location.pathname.match(/^\\/a\\/", 'lecture de la route courte dans le navigateur'],
   ['src/feed.js', "fetch('/api/report'", 'signalement cloud'],
+  ['src/feed.js', "fetch('/api/private'", 'carnet privé cloud'],
+  ['src/feed.js', 'sharedPrivateToken', 'lecture du lien privé dans le navigateur'],
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
   ['src/auth.js', 'Motif du refus', 'motif de modération visible'],
+  ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
   ['api/health.js', "status: 'ok'", 'health check'],
   ['api/ready.js', 'configuration_required', 'readiness'],
   ['api/config.js', 'configured', 'configuration publique'],
@@ -53,6 +56,8 @@ const contracts = [
   ['api/report.js', '/rest/v1/reports', 'persistance du signalement'],
   ['api/submit.js', 'sanitizePublicText', 'filtre serveur'],
   ['api/submit.js', 'profile.profession', 'métier du profil'],
+  ['api/private.js', "visibility: 'private'", 'persistance du carnet privé'],
+  ['api/private-share.js', 'tokenHash', 'jeton privé haché'],
   ['lib/supabase-config.js', 'SUPABASE_SECRET_KEY', 'clé secrète actuelle'],
   ['lib/supabase-config.js', 'SUPABASE_SERVICE_ROLE_KEY', 'compatibilité clé historique'],
   ['lib/auth-user.js', '/auth/v1/user', 'validation de session'],
@@ -87,6 +92,7 @@ if (packageJson.devDependencies?.esbuild !== '0.28.1') throw new Error('Version 
 if (source['.nvmrc'].trim() !== '24') throw new Error('.nvmrc doit cibler Node 24');
 if (vercelConfig.outputDirectory !== 'public') throw new Error('Dossier de sortie Vercel incorrect');
 if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.destination.includes('anecdote=:id'))) throw new Error('Route courte de partage absente');
+if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route.destination.includes('private=:token'))) throw new Error('Route courte privée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
 

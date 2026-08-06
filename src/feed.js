@@ -9,10 +9,8 @@ import { sanitizePublicText } from '../lib/privacy-filter.js';
 
 const MAX_CHARS = 355;
 const DRAFT_KEY = 'iladitquoi.composer-draft';
-const PRIVATE_KEY = 'iladitquoi.private-notes';
 const SAVED_KEY = 'iladitquoi.saved-posts';
 const LEGACY_SAVED_KEY = 'anecdotes-du-soin.saved-posts';
-const LEGACY_PRIVATE_KEY = 'anecdotes-du-soin.private-notes';
 const THEMES = {
   leger: { label: 'Léger', tone: 'blue' },
   drole: { label: 'Drôle', tone: 'orange' },
@@ -31,6 +29,7 @@ const ICONS = {
 let feedItems = [];
 let currentSort = new URLSearchParams(location.search).get('sort') === 'new' ? 'new' : 'top';
 let currentProfile = null;
+let privateNoteCount = 0;
 
 function renderIcons(root = document) {
   createIcons({ icons: ICONS, root, attrs: { 'stroke-width': 1.8 } });
@@ -49,17 +48,6 @@ function saveJson(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage may be unavailable */ }
 }
 
-function loadPrivateNotes() {
-  const current = loadJson(PRIVATE_KEY, []);
-  if (Array.isArray(current) && current.length) return current;
-  const legacy = loadJson(LEGACY_PRIVATE_KEY, []);
-  if (Array.isArray(legacy) && legacy.length) {
-    saveJson(PRIVATE_KEY, legacy);
-    return legacy;
-  }
-  return [];
-}
-
 function loadSavedPosts() {
   const current = loadJson(SAVED_KEY, []);
   if (Array.isArray(current) && current.length) return current;
@@ -72,9 +60,8 @@ function loadSavedPosts() {
 }
 
 function updateNotebookSummary() {
-  const count = loadPrivateNotes().length;
   document.querySelectorAll('[data-private-count]').forEach((element) => {
-    element.textContent = String(count);
+    element.textContent = String(privateNoteCount);
   });
 }
 
@@ -101,6 +88,13 @@ function sharedAnecdoteId() {
   return pathMatch?.[1] || '';
 }
 
+function sharedPrivateToken() {
+  const queryToken = new URLSearchParams(location.search).get('private');
+  if (queryToken) return queryToken;
+  const pathMatch = location.pathname.match(/^\/p\/([A-Za-z0-9_-]{24,128})\/?$/);
+  return pathMatch?.[1] || '';
+}
+
 function createButton(label, icon, className) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -116,7 +110,8 @@ function createButton(label, icon, className) {
 
 function createPost(anecdote) {
   const article = document.createElement('article');
-  article.className = 'story';
+  const isPrivateShare = anecdote.private_share === true;
+  article.className = `story${isPrivateShare ? ' is-private-share' : ''}`;
   article.dataset.id = anecdote.id;
   article.dataset.profession = String(anecdote.profession || 'Métier du soin');
   article.dataset.theme = String(anecdote.theme || 'leger');
@@ -137,7 +132,13 @@ function createPost(anecdote) {
   down.className = 'vote-control';
   down.setAttribute('aria-label', 'Downvoter');
   down.innerHTML = '<i data-lucide="arrow-down"></i>';
-  voteColumn.append(up, score, down);
+  if (isPrivateShare) {
+    voteColumn.classList.add('private-share-votes');
+    score.textContent = 'Privé';
+    voteColumn.append(score);
+  } else {
+    voteColumn.append(up, score, down);
+  }
 
   let localVote = 0;
   const applyVote = (direction) => {
@@ -147,8 +148,10 @@ function createPost(anecdote) {
     up.classList.toggle('is-active', localVote === 1);
     down.classList.toggle('is-active', localVote === -1);
   };
-  up.addEventListener('click', () => applyVote(1));
-  down.addEventListener('click', () => applyVote(-1));
+  if (!isPrivateShare) {
+    up.addEventListener('click', () => applyVote(1));
+    down.addEventListener('click', () => applyVote(-1));
+  }
 
   const content = document.createElement('div');
   content.className = 'story-content';
@@ -186,7 +189,14 @@ function createPost(anecdote) {
     saveJson(SAVED_KEY, savedPosts);
     updateSavedState();
   });
-  header.append(themeBadge, save);
+  if (isPrivateShare) {
+    const privateBadge = document.createElement('span');
+    privateBadge.className = 'private-share-badge';
+    privateBadge.textContent = 'Lien privé';
+    header.append(themeBadge, privateBadge);
+  } else {
+    header.append(themeBadge, save);
+  }
 
   const copy = document.createElement('p');
   copy.className = 'story-copy';
@@ -242,7 +252,7 @@ function createPost(anecdote) {
       report.querySelector('span').textContent = 'Réessayer';
     }
   });
-  actions.append(share, report);
+  if (!isPrivateShare) actions.append(share, report);
   footer.append(identity, actions);
   content.append(header, copy, readMore, footer);
   article.append(voteColumn, content);
@@ -317,6 +327,16 @@ async function loadFeed(sort = currentSort) {
 }
 
 async function includeSharedAnecdote() {
+  const privateToken = sharedPrivateToken();
+  if (privateToken) {
+    try {
+      const response = await fetch(`/api/private-share?token=${encodeURIComponent(privateToken)}`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.anecdote) feedItems.unshift(data.anecdote);
+    } catch { /* the public feed remains available */ }
+    return;
+  }
   const id = sharedAnecdoteId();
   if (!id || feedItems.some((item) => item.id === id)) return;
   try {
@@ -328,7 +348,7 @@ async function includeSharedAnecdote() {
 }
 
 function focusSharedAnecdote() {
-  const id = sharedAnecdoteId();
+  const id = sharedPrivateToken() ? feedItems.find((item) => item.private_share)?.id : sharedAnecdoteId();
   if (!id) return;
   const post = [...document.querySelectorAll('.story')].find((item) => item.dataset.id === id);
   if (!post) return;
@@ -389,6 +409,8 @@ function updateComposerIdentity(profile) {
 async function syncAuthProfile() {
   const profile = await window.AnecdotesAuth?.getProfile?.();
   updateComposerIdentity(profile || null);
+  privateNoteCount = await window.AnecdotesAuth?.getPrivateCount?.() || 0;
+  updateNotebookSummary();
 }
 
 function bindComposer() {
@@ -452,13 +474,29 @@ function bindComposer() {
         status.textContent = 'Connectez-vous pour utiliser le carnet privé.';
         return;
       }
-      const notes = loadPrivateNotes();
-      notes.unshift({ id: crypto.randomUUID(), text, profession: currentProfile?.profession || profession.value, createdAt: Date.now() });
-      saveJson(PRIVATE_KEY, notes);
-      updateNotebookSummary();
-      editor.value = '';
-      refresh();
-      status.textContent = 'Anecdote enregistrée dans votre carnet privé sur cet appareil.';
+      submit.disabled = true;
+      status.textContent = 'Enregistrement dans votre carnet privé…';
+      try {
+        const token = await window.AnecdotesAuth?.getAccessToken?.();
+        const response = await fetch('/api/private', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+          body: JSON.stringify({ text, theme: document.querySelector('#theme-choice').value })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'private_submission_failed');
+        privateNoteCount += 1;
+        updateNotebookSummary();
+        editor.value = '';
+        refresh();
+        status.textContent = data.privacy?.changed
+          ? `Note enregistrée. Le filtre a masqué : ${data.privacy.flags.join(', ')}.`
+          : 'Note enregistrée dans votre carnet privé.';
+      } catch {
+        status.textContent = 'L’enregistrement a échoué. Le brouillon est conservé.';
+      } finally {
+        submit.disabled = false;
+      }
       return;
     }
     if (!anonymous.checked && !session) {
@@ -513,7 +551,7 @@ function initialize() {
   bindFilters();
   bindShareDialog();
   updateNotebookSummary();
-  window.addEventListener('anecdotes:auth', (event) => updateComposerIdentity(event.detail.profile));
+  window.addEventListener('anecdotes:auth', () => syncAuthProfile().catch(() => updateComposerIdentity(null)));
   syncAuthProfile().catch(() => updateComposerIdentity(null));
   loadFeed(currentSort);
 }

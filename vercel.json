@@ -10,6 +10,7 @@
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/regles", "destination": "/rules.html" },
     { "source": "/a/:id", "destination": "/?anecdote=:id" },
+    { "source": "/p/:token", "destination": "/?private=:token" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/ready", "destination": "/api/ready" },
     { "source": "/api/configuration", "destination": "/api/config" }

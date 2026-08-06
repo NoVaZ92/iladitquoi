@@ -3,6 +3,7 @@ import { populateProfessionSelect } from '../lib/professions.js';
 
 const AUTH_PAGE = '/auth.html';
 const PROFILE_PAGE = '/profile.html';
+const LEGACY_PRIVATE_KEYS = ['iladitquoi.private-notes', 'anecdotes-du-soin.private-notes'];
 let supabase;
 let currentSession = null;
 let currentProfile = null;
@@ -124,10 +125,46 @@ function emptyState(message) {
   return element;
 }
 
+function legacyPrivateNotes() {
+  for (const key of LEGACY_PRIVATE_KEYS) {
+    try {
+      const notes = JSON.parse(localStorage.getItem(key) || '[]');
+      if (Array.isArray(notes) && notes.length) return { key, notes };
+    } catch { /* unreadable storage behaves as an empty legacy notebook */ }
+  }
+  return { key: LEGACY_PRIVATE_KEYS[0], notes: [] };
+}
+
+async function migrateLegacyPrivateNotes(session, profile) {
+  if (!session || !profile?.profession) return;
+  const { key, notes } = legacyPrivateNotes();
+  if (!notes.length) return;
+  const remaining = [];
+  for (const note of notes) {
+    const text = typeof note?.text === 'string' ? note.text.trim() : '';
+    if (!text) continue;
+    try {
+      const response = await fetch('/api/private', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ text, theme: note.theme || 'leger' })
+      });
+      if (!response.ok) remaining.push(note);
+    } catch {
+      remaining.push(note);
+    }
+  }
+  try {
+    if (remaining.length) localStorage.setItem(key, JSON.stringify(remaining));
+    else LEGACY_PRIVATE_KEYS.forEach((legacyKey) => localStorage.removeItem(legacyKey));
+  } catch { /* a later authenticated session can retry the migration */ }
+}
+
 function profileEntry(anecdote) {
   const article = document.createElement('article');
+  const isPrivate = anecdote.visibility === 'private';
   const status = anecdote.moderation_status || 'pending';
-  article.className = `profile-entry is-${status}`;
+  article.className = `profile-entry ${isPrivate ? 'is-private' : `is-${status}`}`;
   const header = document.createElement('div');
   header.className = 'profile-entry-top';
   const main = document.createElement('div');
@@ -139,21 +176,28 @@ function profileEntry(anecdote) {
   copy.textContent = anecdote.body;
   main.append(meta, copy);
   const state = document.createElement('span');
-  state.className = `moderation-state is-${status}`;
-  state.textContent = status === 'published' ? 'Validée' : status === 'refused' ? 'Refusée' : 'En cours d’examen';
+  state.className = `moderation-state ${isPrivate ? 'is-private' : `is-${status}`}`;
+  state.textContent = isPrivate ? 'Privée' : status === 'published' ? 'Validée' : status === 'refused' ? 'Refusée' : 'En cours d’examen';
   header.append(main, state);
   const foot = document.createElement('div');
   foot.className = 'profile-entry-foot';
   const submitted = document.createElement('span');
-  submitted.textContent = `Soumise le ${formatDate(anecdote.submitted_at)}`;
+  submitted.textContent = `${isPrivate ? 'Enregistrée' : 'Soumise'} le ${formatDate(anecdote.submitted_at)}`;
   foot.append(submitted);
-  if (status === 'published') {
+  if (isPrivate) {
+    const share = document.createElement('button');
+    share.type = 'button';
+    share.className = 'private-share-button';
+    share.textContent = 'Créer un lien privé';
+    share.addEventListener('click', () => window.dispatchEvent(new CustomEvent('anecdotes:private-share', { detail: { anecdoteId: anecdote.id } })));
+    foot.append(share);
+  } else if (status === 'published') {
     const votes = document.createElement('span');
     votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
     foot.append(votes);
   }
   article.append(header);
-  if (status === 'refused') {
+  if (!isPrivate && status === 'refused') {
     const decision = document.createElement('div');
     decision.className = 'moderation-decision is-refused';
     const title = document.createElement('strong');
@@ -162,7 +206,7 @@ function profileEntry(anecdote) {
     reason.textContent = anecdote.moderation_reason || 'Cette anecdote ne respecte pas les règles de publication.';
     decision.append(title, reason);
     article.append(decision);
-  } else if (status === 'pending') {
+  } else if (!isPrivate && status === 'pending') {
     const decision = document.createElement('div');
     decision.className = 'moderation-decision is-pending';
     decision.textContent = anecdote.moderation_reason || 'Votre anecdote est en attente de validation par la modération.';
@@ -201,13 +245,16 @@ async function renderProfilePage(session, profile) {
 
   const publishedList = document.querySelector('#published-list');
   const moderationList = document.querySelector('#pending-list');
+  const privateList = document.querySelector('#private-list');
   if (error) {
     publishedList?.replaceChildren(emptyState('Impossible de charger vos publications.'));
     moderationList?.replaceChildren(emptyState('Impossible de charger le suivi de modération.'));
+    privateList?.replaceChildren(emptyState('Impossible de charger votre carnet privé.'));
     return;
   }
 
   const publicAnecdotes = (anecdotes || []).filter((item) => item.visibility === 'public');
+  const privateAnecdotes = (anecdotes || []).filter((item) => item.visibility === 'private');
   const published = publicAnecdotes.filter((item) => item.moderation_status === 'published');
   const moderation = publicAnecdotes.filter((item) => item.moderation_status !== 'published');
   setText('[data-profile-published-count]', published.length);
@@ -221,6 +268,8 @@ async function renderProfilePage(session, profile) {
   setText('#pending-summary', moderationSummary || 'Aucune décision en attente');
 
   if (publishedList) publishedList.replaceChildren(...(published.length ? published.map(profileEntry) : [emptyState('Aucune anecdote publiée pour le moment.') ]));
+  setText('#private-summary', privateAnecdotes.length ? `${privateAnecdotes.length} note${privateAnecdotes.length > 1 ? 's' : ''}` : 'Carnet vide');
+  if (privateList) privateList.replaceChildren(...(privateAnecdotes.length ? privateAnecdotes.map(profileEntry) : [emptyState('Votre carnet est vide. Ajoutez une note depuis la page d’accueil.') ]));
   if (moderationList) moderationList.replaceChildren(...(moderation.length ? moderation.map(profileEntry) : [emptyState('Aucune anecdote n’attend de décision.') ]));
 
   const badges = [];
@@ -433,6 +482,7 @@ async function setupAuthPage(session, profile) {
 async function applySession(session) {
   currentSession = session;
   currentProfile = session ? await fetchProfile(session) : null;
+  await migrateLegacyPrivateNotes(currentSession, currentProfile);
   updateAccountChrome(session, currentProfile);
   bindGlobalAccountActions();
   if (document.body.dataset.page === 'profile') await renderProfilePage(session, currentProfile);
@@ -464,5 +514,15 @@ window.AnecdotesAuth = {
   async getSession() { await ready; return currentSession; },
   async getProfile() { await ready; return currentProfile; },
   async getAccessToken() { await ready; return currentSession?.access_token || ''; },
+  async getPrivateCount() {
+    await ready;
+    if (!currentSession) return 0;
+    const { count, error } = await supabase
+      .from('anecdotes')
+      .select('id', { count: 'exact', head: true })
+      .eq('author_id', currentSession.user.id)
+      .eq('visibility', 'private');
+    return error ? 0 : Number(count) || 0;
+  },
   async signOut() { await ready; return supabase?.auth.signOut(); }
 };

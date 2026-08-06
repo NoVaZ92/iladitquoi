@@ -7,6 +7,8 @@ import adminQueue from '../api/admin/queue.js';
 import adminReport from '../api/admin/report.js';
 import feed from '../api/feed.js';
 import report from '../api/report.js';
+import privateAnecdote from '../api/private.js';
+import privateShare from '../api/private-share.js';
 import submit from '../api/submit.js';
 
 function createResponse() {
@@ -157,6 +159,45 @@ try {
     throw new Error('Le suivi privé d’une soumission anonyme connectée est invalide');
   }
 
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
+    if (lastRequest.url.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ pseudonym: 'NuitCalme', profession: 'Orthophoniste' }]; } };
+    return { ok: true, status: 201, async json() { return [{ id: 'private-1', submitted_at: '2026-08-06T10:00:00Z' }]; } };
+  };
+  response = createResponse();
+  await privateAnecdote({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { text: 'Amine garde cette idée dans son carnet.', theme: 'drole' } }, response);
+  const privatePayload = JSON.parse(lastRequest.options.body);
+  if (response.statusCode !== 201 || privatePayload.visibility !== 'private' || privatePayload.moderation_status !== 'published' || privatePayload.body.includes('Amine')) {
+    throw new Error('Enregistrement du carnet privé invalide');
+  }
+
+  const privateId = '623e4567-e89b-42d3-a456-426614174005';
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
+    if (lastRequest.url.includes('/rest/v1/anecdotes?')) return { ok: true, status: 200, async json() { return [{ id: privateId }]; } };
+    if (lastRequest.url.endsWith('/rest/v1/private_share_links')) return { ok: true, status: 201, async json() { return []; } };
+    return { ok: false, status: 500, async json() { return []; } };
+  };
+  response = createResponse();
+  await privateShare({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { anecdoteId: privateId } }, response);
+  if (response.statusCode !== 201 || !/^[A-Za-z0-9_-]{24,}$/.test(response.body.token) || !lastRequest.options.body.includes('token_hash')) {
+    throw new Error('Création du lien privé invalide');
+  }
+
+  globalThis.fetch = async (url) => {
+    const value = String(url);
+    if (value.includes('/rest/v1/private_share_links?')) return { ok: true, status: 200, async json() { return [{ anecdote_id: privateId, expires_at: null }]; } };
+    if (value.includes('/rest/v1/anecdotes?')) return { ok: true, status: 200, async json() { return [{ id: privateId, profession: 'Orthophoniste', theme: 'drole', body: 'Note privée', submitted_at: '2026-08-06T10:00:00Z' }]; } };
+    return { ok: false, status: 500, async json() { return []; } };
+  };
+  response = createResponse();
+  await privateShare({ method: 'GET', query: { token: 'a'.repeat(24) } }, response);
+  if (response.statusCode !== 200 || response.body.anecdote.author_label !== 'Note privée partagée' || response.body.anecdote.private_share !== true) {
+    throw new Error('Lecture du lien privé invalide');
+  }
+
   delete process.env.SUPABASE_SECRET_KEY;
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-role-key';
   globalThis.fetch = async (url, options = {}) => {
@@ -294,7 +335,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('22 contrats API vérifiés.');
+  console.log('25 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;
