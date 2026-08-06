@@ -43,7 +43,8 @@ set moderation_status = 'published'
 where id = 'UUID_DE_L_ANECDOTE';
 ```
 
-7. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
+7. Promouvoir un compte `admin`, ouvrir `https://votre-url/admin`, puis traiter une anecdote `pending` et un signalement de test.
+8. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
 
 ## 4. Limites de cette beta
 

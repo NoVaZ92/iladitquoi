@@ -2,6 +2,9 @@ import health from '../api/health.js';
 import ready from '../api/ready.js';
 import publicConfig from '../api/config.js';
 import anecdote from '../api/anecdote.js';
+import adminDecision from '../api/admin/decision.js';
+import adminQueue from '../api/admin/queue.js';
+import adminReport from '../api/admin/report.js';
 import feed from '../api/feed.js';
 import report from '../api/report.js';
 import submit from '../api/submit.js';
@@ -187,6 +190,9 @@ try {
 
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
+    if (lastRequest.url.includes('/rest/v1/anecdotes?')) {
+      return { ok: true, status: 200, async json() { return [{ id: sharedId }]; } };
+    }
     return { ok: true, status: 201, async json() { return []; } };
   };
   response = createResponse();
@@ -200,7 +206,82 @@ try {
     throw new Error('Signalement public invalide');
   }
 
-  console.log('16 contrats API vérifiés.');
+  response = createResponse();
+  await adminQueue({ method: 'GET', headers: {} }, response);
+  if (response.statusCode !== 401 || response.body.error !== 'authentication_required') {
+    throw new Error('La file de modération doit exiger une session');
+  }
+
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: '223e4567-e89b-42d3-a456-426614174001' }; } };
+    return { ok: true, status: 200, async json() { return [{ id: '223e4567-e89b-42d3-a456-426614174001', pseudonym: 'Membre', role: 'member' }]; } };
+  };
+  response = createResponse();
+  await adminQueue({ method: 'GET', headers: { authorization: 'Bearer member-token' } }, response);
+  if (response.statusCode !== 403 || response.body.error !== 'forbidden') {
+    throw new Error('Un membre ne doit pas accéder à la modération');
+  }
+
+  const moderatorId = '323e4567-e89b-42d3-a456-426614174002';
+  const pendingId = '423e4567-e89b-42d3-a456-426614174003';
+  const reportId = '523e4567-e89b-42d3-a456-426614174004';
+  const requests = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const request = { url: String(url), options };
+    requests.push(request);
+    if (request.url.endsWith('/auth/v1/user')) {
+      return { ok: true, status: 200, async json() { return { id: moderatorId, email: 'admin@example.com' }; } };
+    }
+    if (request.url.includes('/rest/v1/profiles?')) {
+      if (request.url.includes('%2Crole')) return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'Admin', role: 'admin' }]; } };
+      if (request.url.includes('select=id%2Cpseudonym')) return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'Admin' }]; } };
+      return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'Admin', role: 'admin' }]; } };
+    }
+    if (request.url.includes('/rest/v1/anecdotes?') && request.options.method === 'PATCH') {
+      return { ok: true, status: 200, async json() { return [{ id: pendingId, moderation_status: 'refused' }]; } };
+    }
+    if (request.url.includes('/rest/v1/anecdotes?') && request.url.includes('moderation_status=eq.pending')) {
+      return { ok: true, status: 200, async json() { return [{ id: pendingId, author_label: 'Anonyme', profession: 'Infirmière', theme: 'leger', body: 'À relire', submitted_at: '2026-08-06T10:00:00Z' }]; } };
+    }
+    if (request.url.includes('/rest/v1/anecdotes?')) {
+      return { ok: true, status: 200, async json() { return [{ id: pendingId, author_label: 'Anonyme', profession: 'Infirmière', theme: 'leger', body: 'À relire', moderation_status: 'pending', submitted_at: '2026-08-06T10:00:00Z' }]; } };
+    }
+    if (request.url.includes('/rest/v1/reports?') && (!request.options.method || request.options.method === 'GET')) {
+      return { ok: true, status: 200, async json() { return [{ id: reportId, anecdote_id: pendingId, reporter_id: moderatorId, reason: 'Détail à vérifier', created_at: '2026-08-06T10:05:00Z' }]; } };
+    }
+    if (request.url.endsWith('/rest/v1/moderation_decisions')) {
+      return { ok: true, status: 201, async json() { return []; } };
+    }
+    if (request.url.includes('/rest/v1/reports?') && request.options.method === 'PATCH') {
+      return { ok: true, status: 200, async json() { return [{ id: reportId }]; } };
+    }
+    return { ok: false, status: 500, async json() { return []; } };
+  };
+
+  response = createResponse();
+  await adminQueue({ method: 'GET', headers: { authorization: 'Bearer moderator-token' } }, response);
+  if (response.statusCode !== 200 || response.body.pending.length !== 1 || response.body.reports[0].reporter_label !== 'Admin') {
+    throw new Error('File de modération administrateur invalide');
+  }
+
+  response = createResponse();
+  await adminDecision({
+    method: 'POST',
+    headers: { authorization: 'Bearer moderator-token' },
+    body: { anecdoteId: pendingId, status: 'refused', authorMessage: 'Le détail est trop identifiable.', internalNote: 'Relecture équipe', reportIds: [reportId] }
+  }, response);
+  const decisionRequest = requests.find((request) => request.url.endsWith('/rest/v1/moderation_decisions'));
+  if (response.statusCode !== 200 || !decisionRequest || JSON.parse(decisionRequest.options.body).moderator_id !== moderatorId || response.body.resolvedReports !== 1) {
+    throw new Error('Décision de modération invalide');
+  }
+
+  response = createResponse();
+  await adminReport({ method: 'POST', headers: { authorization: 'Bearer moderator-token' }, body: { reportId } }, response);
+  if (response.statusCode !== 200 || response.body.report.id !== reportId) {
+    throw new Error('Clôture de signalement invalide');
+  }
+
+  console.log('21 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

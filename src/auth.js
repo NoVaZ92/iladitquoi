@@ -83,6 +83,7 @@ function updateAccountChrome(session, profile) {
   setText('[data-auth-xp]', Number(profile?.xp) || 0);
   document.querySelectorAll('[data-auth-guest]').forEach((element) => { element.hidden = signedIn; });
   document.querySelectorAll('[data-auth-member]').forEach((element) => { element.hidden = !signedIn; });
+  document.querySelectorAll('[data-admin-link]').forEach((link) => { link.hidden = !['moderator', 'admin'].includes(profile?.role); });
 
   const anonymous = document.querySelector('#anonymous-toggle');
   const privateOption = document.querySelector('#visibility-choice option[value="private"]');

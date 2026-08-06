@@ -19,6 +19,25 @@ export default async function handler(request, response) {
   if (identity.status === 'invalid') return response.status(401).json({ error: 'invalid_session' });
   if (identity.status === 'unavailable') return response.status(502).json({ error: 'authentication_unavailable' });
 
+  const anecdoteQuery = new URLSearchParams({
+    id: `eq.${anecdoteId}`,
+    visibility: 'eq.public',
+    moderation_status: 'eq.published',
+    select: 'id',
+    limit: '1'
+  });
+  try {
+    const anecdoteResponse = await fetch(`${url}/rest/v1/anecdotes?${anecdoteQuery}`, {
+      headers: getSupabaseAdminHeaders(secretKey),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!anecdoteResponse.ok) return response.status(502).json({ error: 'report_failed' });
+    const [anecdote] = await anecdoteResponse.json();
+    if (!anecdote) return response.status(404).json({ error: 'anecdote_not_found' });
+  } catch {
+    return response.status(502).json({ error: 'report_failed' });
+  }
+
   const payload = {
     anecdote_id: anecdoteId,
     reporter_id: identity.user?.id || null,
