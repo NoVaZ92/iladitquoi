@@ -7,7 +7,7 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
   'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -23,6 +23,7 @@ const contracts = [
   ['finalized.html', 'href="/rules.html"', 'lien vers les règles'],
   ['profile.html', 'data-profile-tab="pending"', 'suivi de modération'],
   ['profile.html', 'Décisions de modération', 'titre explicite de la modération'],
+  ['profile.html', 'id="delete-refused-dialog"', 'confirmation de suppression d’une anecdote refusée'],
   ['profile.html', 'data-admin-link', 'accès administration conditionnel'],
   ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
   ['auth.html', 'accept="image/jpeg,image/png,image/gif"', 'import d’avatar restreint'],
@@ -49,6 +50,7 @@ const contracts = [
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
   ['src/auth.js', 'Motif du refus', 'motif de modération visible'],
+  ['src/auth.js', 'deleteRefusedAnecdote', 'suppression propriétaire d’une anecdote refusée'],
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
   ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
@@ -70,6 +72,10 @@ const contracts = [
   ['supabase/migrations/0003_publication_timestamp.sql', 'anecdotes_publication_timestamp', 'date de publication automatique'],
   ['supabase/migrations/0004_profile_avatars.sql', "insert into storage.buckets", 'bucket avatars sécurisé'],
   ['supabase/migrations/0005_persistent_votes.sql', 'cannot_vote_own_anecdote', 'protection contre l’auto-vote'],
+  ['supabase/migrations/0006_refused_anecdote_retention.sql', 'members delete their own refused anecdotes', 'RLS de suppression des anecdotes refusées'],
+  ['supabase/migrations/0006_refused_anecdote_retention.sql', 'author_id = (select auth.uid())', 'propriété requise pour la suppression'],
+  ['supabase/migrations/0006_refused_anecdote_retention.sql', "updated_at < now() - interval '30 days'", 'délai de conservation des refus'],
+  ['supabase/migrations/0006_refused_anecdote_retention.sql', 'purge-refused-anecdotes-after-30-days', 'purge automatique des anecdotes refusées'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 
@@ -85,10 +91,12 @@ for (const file of ['finalized.html', 'profile.html', 'auth.html', 'src/auth.js'
 if (/data-demo|À 3 h 12|Le stylo qui a sauvé/.test(source['finalized.html'])) throw new Error('Une anecdote de démonstration reste dans la page publique');
 if (PROFESSIONS.length < 40 || !PROFESSIONS.includes('Orthophoniste') || !PROFESSIONS.includes('Dentiste')) throw new Error('Liste des métiers incomplète');
 
-const privacy = sanitizePublicText("Amine envoie alors l'argent à son pote Mouloude !");
-if (!privacy.changed || privacy.text.includes('Amine') || privacy.text.includes('Mouloude') || !privacy.flags.includes('prénom potentiel')) {
-  throw new Error('Le filtre ne masque pas les prénoms potentiels');
-}
+const sentenceStart = sanitizePublicText('Incroyable journée au service.');
+if (sentenceStart.changed || sentenceStart.text !== 'Incroyable journée au service.') throw new Error('Un premier mot en majuscule ne doit pas être pris pour un prénom');
+const lowercaseName = sanitizePublicText("paul s'amuse au travail.");
+if (lowercaseName.changed || lowercaseName.text !== "paul s'amuse au travail.") throw new Error('Un prénom isolé doit être laissé à la modération humaine');
+const titledName = sanitizePublicText('Le Dr Martin arrive dans le service.');
+if (!titledName.changed || titledName.text.includes('Martin') || !titledName.flags.includes('nom avec civilité')) throw new Error('Un nom précédé d’une civilité doit rester masqué');
 
 if (packageJson.name !== 'iladitquoi') throw new Error('Nom du package incorrect');
 if (packageJson.engines?.node !== '24.x') throw new Error('Runtime Node 24 non verrouillée');

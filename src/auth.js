@@ -139,6 +139,63 @@ function emptyState(message) {
   return element;
 }
 
+function showProfileStatus(message, success = false) {
+  const status = document.querySelector('[data-profile-status]');
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle('is-success', success);
+}
+
+function confirmRefusedDeletion() {
+  const dialog = document.querySelector('#delete-refused-dialog');
+  const cancel = document.querySelector('#cancel-refused-delete');
+  const close = document.querySelector('#close-refused-delete');
+  const confirm = document.querySelector('#confirm-refused-delete');
+  if (!dialog?.showModal || !cancel || !close || !confirm) {
+    return Promise.resolve(window.confirm('Supprimer définitivement cette anecdote refusée ?'));
+  }
+
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const finish = (confirmed) => {
+      controller.abort();
+      if (dialog.open) dialog.close();
+      resolve(confirmed);
+    };
+    const options = { signal: controller.signal };
+    cancel.addEventListener('click', () => finish(false), options);
+    close.addEventListener('click', () => finish(false), options);
+    confirm.addEventListener('click', () => finish(true), options);
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      finish(false);
+    }, options);
+    dialog.showModal();
+  });
+}
+
+async function deleteRefusedAnecdote(anecdote, button) {
+  if (!currentSession || !await confirmRefusedDeletion()) return;
+  button.disabled = true;
+  showProfileStatus('Suppression de l’anecdote…');
+  try {
+    const { data, error } = await supabase
+      .from('anecdotes')
+      .delete()
+      .eq('id', anecdote.id)
+      .eq('author_id', currentSession.user.id)
+      .eq('visibility', 'public')
+      .eq('moderation_status', 'refused')
+      .select('id');
+    if (error || !data?.length) throw error || new Error('anecdote_not_deleted');
+    showProfileStatus('L’anecdote refusée a été supprimée.', true);
+    await renderProfilePage(currentSession, currentProfile);
+  } catch {
+    button.disabled = false;
+    showProfileStatus('Cette anecdote n’a pas pu être supprimée. Rechargez la page puis réessayez.');
+  }
+}
+
 function legacyPrivateNotes() {
   for (const key of LEGACY_PRIVATE_KEYS) {
     try {
@@ -209,6 +266,23 @@ function profileEntry(anecdote) {
     const votes = document.createElement('span');
     votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
     foot.append(votes);
+  } else if (status === 'refused') {
+    const automaticDeletion = document.createElement('span');
+    const refusedAt = new Date(anecdote.updated_at || anecdote.submitted_at);
+    const deletionDate = new Date(refusedAt.getTime() + (30 * 24 * 60 * 60 * 1000));
+    automaticDeletion.textContent = `Suppression automatique à partir du ${formatDate(deletionDate)}`;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'refused-delete-button';
+    remove.title = 'Supprimer définitivement cette anecdote';
+    const icon = document.createElement('i');
+    icon.dataset.lucide = 'trash-2';
+    icon.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = 'Supprimer';
+    remove.append(icon, label);
+    remove.addEventListener('click', () => deleteRefusedAnecdote(anecdote, remove));
+    foot.append(automaticDeletion, remove);
   }
   article.append(header);
   if (!isPrivate && status === 'refused') {
@@ -253,7 +327,7 @@ async function renderProfilePage(session, profile) {
 
   const { data: anecdotes, error } = await supabase
     .from('anecdotes')
-    .select('id,profession,theme,body,moderation_status,moderation_reason,vote_score,submitted_at,published_at,visibility')
+    .select('id,profession,theme,body,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at,visibility')
     .eq('author_id', session.user.id)
     .order('submitted_at', { ascending: false });
 
@@ -285,6 +359,7 @@ async function renderProfilePage(session, profile) {
   setText('#private-summary', privateAnecdotes.length ? `${privateAnecdotes.length} note${privateAnecdotes.length > 1 ? 's' : ''}` : 'Carnet vide');
   if (privateList) privateList.replaceChildren(...(privateAnecdotes.length ? privateAnecdotes.map(profileEntry) : [emptyState('Votre carnet est vide. Ajoutez une note depuis la page d’accueil.') ]));
   if (moderationList) moderationList.replaceChildren(...(moderation.length ? moderation.map(profileEntry) : [emptyState('Aucune anecdote n’attend de décision.') ]));
+  window.dispatchEvent(new Event('anecdotes:icons-updated'));
 
   const badges = [];
   if (published.length >= 1) badges.push('Première publication');

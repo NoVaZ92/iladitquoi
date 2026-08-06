@@ -1,9 +1,9 @@
 import {
   ArrowLeft, Bookmark, BookOpen, Copy, createIcons, FileClock, LockKeyhole, LogOut,
-  NotebookPen, PenLine, Send, ShieldCheck, UserRound, X
+  NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X
 } from 'lucide';
 
-const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, UserRound, X };
+const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X };
 const SAVED_KEY = 'iladitquoi.saved-posts';
 const LEGACY_SAVED_KEY = 'anecdotes-du-soin.saved-posts';
 
@@ -99,6 +99,7 @@ function bindPrivateShare() {
 
 function initialize() {
   createIcons({ icons: ICONS, attrs: { 'stroke-width': 1.8 } });
+  window.addEventListener('anecdotes:icons-updated', () => createIcons({ icons: ICONS, attrs: { 'stroke-width': 1.8 } }));
   renderSavedPosts();
   bindPrivateShare();
   document.querySelectorAll('[data-profile-tab]').forEach((button) => button.addEventListener('click', () => activateTab(button.dataset.profileTab)));

@@ -96,11 +96,11 @@ try {
   await submit({
     method: 'POST',
     headers: { origin: 'https://anecdotes.example' },
-    body: { text: "Amine envoie alors l'argent à son pote Mouloude !", profession: 'Infirmière', theme: 'drole', anonymous: true }
+    body: { text: 'Le Dr Martin arrive dans le service.', profession: 'Infirmière', theme: 'drole', anonymous: true }
   }, response);
-  const privateSubmission = JSON.parse(lastRequest.options.body);
-  if (response.statusCode !== 201 || privateSubmission.body.includes('Amine') || privateSubmission.body.includes('Mouloude') || !privateSubmission.moderation_reason?.startsWith('Filtre automatique')) {
-    throw new Error('Le filtre serveur doit masquer et signaler les prénoms potentiels');
+  const namedSubmission = JSON.parse(lastRequest.options.body);
+  if (response.statusCode !== 201 || namedSubmission.body.includes('Martin') || !namedSubmission.moderation_reason?.startsWith('Filtre automatique')) {
+    throw new Error('Le filtre serveur doit masquer et signaler un nom précédé d’une civilité');
   }
 
   response = createResponse();
@@ -167,9 +167,9 @@ try {
     return { ok: true, status: 201, async json() { return [{ id: 'private-1', submitted_at: '2026-08-06T10:00:00Z' }]; } };
   };
   response = createResponse();
-  await privateAnecdote({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { text: 'Amine garde cette idée dans son carnet.', theme: 'drole' } }, response);
+  await privateAnecdote({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { text: 'Le Dr Martin garde cette idée dans le carnet.', theme: 'drole' } }, response);
   const privatePayload = JSON.parse(lastRequest.options.body);
-  if (response.statusCode !== 201 || privatePayload.visibility !== 'private' || privatePayload.moderation_status !== 'published' || privatePayload.body.includes('Amine')) {
+  if (response.statusCode !== 201 || privatePayload.visibility !== 'private' || privatePayload.moderation_status !== 'published' || privatePayload.body.includes('Martin')) {
     throw new Error('Enregistrement du carnet privé invalide');
   }
 

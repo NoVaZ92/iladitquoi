@@ -23,6 +23,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 - L’onglet **A valider** affiche les anecdotes publiques `pending`. Valider les publie ; refuser exige un message transmis a l’auteur connecte dans son suivi de moderation.
 - L’onglet **Signalements** affiche les signalements non resolus. Conserver cloture le signalement. Masquer et refuser retire l’anecdote publiee du fil et cloture le signalement associe.
 - Chaque validation ou refus est enregistre dans `moderation_decisions` avec le moderateur, le message auteur et la note interne facultative.
+- L’auteur peut supprimer une anecdote refusee depuis son profil. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour celles dont le refus date de plus de 30 jours ; les decisions, votes et signalements associes sont supprimes en cascade.
 
 ## Architecture recommandee
 
@@ -43,7 +44,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 
 ## Garanties avant ouverture publique
 
-1. Filtre cote serveur pour noms, prenoms, numeros, emails et adresses, complete par une file de moderation humaine. Le filtre bloque ou met en attente, il ne suffit pas a rendre une publication sure.
+1. Filtre cote serveur pour emails, telephones et noms precedes d'une civilite, complete par une file de moderation humaine pour les autres identifiants. Le filtre ne suffit pas a rendre une publication sure.
 2. Limites de debit par IP et compte pour les soumissions, votes, signalements et creation de liens. Ajouter CAPTCHA seulement quand le risque d'abus le justifie.
 3. Journal d'audit, chiffrement en transit, sauvegardes, suppression de compte et export des donnees. Ne pas conserver les textes de brouillon dans des logs applicatifs.
 4. Politique de confidentialite, CGU, regles de publication et canal de contact moderation accessibles avant toute soumission.
