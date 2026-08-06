@@ -1,9 +1,9 @@
 import {
-  ArrowLeft, Bookmark, BookOpen, Copy, createIcons, FileClock, LockKeyhole, LogOut,
+  ArrowLeft, Bookmark, BookOpen, Copy, createIcons, Download, FileClock, LockKeyhole, LogOut,
   NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X
 } from 'lucide';
 
-const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X };
+const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, Download, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X };
 const SAVED_KEY = 'iladitquoi.saved-posts';
 const LEGACY_SAVED_KEY = 'anecdotes-du-soin.saved-posts';
 
@@ -117,6 +117,12 @@ function initialize() {
   window.addEventListener('anecdotes:icons-updated', () => createIcons({ icons: ICONS, attrs: { 'stroke-width': 1.8 } }));
   renderSavedPosts();
   bindPrivateShare();
+  document.querySelector('[data-export-personal-data]')?.addEventListener('click', (event) => {
+    window.dispatchEvent(new CustomEvent('anecdotes:export-data', { detail: { button: event.currentTarget } }));
+  });
+  document.querySelector('[data-delete-account]')?.addEventListener('click', (event) => {
+    window.dispatchEvent(new CustomEvent('anecdotes:delete-account', { detail: { button: event.currentTarget } }));
+  });
   document.querySelectorAll('[data-profile-tab]').forEach((button) => button.addEventListener('click', () => activateTab(button.dataset.profileTab)));
   const requested = new URLSearchParams(location.search).get('tab');
   activateTab(['published', 'saved', 'private', 'pending'].includes(requested) ? requested : 'published');

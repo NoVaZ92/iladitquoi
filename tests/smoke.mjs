@@ -5,9 +5,9 @@ import { PROFESSIONS } from '../lib/professions.js';
 const names = [
   'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
-  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
+  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -56,11 +56,14 @@ const contracts = [
   ['src/auth.js', 'deleteRefusedAnecdote', 'suppression propriétaire d’une anecdote refusée'],
   ['src/auth.js', 'revokePrivateLinks', 'révocation des liens privés du propriétaire'],
   ['src/auth.js', 'deletePrivateAnecdote', 'suppression des notes privées du propriétaire'],
+  ['src/auth.js', 'exportPersonalData', 'export des données personnelles'],
+  ['src/auth.js', 'deleteAccount', 'suppression du compte'],
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
   ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
   ['api/ready.js', 'configuration_required', 'readiness'],
   ['api/ready.js', '/rest/v1/rpc/rate_limit_ready', 'readiness de la protection anti-abus'],
+  ['api/ready.js', '/rest/v1/rpc/account_deletion_ready', 'readiness de la suppression de compte'],
   ['api/config.js', 'configured', 'configuration publique'],
   ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
   ['api/anecdote.js', 'anecdote_not_found', 'anecdote partagée'],
@@ -73,6 +76,8 @@ const contracts = [
   ['api/private.js', 'RATE_LIMITS.privateNote', 'limite des notes privées'],
   ['api/private-share.js', 'tokenHash', 'jeton privé haché'],
   ['api/private-share.js', 'RATE_LIMITS.privateShare', 'limite de création des liens privés'],
+  ['api/account.js', 'RATE_LIMITS.accountDeletion', 'limite de suppression de compte'],
+  ['api/account.js', '/auth/v1/admin/users/', 'suppression Auth du compte'],
   ['lib/rate-limit.js', "createHmac('sha256'", 'pseudonymisation des sujets de limitation'],
   ['lib/rate-limit.js', "response.status(429)", 'réponse de limitation explicite'],
   ['lib/vote-handler.js', 'cast_anecdote_vote', 'vote atomique'],
@@ -95,6 +100,8 @@ const contracts = [
   ['supabase/migrations/0007_rate_limits.sql', 'purge-expired-rate-limit-buckets', 'purge des compteurs anti-abus'],
   ['supabase/migrations/0008_private_note_management.sql', 'members delete their own private anecdotes', 'RLS de suppression des notes privées'],
   ['supabase/migrations/0008_private_note_management.sql', 'owners revoke active private links', 'RLS de révocation des liens privés'],
+  ['supabase/migrations/0009_profile_privilege_protection.sql', 'role and xp cannot be changed from a member session', 'protection contre l’auto-promotion'],
+  ['supabase/migrations/0010_account_deletion.sql', 'on delete set null', 'conservation des décisions après suppression du modérateur'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 
@@ -116,6 +123,10 @@ const lowercaseName = sanitizePublicText("paul s'amuse au travail.");
 if (lowercaseName.changed || lowercaseName.text !== "paul s'amuse au travail.") throw new Error('Un prénom isolé doit être laissé à la modération humaine');
 const titledName = sanitizePublicText('Le Dr Martin arrive dans le service.');
 if (!titledName.changed || titledName.text.includes('Martin') || !titledName.flags.includes('nom avec civilité')) throw new Error('Un nom précédé d’une civilité doit rester masqué');
+const privilegeMigration = source['supabase/migrations/0009_profile_privilege_protection.sql'];
+if (privilegeMigration.includes('not public.is_moderator()') || !privilegeMigration.includes('auth.uid() = old.id')) {
+  throw new Error('Un modérateur ne doit pas pouvoir modifier son propre rôle');
+}
 
 if (packageJson.name !== 'iladitquoi') throw new Error('Nom du package incorrect');
 if (packageJson.engines?.node !== '24.x') throw new Error('Runtime Node 24 non verrouillée');
@@ -129,6 +140,9 @@ if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route
 if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route.destination.includes('action=vote'))) throw new Error('Route de vote regroupée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
+const globalHeaders = vercelConfig.headers?.find((entry) => entry.source === '/(.*)')?.headers || [];
+if (!globalHeaders.some((header) => header.key === 'Content-Security-Policy' && header.value.includes("default-src 'self'"))) throw new Error('Politique de sécurité du navigateur absente');
+if (!globalHeaders.some((header) => header.key === 'Cross-Origin-Opener-Policy' && header.value === 'same-origin')) throw new Error('Isolation de fenêtre absente');
 
 const authSource = source['src/auth.js'];
 for (const [formId, readStatement] of [

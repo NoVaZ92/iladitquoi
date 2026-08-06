@@ -34,6 +34,22 @@ export default async function handler(_request, response) {
     if (!rateLimitHealth.ok || await rateLimitHealth.json() !== true) {
       return response.status(503).json({ status: 'dependency_unavailable', configured: true });
     }
+
+    const accountDeletionHealth = await fetch(`${url}/rest/v1/rpc/account_deletion_ready`, {
+      method: 'POST',
+      headers: { ...getSupabaseAdminHeaders(secretKey), 'content-type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000)
+    });
+    if (accountDeletionHealth.status === 401 || accountDeletionHealth.status === 403) {
+      return response.status(503).json({ status: 'credentials_invalid', configured: true });
+    }
+    if (accountDeletionHealth.status === 404) {
+      return response.status(503).json({ status: 'schema_required', configured: true });
+    }
+    if (!accountDeletionHealth.ok || await accountDeletionHealth.json() !== true) {
+      return response.status(503).json({ status: 'dependency_unavailable', configured: true });
+    }
   } catch {
     return response.status(503).json({ status: 'dependency_unavailable', configured: true });
   }

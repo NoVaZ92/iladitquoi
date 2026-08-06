@@ -4,6 +4,7 @@ import { populateProfessionSelect } from '../lib/professions.js';
 const AUTH_PAGE = '/auth.html';
 const PROFILE_PAGE = '/profile.html';
 const LEGACY_PRIVATE_KEYS = ['iladitquoi.private-notes', 'anecdotes-du-soin.private-notes'];
+const LOCAL_ACCOUNT_KEYS = ['iladitquoi.saved-posts', 'anecdotes-du-soin.saved-posts', ...LEGACY_PRIVATE_KEYS];
 const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif']);
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 let supabase;
@@ -202,6 +203,113 @@ function confirmPrivateLinkRevocation() {
     confirmId: '#confirm-private-link-revoke',
     fallback: 'Révoquer les liens de partage de cette note ?'
   });
+}
+
+function confirmAccountDeletion() {
+  const dialog = document.querySelector('#delete-account-dialog');
+  const cancel = document.querySelector('#cancel-account-delete');
+  const close = document.querySelector('#close-account-delete');
+  const confirm = document.querySelector('#confirm-account-delete');
+  const input = document.querySelector('#account-delete-confirmation');
+  if (!dialog?.showModal || !cancel || !close || !confirm || !input) {
+    return Promise.resolve(window.prompt('Tapez SUPPRIMER pour effacer définitivement votre compte.') === 'SUPPRIMER');
+  }
+
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const finish = (confirmed) => {
+      controller.abort();
+      if (dialog.open) dialog.close();
+      resolve(confirmed);
+    };
+    const options = { signal: controller.signal };
+    input.value = '';
+    confirm.disabled = true;
+    input.addEventListener('input', () => { confirm.disabled = input.value.trim() !== 'SUPPRIMER'; }, options);
+    cancel.addEventListener('click', () => finish(false), options);
+    close.addEventListener('click', () => finish(false), options);
+    confirm.addEventListener('click', () => finish(true), options);
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      finish(false);
+    }, options);
+    dialog.showModal();
+    input.focus();
+  });
+}
+
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+async function exportPersonalData(button) {
+  if (!currentSession) return;
+  button.disabled = true;
+  showProfileStatus('Préparation de votre export…');
+  try {
+    const [anecdotesResult, votesResult, reportsResult, linksResult] = await Promise.all([
+      supabase.from('anecdotes').select('id,author_label,profession,theme,body,visibility,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at').eq('author_id', currentSession.user.id).order('submitted_at', { ascending: false }),
+      supabase.from('votes').select('anecdote_id,value,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false }),
+      supabase.from('reports').select('id,anecdote_id,reason,created_at,resolved_at').eq('reporter_id', currentSession.user.id).order('created_at', { ascending: false }),
+      supabase.from('private_share_links').select('id,anecdote_id,expires_at,revoked_at,created_at,last_opened_at').order('created_at', { ascending: false })
+    ]);
+    const failure = [anecdotesResult, votesResult, reportsResult, linksResult].find((result) => result.error);
+    if (failure?.error) throw failure.error;
+    const selection = (() => {
+      try { return JSON.parse(localStorage.getItem('iladitquoi.saved-posts') || '[]'); } catch { return []; }
+    })();
+    downloadJson(`iladitquoi-donnees-${new Date().toISOString().slice(0, 10)}.json`, {
+      exported_at: new Date().toISOString(),
+      account: {
+        id: currentSession.user.id,
+        email: currentSession.user.email || null,
+        profile: currentProfile
+      },
+      anecdotes: anecdotesResult.data || [],
+      votes: votesResult.data || [],
+      reports: reportsResult.data || [],
+      private_share_links: linksResult.data || [],
+      local_selections: Array.isArray(selection) ? selection : []
+    });
+    showProfileStatus('Votre export a été téléchargé.', true);
+  } catch {
+    showProfileStatus('Votre export n’a pas pu être préparé. Rechargez la page puis réessayez.');
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteAccount(button) {
+  if (!currentSession || !await confirmAccountDeletion()) return;
+  button.disabled = true;
+  showProfileStatus('Suppression définitive du compte…');
+  try {
+    const response = await fetch('/api/account', {
+      method: 'DELETE',
+      headers: { authorization: `Bearer ${currentSession.access_token}` }
+    });
+    const data = response.status === 204 ? {} : await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(data.error || 'account_deletion_failed');
+      error.retryAfter = Number(data.retryAfter) || 0;
+      throw error;
+    }
+    LOCAL_ACCOUNT_KEYS.forEach((key) => localStorage.removeItem(key));
+    await supabase.auth.signOut({ scope: 'local' });
+    window.location.replace('/?account-deleted=1');
+  } catch (error) {
+    button.disabled = false;
+    const minutes = Math.max(1, Math.ceil((error.retryAfter || 1) / 60));
+    showProfileStatus(error.message === 'rate_limit_exceeded'
+      ? `Trop de demandes de suppression. Réessayez dans ${minutes} min.`
+      : 'Votre compte n’a pas pu être supprimé. Rechargez la page puis réessayez.');
+  }
 }
 
 async function deleteRefusedAnecdote(anecdote, button) {
@@ -765,3 +873,6 @@ window.AnecdotesAuth = {
   },
   async signOut() { await ready; return supabase?.auth.signOut(); }
 };
+
+window.addEventListener('anecdotes:export-data', (event) => exportPersonalData(event.detail.button));
+window.addEventListener('anecdotes:delete-account', (event) => deleteAccount(event.detail.button));

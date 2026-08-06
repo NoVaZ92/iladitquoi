@@ -34,6 +34,12 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 - Roles : `member`, `moderator`, `admin`. Les moderateurs et administrateurs voient la file commune et chaque decision est journalisee.
 - Media et partage : les liens prives sont des jetons aleatoires, stockes hashes, revocables et eventuellement expires. Le texte de l'anecdote ne doit jamais apparaitre dans l'URL, dans le titre partage ni dans le message WhatsApp.
 
+## Suppression et export
+
+- Le bouton `Télécharger mes données` du profil produit un JSON avec le compte, les anecdotes, votes, signalements, liens privés et sélections conservées sur ce navigateur.
+- Le bouton `Supprimer mon compte` exige la saisie de `SUPPRIMER`, efface les contenus et l'avatar, puis supprime le compte Supabase. Les anciennes décisions de modération gardent leur historique mais ne sont plus reliées à un compte supprimé.
+- Tester la suppression avec un compte non administrateur avant ouverture. Une suppression de compte ne doit jamais être effectuée depuis le SQL Editor pour un utilisateur réel, sauf procédure de support documentée.
+
 ## Modele de donnees minimal
 
 - `users` : pseudo, metier, niveau, xp, statut de compte.
@@ -47,7 +53,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 
 1. Filtre cote serveur pour emails, telephones et noms precedes d'une civilite, complete par une file de moderation humaine pour les autres identifiants. Le filtre ne suffit pas a rendre une publication sure.
 2. Limites de debit par IP et compte pour les soumissions, votes, signalements et creation de liens. Elles sont actives ; ajouter CAPTCHA seulement si les alertes de volume montrent qu’elles ne suffisent plus.
-3. Journal d'audit, chiffrement en transit, sauvegardes, suppression de compte et export des donnees. Ne pas conserver les textes de brouillon dans des logs applicatifs.
+3. Journal d'audit, chiffrement en transit, sauvegardes, suppression de compte et export des donnees. Le profil propose deja un export JSON et une suppression definitive ; tester ces parcours avec un compte de test avant l'ouverture publique. Ne pas conserver les textes de brouillon dans des logs applicatifs.
 4. Politique de confidentialite, CGU, regles de publication et canal de contact moderation accessibles avant toute soumission.
 5. Tests automatises pour les permissions, l'anonymat, la revocation d'un lien prive, le filtrage PII et le cycle de moderation.
 

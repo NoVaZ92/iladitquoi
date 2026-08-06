@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0008`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0008_private_note_management.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, et `0008` ajoute la gestion des liens et notes prives. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0010`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0010_account_deletion.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, `0008` ajoute la gestion des liens et notes prives, `0009` empeche un membre ou moderateur de modifier son propre role et `0010` rend possible la suppression complete d'un compte sans effacer l'historique des decisions de moderation. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -27,6 +27,7 @@ Ne jamais mettre la cle `secret` ou `service_role` dans le navigateur, dans Git 
 3. Verifier dans `Settings > Environment Variables` que l'integration Supabase a synchronise `SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `SUPABASE_PUBLISHABLE_KEY` pour `Production` et `Preview`. Les anciennes variables `SUPABASE_SERVICE_ROLE_KEY` et `SUPABASE_ANON_KEY` restent compatibles.
 4. Pour la premiere mise en ligne, renseigner l'URL Vercel finale dans `PUBLIC_APP_ORIGIN`, sans slash final. Remplacer cette valeur par le domaine final lorsqu'il sera connecte.
 5. A chaque push sur `main`, Vercel execute `npm run build`. Ce build lance les controles statiques et les contrats API avant d'autoriser le deploiement.
+6. Avant toute ouverture publique, renseigner le responsable de publication, une adresse de contact reelle pour la moderation et les demandes de donnees, puis faire relire les CGU et la politique de confidentialite. Ce sont des informations organisationnelles qui ne peuvent pas etre devinees ou configurees par le code.
 
 ## 3. Verifier apres le premier deploiement
 
@@ -48,6 +49,8 @@ where id = 'UUID_DE_L_ANECDOTE';
 9. Refuser une anecdote liee a un compte, puis verifier que son auteur peut la supprimer depuis l'onglet `Moderation` de son profil. Dans `Supabase > Integrations > Cron`, les jobs `purge-refused-anecdotes-after-30-days` et `purge-expired-rate-limit-buckets` doivent etre actifs.
 10. Verifier dans le SQL Editor que `private.rate_limit_buckets` existe. Les colonnes ne doivent contenir que des empreintes SHA-256 et jamais une adresse IP ou un identifiant de compte en clair.
 11. Creer un lien prive depuis le carnet, verifier sa lecture, puis le revoquer. Le lien doit alors repondre `share_not_found`. Supprimer ensuite la note pour verifier la suppression en cascade de ses liens.
+12. Depuis le profil, telecharger l'export personnel, puis tester la suppression avec un compte de test. Le compte, son avatar, ses anecdotes et ses liens prives doivent disparaitre. Les decisions prises par un ancien moderateur restent conservees avec un moderateur nul.
+13. Avec un compte `moderator`, verifier qu'une modification de profil ordinaire fonctionne mais qu'une tentative de modifier `role` ou `xp` depuis une session connectee est rejetee. Seul le SQL Editor, utilise par le proprietaire, doit pouvoir promouvoir ou retrograder un compte.
 
 ## 4. Limites de cette beta
 
@@ -55,6 +58,7 @@ where id = 'UUID_DE_L_ANECDOTE';
 - Supabase Free peut mettre le projet en pause apres une periode d'inactivite. Exporter la base regulierement avant toute campagne ou test important.
 - Les comptes, profils, avatars, soumissions publiques, carnet prive, votes et signalements sont synchronises avec Supabase. Les selections restent locales dans cette version.
 - Toute anecdote publique reste `pending` jusqu'a une validation humaine. Le filtrage automatique masque quelques motifs evidents, mais ne remplace pas la moderation.
+- Le deploiement envoie une politique de securite du navigateur. Si un service tiers est ajoute plus tard (mesure d'audience, image, paiement), declarer explicitement son domaine dans `Content-Security-Policy` de `vercel.json` et verifier qu'il est necessaire.
 
 ## Verifications locales
 

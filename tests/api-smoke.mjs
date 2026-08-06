@@ -2,6 +2,7 @@ import health from '../api/health.js';
 import ready from '../api/ready.js';
 import publicConfig from '../api/config.js';
 import anecdote from '../api/anecdote.js';
+import account from '../api/account.js';
 import adminDecision from '../api/admin/decision.js';
 import adminQueue from '../api/admin/queue.js';
 import adminReport from '../api/admin/report.js';
@@ -57,7 +58,7 @@ try {
   let lastRequest;
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
-    if (lastRequest.url.endsWith('/rest/v1/rpc/rate_limit_ready')) {
+    if (lastRequest.url.endsWith('/rest/v1/rpc/rate_limit_ready') || lastRequest.url.endsWith('/rest/v1/rpc/account_deletion_ready')) {
       return { ok: true, status: 200, async json() { return true; } };
     }
     return { ok: true, async json() { return []; } };
@@ -228,6 +229,27 @@ try {
   const privatePayload = JSON.parse(lastRequest.options.body);
   if (response.statusCode !== 201 || privatePayload.visibility !== 'private' || privatePayload.moderation_status !== 'published' || privatePayload.body.includes('Martin')) {
     throw new Error('Enregistrement du carnet privé invalide');
+  }
+
+  const deletedAccountId = '823e4567-e89b-42d3-a456-426614174007';
+  const accountRequests = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const request = { url: String(url), options };
+    accountRequests.push(request);
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
+    if (request.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: deletedAccountId }; } };
+    if (request.url.includes('/storage/v1/object/avatars/')) return { ok: false, status: 404, async json() { return {}; } };
+    if (request.url.includes('/rest/v1/anecdotes?') && request.options.method === 'DELETE') return { ok: true, status: 204, async json() { return {}; } };
+    if (request.url.endsWith(`/auth/v1/admin/users/${deletedAccountId}`) && request.options.method === 'DELETE') return { ok: true, status: 204, async json() { return {}; } };
+    return { ok: false, status: 500, async json() { return {}; } };
+  };
+  response = createResponse();
+  await account({ method: 'DELETE', headers: { authorization: 'Bearer user-token' } }, response);
+  const anecdotesDelete = accountRequests.find((request) => request.url.includes('/rest/v1/anecdotes?') && request.options.method === 'DELETE');
+  const authDelete = accountRequests.find((request) => request.url.endsWith(`/auth/v1/admin/users/${deletedAccountId}`));
+  if (response.statusCode !== 204 || !anecdotesDelete || !authDelete) {
+    throw new Error('Suppression de compte et des contenus invalide');
   }
 
   const privateId = '623e4567-e89b-42d3-a456-426614174005';
@@ -412,7 +434,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('29 contrats API vérifiés.');
+  console.log('30 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;
