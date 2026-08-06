@@ -32,6 +32,12 @@
     .field { display: grid; gap: 6px; color: var(--text); font-size: 12px; font-weight: 700; }
     .field input, .field select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; background: #fff; color: var(--text); font-size: 14px; }
     .field input:focus, .field select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(22, 88, 245, .12); }
+    .avatar-field { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 7px; padding: 10px; }
+    .avatar-preview { display: grid; place-items: center; flex: none; width: 52px; height: 52px; overflow: hidden; border-radius: 50%; background: #172033; color: white; font-size: 17px; font-weight: 800; }
+    .avatar-preview.has-image { background-position: center; background-size: cover; color: transparent; }
+    .avatar-field-copy { display: grid; min-width: 0; gap: 4px; }
+    .avatar-field-copy input { min-height: 0; border: 0; padding: 0; background: transparent; font-size: 11px; }
+    .avatar-field-copy small { color: var(--muted); font-size: 10px; line-height: 1.35; }
     .check-field { display: flex; align-items: start; gap: 9px; color: var(--muted); font-size: 11px; line-height: 1.45; }
     .check-field input { margin-top: 2px; accent-color: var(--blue); }
     .primary-button { border: 1px solid var(--blue); background: var(--blue); color: #fff; }
@@ -101,6 +107,7 @@
         <label class="field">Métier
           <select name="profession" required><option value="">Chargement…</option></select>
         </label>
+        <label class="field">Photo de profil<div class="avatar-field"><span class="avatar-preview" data-avatar-preview aria-hidden="true">·</span><span class="avatar-field-copy"><input name="avatar" type="file" accept="image/jpeg,image/png,image/gif"><small>JPEG, PNG ou GIF, 4 Mo maximum.</small></span></div></label>
         <button class="primary-button" type="submit">Terminer mon profil</button>
       </form>
 

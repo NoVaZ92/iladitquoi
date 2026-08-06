@@ -7,7 +7,7 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
   'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -25,6 +25,7 @@ const contracts = [
   ['profile.html', 'Décisions de modération', 'titre explicite de la modération'],
   ['profile.html', 'data-admin-link', 'accès administration conditionnel'],
   ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
+  ['auth.html', 'accept="image/jpeg,image/png,image/gif"', 'import d’avatar restreint'],
   ['rules.html', 'Filtre automatique', 'règles de confidentialité'],
   ['admin.html', 'src="/assets/admin.js"', 'page administration'],
   ['admin.html', 'id="queue-list"', 'file de validation'],
@@ -48,6 +49,7 @@ const contracts = [
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
   ['src/auth.js', 'Motif du refus', 'motif de modération visible'],
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
+  ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
   ['api/ready.js', 'configuration_required', 'readiness'],
   ['api/config.js', 'configured', 'configuration publique'],
@@ -64,6 +66,7 @@ const contracts = [
   ['supabase/migrations/0001_initial_schema.sql', 'enable row level security', 'RLS Supabase'],
   ['supabase/migrations/0002_authentication.sql', 'protect_profile_privileges', 'protection des rôles'],
   ['supabase/migrations/0003_publication_timestamp.sql', 'anecdotes_publication_timestamp', 'date de publication automatique'],
+  ['supabase/migrations/0004_profile_avatars.sql', "insert into storage.buckets", 'bucket avatars sécurisé'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 

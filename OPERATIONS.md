@@ -2,7 +2,7 @@
 
 ## Etat du MVP
 
-Le fil, les comptes, les soumissions publiques et les signalements utilisent Supabase. Les votes, les selections et le carnet prive restent locaux au navigateur dans cette version et ne sont donc pas partages entre appareils.
+Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive et les signalements utilisent Supabase. Les votes et les selections restent locaux au navigateur dans cette version.
 
 ## Donner le role administrateur
 

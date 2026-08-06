@@ -4,6 +4,8 @@ import { populateProfessionSelect } from '../lib/professions.js';
 const AUTH_PAGE = '/auth.html';
 const PROFILE_PAGE = '/profile.html';
 const LEGACY_PRIVATE_KEYS = ['iladitquoi.private-notes', 'anecdotes-du-soin.private-notes'];
+const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif']);
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 let supabase;
 let currentSession = null;
 let currentProfile = null;
@@ -23,6 +25,18 @@ function levelFromXp(xp) {
 
 function setText(selector, value) {
   document.querySelectorAll(selector).forEach((element) => { element.textContent = value; });
+}
+
+function setAvatar(element, pseudonym, avatarUrl = '') {
+  if (!element) return;
+  const initial = (pseudonym || '·').charAt(0).toUpperCase();
+  element.textContent = initial;
+  element.classList.toggle('has-image', Boolean(avatarUrl));
+  element.style.backgroundImage = avatarUrl ? `url(${JSON.stringify(avatarUrl)})` : '';
+}
+
+function setAvatarPreview(avatarUrl, pseudonym) {
+  setAvatar(document.querySelector('[data-avatar-preview]'), pseudonym, avatarUrl);
 }
 
 function frenchAuthError(error) {
@@ -56,7 +70,7 @@ async function fetchProfile(session) {
   if (!session) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('id,pseudonym,profession,role,xp,created_at')
+    .select('id,pseudonym,profession,role,xp,avatar_url,created_at')
     .eq('id', session.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -79,7 +93,7 @@ function updateAccountChrome(session, profile) {
   });
   setText('[data-auth-name]', pseudonym);
   setText('[data-auth-meta]', meta);
-  setText('[data-auth-avatar]', signedIn ? pseudonym.charAt(0).toUpperCase() : '→');
+  document.querySelectorAll('[data-auth-avatar]').forEach((element) => setAvatar(element, signedIn ? pseudonym : '→', profile?.avatar_url));
   setText('[data-auth-level]', signedIn ? level : 0);
   setText('[data-auth-xp]', Number(profile?.xp) || 0);
   document.querySelectorAll('[data-auth-guest]').forEach((element) => { element.hidden = signedIn; });
@@ -234,7 +248,7 @@ async function renderProfilePage(session, profile) {
   const level = levelFromXp(profile.xp);
   setText('[data-profile-pseudonym]', profile.pseudonym);
   setText('[data-profile-profession]', `${profile.profession} · Niveau ${level}`);
-  setText('[data-profile-avatar]', profile.pseudonym.charAt(0).toUpperCase());
+  document.querySelectorAll('[data-profile-avatar]').forEach((element) => setAvatar(element, profile.pseudonym, profile.avatar_url));
   setText('[data-profile-xp]', Number(profile.xp) || 0);
 
   const { data: anecdotes, error } = await supabase
@@ -328,6 +342,7 @@ function renderAuthPageState(session, profile, requestedMode, params) {
     if (profileForm) {
       profileForm.elements.pseudonym.value = profile?.pseudonym || '';
       profileForm.elements.profession.value = profile?.profession || '';
+      setAvatarPreview(profile?.avatar_url, profile?.pseudonym);
     }
     setAuthView('profile');
     return;
@@ -452,6 +467,20 @@ async function setupAuthPage(session, profile) {
   });
 
   const profileForm = document.querySelector('#profile-form');
+  profileForm?.elements.avatar?.addEventListener('change', () => {
+    const [file] = profileForm.elements.avatar.files || [];
+    if (!file) {
+      setAvatarPreview(currentProfile?.avatar_url, currentProfile?.pseudonym);
+      return;
+    }
+    if (!AVATAR_TYPES.has(file.type) || file.size > MAX_AVATAR_BYTES) {
+      profileForm.elements.avatar.value = '';
+      setAvatarPreview(currentProfile?.avatar_url, currentProfile?.pseudonym);
+      setStatus('Choisissez une image JPEG, PNG ou GIF de 4 Mo maximum.', true);
+      return;
+    }
+    setAvatarPreview(URL.createObjectURL(file), currentProfile?.pseudonym);
+  });
   profileForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -464,9 +493,30 @@ async function setupAuthPage(session, profile) {
       setAuthView('signin');
       return;
     }
+    const avatar = values.get('avatar');
+    let avatarUrl = currentProfile?.avatar_url || null;
+    if (avatar instanceof File && avatar.size) {
+      if (!AVATAR_TYPES.has(avatar.type) || avatar.size > MAX_AVATAR_BYTES) {
+        setBusy(form, false);
+        setStatus('Choisissez une image JPEG, PNG ou GIF de 4 Mo maximum.', true);
+        return;
+      }
+      const extension = avatar.type === 'image/png' ? 'png' : avatar.type === 'image/gif' ? 'gif' : 'jpg';
+      const path = `${activeSession.user.id}/avatar.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, avatar, { cacheControl: '31536000', contentType: avatar.type, upsert: true });
+      if (uploadError) {
+        setBusy(form, false);
+        setStatus('La photo n’a pas pu être envoyée. Vérifiez la migration Supabase.', true);
+        return;
+      }
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+    }
     const { error } = await supabase
       .from('profiles')
-      .update({ pseudonym: String(values.get('pseudonym')).trim(), profession: String(values.get('profession')).trim() })
+      .update({ pseudonym: String(values.get('pseudonym')).trim(), profession: String(values.get('profession')).trim(), avatar_url: avatarUrl })
       .eq('id', activeSession.user.id);
     setBusy(form, false);
     if (error) {

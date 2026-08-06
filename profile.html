@@ -32,7 +32,8 @@
     .profile-status { min-height: 18px; margin: 0 0 10px; color: var(--danger); font-size: 11px; }
     .profile-hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 28px; }
     .profile-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
-    .profile-avatar-large { display: grid; place-items: center; flex: none; width: 70px; height: 70px; border-radius: 50%; background: #111827; color: white; font-size: 25px; font-weight: 850; }
+    .profile-avatar-large { display: grid; place-items: center; flex: none; width: 70px; height: 70px; overflow: hidden; border-radius: 50%; background: #111827; color: white; font-size: 25px; font-weight: 850; }
+    .profile-avatar-large.has-image { background-position: center; background-size: cover; color: transparent; }
     .eyebrow { margin: 0 0 6px; color: var(--blue); font-size: 10px; font-weight: 850; text-transform: uppercase; }
     h1 { margin: 0; font-size: 31px; line-height: 1.15; }
     .profile-subtitle { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
