@@ -574,5 +574,14 @@ window.AnecdotesAuth = {
       .eq('visibility', 'private');
     return error ? 0 : Number(count) || 0;
   },
+  async getVotes(anecdoteIds) {
+    await ready;
+    if (!currentSession || !Array.isArray(anecdoteIds) || !anecdoteIds.length) return new Map();
+    const { data, error } = await supabase
+      .from('votes')
+      .select('anecdote_id,value')
+      .in('anecdote_id', anecdoteIds);
+    return error ? new Map() : new Map((data || []).map((vote) => [vote.anecdote_id, vote.value]));
+  },
   async signOut() { await ready; return supabase?.auth.signOut(); }
 };

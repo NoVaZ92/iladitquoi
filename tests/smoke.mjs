@@ -5,9 +5,9 @@ import { PROFESSIONS } from '../lib/professions.js';
 const names = [
   'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
-  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
+  'api/health.js', 'api/ready.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/vote.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -44,6 +44,7 @@ const contracts = [
   ['src/feed.js', "location.pathname.match(/^\\/a\\/", 'lecture de la route courte dans le navigateur'],
   ['src/feed.js', "fetch('/api/report'", 'signalement cloud'],
   ['src/feed.js', "fetch('/api/private'", 'carnet privé cloud'],
+  ['src/feed.js', "fetch('/api/vote'", 'votes persistants'],
   ['src/feed.js', 'sharedPrivateToken', 'lecture du lien privé dans le navigateur'],
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
@@ -60,6 +61,7 @@ const contracts = [
   ['api/submit.js', 'profile.profession', 'métier du profil'],
   ['api/private.js', "visibility: 'private'", 'persistance du carnet privé'],
   ['api/private-share.js', 'tokenHash', 'jeton privé haché'],
+  ['api/vote.js', 'cast_anecdote_vote', 'vote atomique'],
   ['lib/supabase-config.js', 'SUPABASE_SECRET_KEY', 'clé secrète actuelle'],
   ['lib/supabase-config.js', 'SUPABASE_SERVICE_ROLE_KEY', 'compatibilité clé historique'],
   ['lib/auth-user.js', '/auth/v1/user', 'validation de session'],
@@ -67,6 +69,7 @@ const contracts = [
   ['supabase/migrations/0002_authentication.sql', 'protect_profile_privileges', 'protection des rôles'],
   ['supabase/migrations/0003_publication_timestamp.sql', 'anecdotes_publication_timestamp', 'date de publication automatique'],
   ['supabase/migrations/0004_profile_avatars.sql', "insert into storage.buckets", 'bucket avatars sécurisé'],
+  ['supabase/migrations/0005_persistent_votes.sql', 'cannot_vote_own_anecdote', 'protection contre l’auto-vote'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 

@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0004`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0004_profile_avatars.sql` avant de deployer cette version.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0005`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0005_persistent_votes.sql` avant de deployer cette version.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -50,7 +50,7 @@ where id = 'UUID_DE_L_ANECDOTE';
 
 - Vercel Hobby est destine a un projet personnel non commercial. Ne pas activer publicite ou partenariats avant de passer a Vercel Pro.
 - Supabase Free peut mettre le projet en pause apres une periode d'inactivite. Exporter la base regulierement avant toute campagne ou test important.
-- Les comptes, profils, avatars, soumissions publiques, carnet prive et signalements sont synchronises avec Supabase. Les votes et selections restent locaux dans cette version.
+- Les comptes, profils, avatars, soumissions publiques, carnet prive, votes et signalements sont synchronises avec Supabase. Les selections restent locales dans cette version.
 - Toute anecdote publique reste `pending` jusqu'a une validation humaine. Le filtrage automatique masque quelques motifs evidents, mais ne remplace pas la moderation.
 
 ## Verifications locales

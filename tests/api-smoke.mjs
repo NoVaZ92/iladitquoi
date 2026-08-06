@@ -10,6 +10,7 @@ import report from '../api/report.js';
 import privateAnecdote from '../api/private.js';
 import privateShare from '../api/private-share.js';
 import submit from '../api/submit.js';
+import vote from '../api/vote.js';
 
 function createResponse() {
   return {
@@ -198,6 +199,19 @@ try {
     throw new Error('Lecture du lien privé invalide');
   }
 
+  const votedId = '723e4567-e89b-42d3-a456-426614174006';
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'user-123' }; } };
+    if (lastRequest.url.endsWith('/rest/v1/rpc/cast_anecdote_vote')) return { ok: true, status: 200, async json() { return [{ vote_score: 12, user_vote: 1 }]; } };
+    return { ok: false, status: 500, async json() { return []; } };
+  };
+  response = createResponse();
+  await vote({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { anecdoteId: votedId, value: 1 } }, response);
+  if (response.statusCode !== 200 || response.body.voteScore !== 12 || response.body.userVote !== 1 || !lastRequest.options.body.includes(votedId)) {
+    throw new Error('Vote persistant invalide');
+  }
+
   delete process.env.SUPABASE_SECRET_KEY;
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-role-key';
   globalThis.fetch = async (url, options = {}) => {
@@ -335,7 +349,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('25 contrats API vérifiés.');
+  console.log('26 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

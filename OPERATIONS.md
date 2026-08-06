@@ -2,7 +2,7 @@
 
 ## Etat du MVP
 
-Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive et les signalements utilisent Supabase. Les votes et les selections restent locaux au navigateur dans cette version.
+Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive, les votes et les signalements utilisent Supabase. Les selections restent locales au navigateur dans cette version.
 
 ## Donner le role administrateur
 

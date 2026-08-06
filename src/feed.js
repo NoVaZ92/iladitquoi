@@ -140,14 +140,41 @@ function createPost(anecdote) {
     voteColumn.append(up, score, down);
   }
 
-  let localVote = 0;
-  const applyVote = (direction) => {
-    const base = Number(article.dataset.score) || 0;
-    localVote = localVote === direction ? 0 : direction;
-    score.textContent = String(base + localVote);
+  let localVote = Number(anecdote.user_vote) || 0;
+  const renderVote = () => {
+    score.textContent = article.dataset.score;
     up.classList.toggle('is-active', localVote === 1);
     down.classList.toggle('is-active', localVote === -1);
   };
+  const applyVote = async (direction) => {
+    const token = await window.AnecdotesAuth?.getAccessToken?.();
+    if (!token) {
+      window.location.assign(`/auth.html?next=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+    up.disabled = true;
+    down.disabled = true;
+    try {
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({ anecdoteId: anecdote.id, value: direction })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'vote_failed');
+      article.dataset.score = String(Number(data.voteScore) || 0);
+      anecdote.vote_score = Number(data.voteScore) || 0;
+      localVote = Number(data.userVote) || 0;
+      anecdote.user_vote = localVote;
+      renderVote();
+    } catch {
+      article.title = 'Votre vote n’a pas pu être enregistré.';
+    } finally {
+      up.disabled = false;
+      down.disabled = false;
+    }
+  };
+  if (!isPrivateShare) renderVote();
   if (!isPrivateShare) {
     up.addEventListener('click', () => applyVote(1));
     down.addEventListener('click', () => applyVote(-1));
@@ -318,12 +345,20 @@ async function loadFeed(sort = currentSort) {
     const data = await response.json();
     feedItems = Array.isArray(data.anecdotes) ? data.anecdotes : [];
     await includeSharedAnecdote();
+    await hydrateUserVotes();
     renderFeed();
     focusSharedAnecdote();
   } catch {
     feedItems = [];
     setFeedState('Le fil ne répond pas', 'Vérifiez la connexion Supabase puis réessayez.', true);
   }
+}
+
+async function hydrateUserVotes() {
+  const ids = feedItems.filter((item) => !item.private_share).map((item) => item.id);
+  const votes = await window.AnecdotesAuth?.getVotes?.(ids);
+  if (!votes) return;
+  feedItems.forEach((item) => { item.user_vote = votes.get(item.id) || 0; });
 }
 
 async function includeSharedAnecdote() {
@@ -551,7 +586,10 @@ function initialize() {
   bindFilters();
   bindShareDialog();
   updateNotebookSummary();
-  window.addEventListener('anecdotes:auth', () => syncAuthProfile().catch(() => updateComposerIdentity(null)));
+  window.addEventListener('anecdotes:auth', () => {
+    syncAuthProfile().catch(() => updateComposerIdentity(null));
+    hydrateUserVotes().then(renderFeed).catch(() => {});
+  });
   syncAuthProfile().catch(() => updateComposerIdentity(null));
   loadFeed(currentSort);
 }
