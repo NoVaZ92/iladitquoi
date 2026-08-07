@@ -1,8 +1,19 @@
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import { PROFESSIONS } from '../lib/professions.js';
+
+const ALLOWED_THEMES = new Set(['leger', 'drole', 'touchant', 'epuisant', 'surprenant', 'apprentissage']);
 
 function boundedInteger(value, fallback, min, max) {
   const parsed = Number.parseInt(String(value || ''), 10);
   return Number.isInteger(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+function normalizedSearch(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[^\p{L}\p{N}\s'-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .slice(0, 64);
 }
 
 export default async function handler(request, response) {
@@ -12,6 +23,9 @@ export default async function handler(request, response) {
   const sort = request.query?.sort === 'new' ? 'new' : 'top';
   const page = boundedInteger(request.query?.page, 0, 0, 1000);
   const limit = boundedInteger(request.query?.limit, 20, 5, 50);
+  const profession = PROFESSIONS.includes(request.query?.profession) ? request.query.profession : '';
+  const theme = ALLOWED_THEMES.has(request.query?.theme) ? request.query.theme : '';
+  const search = normalizedSearch(request.query?.search);
 
   const query = new URLSearchParams({
     select: 'id,author_label,profession,theme,body,vote_score,published_at,submitted_at',
@@ -23,6 +37,9 @@ export default async function handler(request, response) {
     offset: String(page * limit),
     limit: String(limit + 1)
   });
+  if (profession) query.set('profession', `eq.${profession}`);
+  if (theme) query.set('theme', `eq.${theme}`);
+  if (search) query.set('or', `(body.ilike.*${search}*,author_label.ilike.*${search}*,profession.ilike.*${search}*)`);
   let upstream;
   try {
     upstream = await fetch(`${url}/rest/v1/anecdotes?${query}`, {

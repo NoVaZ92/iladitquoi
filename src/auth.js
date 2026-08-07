@@ -13,6 +13,7 @@ const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 let supabase;
 let currentSession = null;
 let currentProfile = null;
+let pendingConfirmationEmail = '';
 
 function safeNext(value) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return PROFILE_PAGE;
@@ -185,13 +186,13 @@ function confirmProfileAction({ dialogId, cancelId, closeId, confirmId, fallback
   });
 }
 
-function confirmRefusedDeletion() {
+function confirmPublicAnecdoteDeletion() {
   return confirmProfileAction({
-    dialogId: '#delete-refused-dialog',
-    cancelId: '#cancel-refused-delete',
-    closeId: '#close-refused-delete',
-    confirmId: '#confirm-refused-delete',
-    fallback: 'Supprimer définitivement cette anecdote refusée ?'
+    dialogId: '#delete-public-anecdote-dialog',
+    cancelId: '#cancel-public-anecdote-delete',
+    closeId: '#close-public-anecdote-delete',
+    confirmId: '#confirm-public-anecdote-delete',
+    fallback: 'Supprimer définitivement cette anecdote ?'
   });
 }
 
@@ -263,14 +264,15 @@ async function exportPersonalData(button) {
   button.disabled = true;
   showProfileStatus('Préparation de votre export…');
   try {
-    const [anecdotesResult, votesResult, reportsResult, linksResult, savedResult] = await Promise.all([
+    const [anecdotesResult, votesResult, reportsResult, linksResult, savedResult, notificationsResult] = await Promise.all([
       supabase.from('anecdotes').select('id,author_label,profession,theme,body,visibility,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at').eq('author_id', currentSession.user.id).order('submitted_at', { ascending: false }),
       supabase.from('votes').select('anecdote_id,value,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false }),
       supabase.from('reports').select('id,anecdote_id,reason,created_at,resolved_at').eq('reporter_id', currentSession.user.id).order('created_at', { ascending: false }),
       supabase.from('private_share_links').select('id,anecdote_id,expires_at,revoked_at,created_at,last_opened_at').order('created_at', { ascending: false }),
-      supabase.from('saved_anecdotes').select('anecdote_id,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false })
+      supabase.from('saved_anecdotes').select('anecdote_id,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false }),
+      supabase.from('account_notifications').select('id,anecdote_id,kind,message,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false })
     ]);
-    const failure = [anecdotesResult, votesResult, reportsResult, linksResult, savedResult].find((result) => result.error);
+    const failure = [anecdotesResult, votesResult, reportsResult, linksResult, savedResult, notificationsResult].find((result) => result.error);
     if (failure?.error) throw failure.error;
     const selection = (() => {
       try { return JSON.parse(localStorage.getItem('iladitquoi.saved-posts') || '[]'); } catch { return []; }
@@ -287,6 +289,7 @@ async function exportPersonalData(button) {
       reports: reportsResult.data || [],
       private_share_links: linksResult.data || [],
       saved_anecdotes: savedResult.data || [],
+      moderation_notifications: notificationsResult.data || [],
       local_selections: Array.isArray(selection) ? selection : []
     });
     showProfileStatus('Votre export a été téléchargé.', true);
@@ -324,8 +327,8 @@ async function deleteAccount(button) {
   }
 }
 
-async function deleteModeratedAnecdote(anecdote, button) {
-  if (!currentSession || !await confirmRefusedDeletion()) return;
+async function deleteOwnedPublicAnecdote(anecdote, button) {
+  if (!currentSession || !await confirmPublicAnecdoteDeletion()) return;
   button.disabled = true;
   showProfileStatus('Suppression de l’anecdote…');
   try {
@@ -335,10 +338,10 @@ async function deleteModeratedAnecdote(anecdote, button) {
       .eq('id', anecdote.id)
       .eq('author_id', currentSession.user.id)
       .eq('visibility', 'public')
-      .in('moderation_status', ['refused', 'hidden'])
+      .in('moderation_status', ['published', 'refused', 'hidden'])
       .select('id');
     if (error || !data?.length) throw error || new Error('anecdote_not_deleted');
-    showProfileStatus('L’anecdote retirée a été supprimée.', true);
+    showProfileStatus('Votre anecdote a été supprimée.', true);
     await renderProfilePage(currentSession, currentProfile);
   } catch {
     button.disabled = false;
@@ -501,7 +504,18 @@ function profileEntry(anecdote) {
   } else if (status === 'published') {
     const votes = document.createElement('span');
     votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
-    foot.append(votes);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'public-delete-button';
+    remove.title = 'Supprimer définitivement cette anecdote';
+    const icon = document.createElement('i');
+    icon.dataset.lucide = 'trash-2';
+    icon.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = 'Supprimer';
+    remove.append(icon, label);
+    remove.addEventListener('click', () => deleteOwnedPublicAnecdote(anecdote, remove));
+    foot.append(votes, remove);
   } else if (['refused', 'hidden'].includes(status)) {
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -513,7 +527,7 @@ function profileEntry(anecdote) {
     const label = document.createElement('span');
     label.textContent = 'Supprimer';
     remove.append(icon, label);
-    remove.addEventListener('click', () => deleteModeratedAnecdote(anecdote, remove));
+    remove.addEventListener('click', () => deleteOwnedPublicAnecdote(anecdote, remove));
     if (status === 'refused') {
       const automaticDeletion = document.createElement('span');
       const refusedAt = new Date(anecdote.updated_at || anecdote.submitted_at);
@@ -665,6 +679,7 @@ function setAuthView(name) {
   const titles = {
     signin: 'Retrouvez vos anecdotes',
     signup: 'Créez votre compte',
+    'signup-confirmation': 'Activez votre compte',
     reset: 'Réinitialisez votre mot de passe',
     'update-password': 'Choisissez un nouveau mot de passe',
     profile: 'Finalisez votre profil',
@@ -736,6 +751,24 @@ async function setupAuthPage(session, profile) {
   });
   document.querySelectorAll('[data-back-to-login]').forEach((button) => button.addEventListener('click', () => setAuthView('signin')));
 
+  document.querySelector('#resend-confirmation')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    if (!pendingConfirmationEmail) {
+      setAuthView('signup');
+      setStatus('Saisissez votre adresse e-mail pour créer ou activer votre compte.', true);
+      return;
+    }
+    button.disabled = true;
+    setStatus('Envoi de l’e-mail d’activation…');
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: pendingConfirmationEmail,
+      options: { emailRedirectTo: `${window.location.origin}${AUTH_PAGE}?confirmed=1&next=${encodeURIComponent(redirectTarget())}` }
+    });
+    button.disabled = false;
+    setStatus(error ? frenchAuthError(error) : 'Un nouvel e-mail d’activation vient d’être envoyé.', Boolean(error));
+  });
+
   document.querySelector('#signin-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -745,6 +778,11 @@ async function setupAuthPage(session, profile) {
     const { error } = await supabase.auth.signInWithPassword({ email: String(values.get('email')).trim(), password: String(values.get('password')) });
     if (error) {
       setBusy(form, false);
+      if (error.code === 'email_not_confirmed') {
+        pendingConfirmationEmail = String(values.get('email')).trim();
+        setText('[data-confirmation-email]', pendingConfirmationEmail);
+        setAuthView('signup-confirmation');
+      }
       setStatus(frenchAuthError(error), true);
       return;
     }
@@ -785,6 +823,9 @@ async function setupAuthPage(session, profile) {
       return;
     }
     form.reset();
+    pendingConfirmationEmail = String(values.get('email')).trim();
+    setText('[data-confirmation-email]', pendingConfirmationEmail);
+    setAuthView('signup-confirmation');
     setStatus('Compte créé. Ouvrez l’e-mail de confirmation pour activer votre profil.');
   });
 

@@ -23,20 +23,20 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 - L’onglet **A valider** affiche les anecdotes publiques `pending`. Valider les publie ; refuser exige un message transmis a l’auteur connecte dans son suivi de moderation.
 - L’onglet **Signalements** affiche les signalements non résolus avec un motif structuré. Conserver clôture le signalement. **Masquer du fil** retire une anecdote déjà publiée, clôture le signalement associé et exige un message pour son auteur.
 - Chaque validation, refus ou retrait est enregistré dans `moderation_decisions` avec le modérateur, le message auteur et la note interne facultative. Les auteurs connectés retrouvent les dernières décisions dans leur profil.
-- L’auteur peut supprimer une anecdote refusée ou retirée du fil depuis son profil. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour les soumissions refusées depuis plus de 30 jours ; un retrait après publication reste disponible au propriétaire jusqu’à sa suppression manuelle.
+- L’auteur peut supprimer toute anecdote publique depuis son profil, y compris une publication validée. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour les soumissions refusées depuis plus de 30 jours ; un retrait après publication reste disponible au propriétaire jusqu’à sa suppression manuelle.
 - Les publications, notes privees, votes, signalements et liens prives sont limites par IP et par compte. Les sujets sont haches par HMAC avant stockage dans `private.rate_limit_buckets`, puis les compteurs expires sont purges quotidiennement.
 
 ## Architecture recommandee
 
 - Frontend : HTML, CSS et JavaScript statiques servis par Vercel, avec routes publiques (`/`, `/profil`, `/admin`) et fonctions Node.js sous `/api/*`.
 - Runtime : Node.js 24 pour les builds et fonctions Vercel. Le build execute les contrats statiques et API avant de deploiement.
-- Donnees et authentification : Supabase Postgres et authentification par lien magique. Une session sera necessaire pour enregistrer un carnet, voter, signaler et suivre une moderation.
+- Donnees et authentification : Supabase Postgres et comptes e-mail avec mot de passe, confirmation d’adresse et reinitialisation de mot de passe. Une session sera necessaire pour enregistrer un carnet, voter, signaler et suivre une moderation.
 - Roles : `member`, `moderator`, `admin`. Les moderateurs et administrateurs voient la file commune et chaque decision est journalisee.
 - Media et partage : les liens prives sont des jetons aleatoires, stockes hashes, revocables et eventuellement expires. Le texte de l'anecdote ne doit jamais apparaitre dans l'URL, dans le titre partage ni dans le message WhatsApp.
 
 ## Suppression et export
 
-- Le bouton `Télécharger mes données` du profil produit un JSON avec le compte, les anecdotes, votes, signalements, liens privés et sélections conservées sur ce navigateur.
+- Le bouton `Télécharger mes données` du profil produit un JSON avec le compte, les anecdotes, votes, signalements, liens privés, sélections synchronisées et notifications de modération, ainsi que le cache local éventuellement présent.
 - Le bouton `Supprimer mon compte` exige la saisie de `SUPPRIMER`, efface les contenus et l'avatar, puis supprime le compte Supabase. Les anciennes décisions de modération gardent leur historique mais ne sont plus reliées à un compte supprimé.
 - Tester la suppression avec un compte non administrateur avant ouverture. Une suppression de compte ne doit jamais être effectuée depuis le SQL Editor pour un utilisateur réel, sauf procédure de support documentée.
 - Les sélections sont synchronisées pour les comptes connectés. Les sélections créées avant connexion restent disponibles localement puis sont reprises automatiquement si elles correspondent encore à une anecdote publiée.

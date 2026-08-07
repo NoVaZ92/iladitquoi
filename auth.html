@@ -48,6 +48,7 @@
     .auth-status.is-error { color: var(--error); }
     .signed-in-copy { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
     .signed-in-actions { display: grid; gap: 10px; }
+    .confirmation-copy { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
     @media (max-width: 520px) {
       .auth-header-inner { min-height: 60px; }
       .brand { font-size: 17px; }
@@ -89,6 +90,11 @@
         <label class="check-field"><input name="rules" type="checkbox" required><span>Je m’engage à ne publier aucune information permettant d’identifier un patient ou un collègue.</span></label>
         <button class="primary-button" type="submit">Créer mon compte</button>
       </form>
+
+      <div data-auth-view="signup-confirmation" hidden>
+        <p class="confirmation-copy">Un lien d’activation a été envoyé à <strong data-confirmation-email></strong>. Ouvrez-le avant de vous connecter.</p>
+        <div class="signed-in-actions"><button class="primary-button" id="resend-confirmation" type="button">Renvoyer l’e-mail</button><button class="secondary-button" type="button" data-back-to-login>Retour à la connexion</button></div>
+      </div>
 
       <form class="auth-form" id="reset-form" data-auth-view="reset" hidden>
         <label class="field">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>

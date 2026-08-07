@@ -34,6 +34,8 @@ let reportTarget = null;
 let feedPage = 0;
 let feedHasMore = false;
 let feedLoading = false;
+let currentFeedFilterKey = '';
+let searchTimer;
 
 function renderIcons(root = document) {
   createIcons({ icons: ICONS, root, attrs: { 'stroke-width': 1.8 } });
@@ -83,6 +85,26 @@ function formatDate(value) {
   if (hours < 24) return `il y a ${hours} h`;
   const days = Math.floor(hours / 24);
   return days === 1 ? 'hier' : `il y a ${days} j`;
+}
+
+function feedFilters() {
+  return {
+    profession: document.querySelector('#profession-filter')?.value || 'all',
+    theme: document.querySelector('[data-theme-filter].is-active')?.dataset.themeFilter || 'all',
+    search: document.querySelector('#search-filter')?.value.trim().slice(0, 64) || ''
+  };
+}
+
+function syncFeedUrl(sort, filters) {
+  const url = new URL(location.href);
+  url.searchParams.set('sort', sort);
+  if (filters.profession !== 'all') url.searchParams.set('profession', filters.profession);
+  else url.searchParams.delete('profession');
+  if (filters.theme !== 'all') url.searchParams.set('theme', filters.theme);
+  else url.searchParams.delete('theme');
+  if (filters.search) url.searchParams.set('search', filters.search);
+  else url.searchParams.delete('search');
+  history.replaceState({}, '', url);
 }
 
 function apiError(data, fallback) {
@@ -349,8 +371,12 @@ function setFeedState(title, copy, retry = false) {
 
 async function loadFeed(sort = currentSort, { append = false } = {}) {
   if (feedLoading) return;
+  const filters = feedFilters();
+  const filterKey = `${filters.profession}|${filters.theme}|${filters.search}`;
+  if (filterKey !== currentFeedFilterKey) append = false;
   if (sort !== currentSort) append = false;
   currentSort = sort;
+  currentFeedFilterKey = filterKey;
   const page = append ? feedPage + 1 : 0;
   feedLoading = true;
   document.querySelectorAll('.segment[data-sort]').forEach((button) => {
@@ -358,9 +384,16 @@ async function loadFeed(sort = currentSort, { append = false } = {}) {
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
-  if (!append) setFeedState('Chargement du fil…', 'Lecture des anecdotes validées dans Supabase.');
+  if (!append) {
+    syncFeedUrl(sort, filters);
+    setFeedState('Chargement du fil…', 'Lecture des anecdotes validées dans Supabase.');
+  }
   try {
-    const response = await fetch(`/api/feed?sort=${sort}&page=${page}&limit=20`, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const query = new URLSearchParams({ sort, page: String(page), limit: '20' });
+    if (filters.profession !== 'all') query.set('profession', filters.profession);
+    if (filters.theme !== 'all') query.set('theme', filters.theme);
+    if (filters.search) query.set('search', filters.search);
+    const response = await fetch(`/api/feed?${query}`, { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error('feed_unavailable');
     const data = await response.json();
     const incoming = Array.isArray(data.anecdotes) ? data.anecdotes : [];
@@ -519,10 +552,13 @@ function bindFilters() {
   document.querySelectorAll('[data-sort]').forEach((button) => button.addEventListener('click', () => loadFeed(button.dataset.sort)));
   document.querySelectorAll('[data-theme-filter]').forEach((button) => button.addEventListener('click', () => {
     document.querySelectorAll('[data-theme-filter]').forEach((item) => item.classList.toggle('is-active', item === button));
-    renderFeed();
+    loadFeed(currentSort);
   }));
-  document.querySelector('#profession-filter').addEventListener('change', renderFeed);
-  document.querySelector('#search-filter').addEventListener('input', renderFeed);
+  document.querySelector('#profession-filter').addEventListener('change', () => loadFeed(currentSort));
+  document.querySelector('#search-filter').addEventListener('input', () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => loadFeed(currentSort), 250);
+  });
   document.querySelector('[data-random-post]').addEventListener('click', () => {
     const posts = [...document.querySelectorAll('.story')];
     posts[Math.floor(Math.random() * posts.length)]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -677,7 +713,16 @@ function bindComposer() {
 function setupProfessionFields() {
   populateProfessionSelect(document.querySelector('#profession-choice'));
   populateProfessionSelect(document.querySelector('#profession-filter'), { placeholder: 'Tous les métiers' });
-  document.querySelector('#profession-filter').querySelector('option').value = 'all';
+  const filter = document.querySelector('#profession-filter');
+  filter.querySelector('option').value = 'all';
+  const params = new URLSearchParams(location.search);
+  document.querySelector('#search-filter').value = params.get('search')?.slice(0, 64) || '';
+  if (PROFESSIONS.includes(params.get('profession'))) filter.value = params.get('profession');
+  const theme = params.get('theme');
+  const selectedTheme = document.querySelector(`[data-theme-filter="${theme}"]`);
+  if (selectedTheme) {
+    document.querySelectorAll('[data-theme-filter]').forEach((item) => item.classList.toggle('is-active', item === selectedTheme));
+  }
 }
 
 function initialize() {

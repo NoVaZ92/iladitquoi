@@ -315,8 +315,9 @@ try {
   }
 
   response = createResponse();
-  await feed({ method: 'GET', query: { page: '2', limit: '50' } }, response);
-  if (response.statusCode !== 200 || response.body.page !== 2 || !lastRequest.url.includes('offset=100') || !lastRequest.url.includes('limit=51')) {
+  await feed({ method: 'GET', query: { page: '2', limit: '50', profession: 'Orthophoniste', theme: 'drole', search: 'patiente (à vérifier)' } }, response);
+  const feedQuery = new URL(lastRequest.url).searchParams;
+  if (response.statusCode !== 200 || response.body.page !== 2 || feedQuery.get('offset') !== '100' || feedQuery.get('limit') !== '51' || feedQuery.get('profession') !== 'eq.Orthophoniste' || feedQuery.get('theme') !== 'eq.drole' || feedQuery.get('or') !== '(body.ilike.*patiente à vérifier*,author_label.ilike.*patiente à vérifier*,profession.ilike.*patiente à vérifier*)') {
     throw new Error('Pagination du fil invalide');
   }
 
