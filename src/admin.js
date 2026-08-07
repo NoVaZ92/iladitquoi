@@ -59,7 +59,8 @@ function field(label, placeholder, className) {
 function createDecisionControls(anecdote, reportIds = []) {
   const controls = document.createElement('div');
   controls.className = 'decision-controls';
-  const authorMessage = field('Message pour l’auteur en cas de refus', 'Ex. Cette anecdote contient un détail permettant d’identifier une personne.', 'author-message');
+  const isPublished = anecdote.moderation_status === 'published';
+  const authorMessage = field(isPublished ? 'Message pour l’auteur avant retrait' : 'Message pour l’auteur en cas de refus', 'Ex. Cette anecdote contient un détail permettant d’identifier une personne.', 'author-message');
   const internalNote = field('Note interne facultative', 'Visible uniquement par la modération.', 'internal-note');
   const actions = document.createElement('div');
   actions.className = 'decision-actions';
@@ -67,26 +68,26 @@ function createDecisionControls(anecdote, reportIds = []) {
   publish.type = 'button';
   publish.className = 'approve-button';
   publish.append(icon('check'), document.createTextNode('Valider'));
-  const refuse = document.createElement('button');
-  refuse.type = 'button';
-  refuse.className = 'refuse-button';
-  refuse.append(icon('x'), document.createTextNode(anecdote.moderation_status === 'published' ? 'Masquer et refuser' : 'Refuser'));
-  if (anecdote.moderation_status !== 'published') actions.append(publish);
-  actions.append(refuse);
+  const secondary = document.createElement('button');
+  secondary.type = 'button';
+  secondary.className = 'refuse-button';
+  secondary.append(icon('x'), document.createTextNode(isPublished ? 'Masquer du fil' : 'Refuser'));
+  if (!isPublished) actions.append(publish);
+  actions.append(secondary);
   controls.append(authorMessage, internalNote, actions);
 
   async function decide(status) {
     const message = authorMessage.querySelector('textarea').value.trim();
     const note = internalNote.querySelector('textarea').value.trim();
-    if (status === 'refused' && message.length < 3) {
-      setStatus('Un message à l’auteur est requis pour refuser une anecdote.', true);
+    if (status !== 'published' && message.length < 3) {
+      setStatus('Un message à l’auteur est requis avant de retirer une anecdote.', true);
       authorMessage.querySelector('textarea').focus();
       return;
     }
-    const confirmed = window.confirm(status === 'published' ? 'Valider et publier cette anecdote ?' : 'Refuser cette anecdote ?');
+    const confirmed = window.confirm(status === 'published' ? 'Valider et publier cette anecdote ?' : status === 'hidden' ? 'Retirer cette anecdote publiée du fil ?' : 'Refuser cette anecdote ?');
     if (!confirmed) return;
     publish.disabled = true;
-    refuse.disabled = true;
+    secondary.disabled = true;
     setStatus('Décision en cours…');
     try {
       const response = await fetch('/api/admin/decision', {
@@ -100,12 +101,12 @@ function createDecisionControls(anecdote, reportIds = []) {
       await loadQueue();
     } catch (error) {
       publish.disabled = false;
-      refuse.disabled = false;
+      secondary.disabled = false;
       setStatus(error.message === 'author_message_required' ? 'Un message à l’auteur est requis.' : 'La décision n’a pas pu être enregistrée.', true);
     }
   }
   publish.addEventListener('click', () => decide('published'));
-  refuse.addEventListener('click', () => decide('refused'));
+  secondary.addEventListener('click', () => decide(isPublished ? 'hidden' : 'refused'));
   return controls;
 }
 
@@ -122,8 +123,8 @@ function createAnecdoteCard(anecdote, { reportIds = [], report = null } = {}) {
   details.textContent = `${anecdote.profession || 'Métier du soin'} · ${anecdote.author_label || 'Anonyme'} · ${formatDate(anecdote.submitted_at)}`;
   meta.append(badge, details);
   const state = document.createElement('span');
-  state.className = anecdote.moderation_status === 'published' ? 'state state-published' : 'state';
-  state.textContent = anecdote.moderation_status === 'published' ? 'Publiée' : anecdote.moderation_status === 'refused' ? 'Retirée' : 'En attente';
+  state.className = anecdote.moderation_status === 'published' ? 'state state-published' : anecdote.moderation_status === 'hidden' ? 'state state-hidden' : 'state';
+  state.textContent = anecdote.moderation_status === 'published' ? 'Publiée' : anecdote.moderation_status === 'hidden' ? 'Masquée' : anecdote.moderation_status === 'refused' ? 'Refusée' : 'En attente';
   header.append(meta, state);
   const body = document.createElement('p');
   body.className = 'anecdote-body';
@@ -145,7 +146,7 @@ function createAnecdoteCard(anecdote, { reportIds = [], report = null } = {}) {
     reportInfo.append(reportTitle, reportReason);
     article.append(reportInfo);
   }
-  if (anecdote.moderation_status !== 'refused') article.append(createDecisionControls(anecdote, reportIds));
+  if (!['refused', 'hidden'].includes(anecdote.moderation_status)) article.append(createDecisionControls(anecdote, reportIds));
   return article;
 }
 

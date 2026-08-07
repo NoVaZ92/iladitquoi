@@ -2,7 +2,7 @@
 
 ## Etat du MVP
 
-Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive, les votes et les signalements utilisent Supabase. Les selections restent locales au navigateur dans cette version.
+Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive, les votes, les signalements et les selections des comptes connectes utilisent Supabase. Les selections visiteur restent locales jusqu’a la connexion.
 
 ## Donner le role administrateur
 
@@ -21,9 +21,9 @@ Verifier ensuite avec `select pseudonym, role from public.profiles;`. Le role `m
 Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `moderator` et `admin`, et les API verifient ce role a chaque lecture ou decision.
 
 - L’onglet **A valider** affiche les anecdotes publiques `pending`. Valider les publie ; refuser exige un message transmis a l’auteur connecte dans son suivi de moderation.
-- L’onglet **Signalements** affiche les signalements non resolus. Conserver cloture le signalement. Masquer et refuser retire l’anecdote publiee du fil et cloture le signalement associe.
-- Chaque validation ou refus est enregistre dans `moderation_decisions` avec le moderateur, le message auteur et la note interne facultative.
-- L’auteur peut supprimer une anecdote refusee depuis son profil. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour celles dont le refus date de plus de 30 jours ; les decisions, votes et signalements associes sont supprimes en cascade.
+- L’onglet **Signalements** affiche les signalements non résolus avec un motif structuré. Conserver clôture le signalement. **Masquer du fil** retire une anecdote déjà publiée, clôture le signalement associé et exige un message pour son auteur.
+- Chaque validation, refus ou retrait est enregistré dans `moderation_decisions` avec le modérateur, le message auteur et la note interne facultative. Les auteurs connectés retrouvent les dernières décisions dans leur profil.
+- L’auteur peut supprimer une anecdote refusée ou retirée du fil depuis son profil. Le job Supabase Cron `purge-refused-anecdotes-after-30-days` efface chaque jour les soumissions refusées depuis plus de 30 jours ; un retrait après publication reste disponible au propriétaire jusqu’à sa suppression manuelle.
 - Les publications, notes privees, votes, signalements et liens prives sont limites par IP et par compte. Les sujets sont haches par HMAC avant stockage dans `private.rate_limit_buckets`, puis les compteurs expires sont purges quotidiennement.
 
 ## Architecture recommandee

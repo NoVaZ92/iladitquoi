@@ -56,19 +56,19 @@
     .profile-entry, .notebook-entry { border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: white; }
     .profile-entry { display: grid; gap: 12px; }
     .profile-entry.is-pending { border-color: #f0d292; background: #fffdf8; box-shadow: inset 3px 0 0 #e59a12; }
-    .profile-entry.is-refused { border-color: #efc8c3; background: #fffafa; box-shadow: inset 3px 0 0 var(--danger); }
+    .profile-entry.is-refused { border-color: #efc8c3; background: #fffafa; box-shadow: inset 3px 0 0 var(--danger); } .profile-entry.is-hidden { border-color: #ead29b; background: #fffdf7; box-shadow: inset 3px 0 0 #c27a00; }
     .profile-entry-top { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
     .profile-entry-main p, .notebook-entry p { margin: 8px 0 0; font-size: 13px; line-height: 1.55; }
     .profile-entry-meta, .notebook-entry > span { color: var(--muted); font-size: 9px; }
     .moderation-state { display: inline-flex; flex: none; align-items: center; min-height: 25px; border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; font-size: 9px; font-weight: 800; white-space: nowrap; }
     .moderation-state.is-pending { border-color: #edcf8c; background: #fff4d9; color: var(--warning); }
-    .moderation-state.is-refused { border-color: #efc8c3; background: #ffebe8; color: var(--danger); }
+    .moderation-state.is-refused { border-color: #efc8c3; background: #ffebe8; color: var(--danger); } .moderation-state.is-hidden { border-color: #ead29b; background: #fff7e4; color: #8c5900; }
     .moderation-state.is-published { border-color: #b9dfc8; background: #ebf8f0; color: #16794f; }
     .moderation-state.is-private { border-color: #cdd7e8; background: #eef3fa; color: #3f506f; }
     .moderation-decision { display: grid; gap: 4px; border-radius: 6px; padding: 11px 12px; font-size: 11px; line-height: 1.5; }
     .moderation-decision strong { font-size: 10px; }
     .moderation-decision.is-pending { border: 1px solid #f0d292; background: #fff6df; color: #765116; }
-    .moderation-decision.is-refused { border: 1px solid #efc8c3; background: #ffebe8; color: #852d25; }
+    .moderation-decision.is-refused { border: 1px solid #efc8c3; background: #ffebe8; color: #852d25; } .moderation-decision.is-hidden { border: 1px solid #ead29b; background: #fff7e4; color: #755000; }
     .profile-entry-foot { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 1px; color: var(--muted); font-size: 9px; }
     .refused-delete-button, .private-delete-button, .saved-remove-button { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border: 0; padding: 0; background: transparent; color: var(--danger); font-size: 9px; font-weight: 800; }
     .refused-delete-button, .private-delete-button { margin-left: auto; }
@@ -92,7 +92,7 @@
     .profile-action:hover { border-color: var(--blue); color: var(--blue); }
     .profile-action.danger { border-color: #efc8c3; color: var(--danger); }
     .profile-action.danger:hover { border-color: var(--danger); background: #fff5f4; color: var(--danger); }
-    .badge-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .badge-list { display: flex; flex-wrap: wrap; gap: 7px; } .notification-list { display: grid; gap: 8px; } .notification-item { border-left: 3px solid var(--blue); padding-left: 9px; } .notification-item.is-anecdote_refused { border-color: var(--danger); } .notification-item.is-anecdote_hidden { border-color: #c27a00; } .notification-item p { color: var(--text); } .notification-item span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
     .badge { border-radius: 5px; padding: 6px 8px; background: #eef3ff; color: var(--blue); font-size: 9px; font-weight: 750; }
     dialog { width: min(92vw, 450px); border: 1px solid var(--line); border-radius: 8px; padding: 0; color: var(--text); box-shadow: 0 24px 70px rgba(15, 23, 42, .25); }
     dialog::backdrop { background: rgba(15, 23, 42, .48); }
@@ -141,6 +141,7 @@
           <aside class="profile-aside">
             <section class="aside-section"><h2><i data-lucide="pen-line"></i>Écrire</h2><p>Ajoutez une anecdote publique ou une note privée.</p><a class="profile-action" href="/#composer"><i data-lucide="pen-line"></i>Nouvelle anecdote</a></section>
             <section class="aside-section"><h2><i data-lucide="shield-check"></i>Badges</h2><div class="badge-list" data-profile-badges></div></section>
+            <section class="aside-section"><h2><i data-lucide="file-clock"></i>Décisions récentes</h2><div class="notification-list" id="notification-list"><div class="private-empty">Chargement des décisions…</div></div></section>
             <section class="aside-section"><h2><i data-lucide="user-round"></i>Compte</h2><a class="profile-action" href="/auth.html?mode=profile&next=%2Fprofile.html">Modifier mon profil</a><button class="profile-action" type="button" data-export-personal-data><i data-lucide="download"></i>Télécharger mes données</button><button class="profile-action" type="button" data-auth-signout><i data-lucide="log-out"></i>Se déconnecter</button><button class="profile-action danger" type="button" data-delete-account><i data-lucide="trash-2"></i>Supprimer mon compte</button></section>
           </aside>
         </div>

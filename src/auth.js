@@ -324,7 +324,7 @@ async function deleteAccount(button) {
   }
 }
 
-async function deleteRefusedAnecdote(anecdote, button) {
+async function deleteModeratedAnecdote(anecdote, button) {
   if (!currentSession || !await confirmRefusedDeletion()) return;
   button.disabled = true;
   showProfileStatus('Suppression de l’anecdote…');
@@ -335,10 +335,10 @@ async function deleteRefusedAnecdote(anecdote, button) {
       .eq('id', anecdote.id)
       .eq('author_id', currentSession.user.id)
       .eq('visibility', 'public')
-      .eq('moderation_status', 'refused')
+      .in('moderation_status', ['refused', 'hidden'])
       .select('id');
     if (error || !data?.length) throw error || new Error('anecdote_not_deleted');
-    showProfileStatus('L’anecdote refusée a été supprimée.', true);
+    showProfileStatus('L’anecdote retirée a été supprimée.', true);
     await renderProfilePage(currentSession, currentProfile);
   } catch {
     button.disabled = false;
@@ -464,7 +464,7 @@ function profileEntry(anecdote) {
   main.append(meta, copy);
   const state = document.createElement('span');
   state.className = `moderation-state ${isPrivate ? 'is-private' : `is-${status}`}`;
-  state.textContent = isPrivate ? 'Privée' : status === 'published' ? 'Validée' : status === 'refused' ? 'Refusée' : 'En cours d’examen';
+  state.textContent = isPrivate ? 'Privée' : status === 'published' ? 'Validée' : status === 'hidden' ? 'Retirée du fil' : status === 'refused' ? 'Refusée' : 'En cours d’examen';
   header.append(main, state);
   const foot = document.createElement('div');
   foot.className = 'profile-entry-foot';
@@ -502,11 +502,7 @@ function profileEntry(anecdote) {
     const votes = document.createElement('span');
     votes.textContent = `${Number(anecdote.vote_score) || 0} votes`;
     foot.append(votes);
-  } else if (status === 'refused') {
-    const automaticDeletion = document.createElement('span');
-    const refusedAt = new Date(anecdote.updated_at || anecdote.submitted_at);
-    const deletionDate = new Date(refusedAt.getTime() + (30 * 24 * 60 * 60 * 1000));
-    automaticDeletion.textContent = `Suppression automatique à partir du ${formatDate(deletionDate)}`;
+  } else if (['refused', 'hidden'].includes(status)) {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'refused-delete-button';
@@ -517,15 +513,22 @@ function profileEntry(anecdote) {
     const label = document.createElement('span');
     label.textContent = 'Supprimer';
     remove.append(icon, label);
-    remove.addEventListener('click', () => deleteRefusedAnecdote(anecdote, remove));
-    foot.append(automaticDeletion, remove);
+    remove.addEventListener('click', () => deleteModeratedAnecdote(anecdote, remove));
+    if (status === 'refused') {
+      const automaticDeletion = document.createElement('span');
+      const refusedAt = new Date(anecdote.updated_at || anecdote.submitted_at);
+      const deletionDate = new Date(refusedAt.getTime() + (30 * 24 * 60 * 60 * 1000));
+      automaticDeletion.textContent = `Suppression automatique à partir du ${formatDate(deletionDate)}`;
+      foot.append(automaticDeletion);
+    }
+    foot.append(remove);
   }
   article.append(header);
-  if (!isPrivate && status === 'refused') {
+  if (!isPrivate && ['refused', 'hidden'].includes(status)) {
     const decision = document.createElement('div');
-    decision.className = 'moderation-decision is-refused';
+    decision.className = `moderation-decision is-${status}`;
     const title = document.createElement('strong');
-    title.textContent = 'Motif du refus';
+    title.textContent = status === 'hidden' ? 'Motif du retrait' : 'Motif du refus';
     const reason = document.createElement('span');
     reason.textContent = anecdote.moderation_reason || 'Cette anecdote ne respecte pas les règles de publication.';
     decision.append(title, reason);
@@ -561,7 +564,7 @@ async function renderProfilePage(session, profile) {
   document.querySelectorAll('[data-profile-avatar]').forEach((element) => setAvatar(element, profile.pseudonym, profile.avatar_url));
   setText('[data-profile-xp]', Number(profile.xp) || 0);
 
-  const [{ data: anecdotes, error }, { data: activeShareLinks, error: linksError }] = await Promise.all([
+  const [{ data: anecdotes, error }, { data: activeShareLinks, error: linksError }, { data: notifications, error: notificationsError }] = await Promise.all([
     supabase
       .from('anecdotes')
       .select('id,profession,theme,body,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at,visibility')
@@ -570,7 +573,13 @@ async function renderProfilePage(session, profile) {
     supabase
       .from('private_share_links')
       .select('anecdote_id')
-      .is('revoked_at', null)
+      .is('revoked_at', null),
+    supabase
+      .from('account_notifications')
+      .select('id,kind,message,created_at')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(4)
   ]);
 
   const publishedList = document.querySelector('#published-list');
@@ -584,6 +593,7 @@ async function renderProfilePage(session, profile) {
   }
 
   if (linksError) showProfileStatus('Les liens privés ne sont pas disponibles pour le moment.');
+  if (notificationsError) showProfileStatus('Les notifications de modération ne sont pas disponibles pour le moment.');
   const activeShareCounts = new Map();
   (activeShareLinks || []).forEach((link) => {
     activeShareCounts.set(link.anecdote_id, (activeShareCounts.get(link.anecdote_id) || 0) + 1);
@@ -599,9 +609,11 @@ async function renderProfilePage(session, profile) {
   setText('[data-profile-published-summary]', `${published.length} au total`);
   const pendingCount = moderation.filter((item) => item.moderation_status === 'pending').length;
   const refusedCount = moderation.filter((item) => item.moderation_status === 'refused').length;
+  const hiddenCount = moderation.filter((item) => item.moderation_status === 'hidden').length;
   const moderationSummary = [
     pendingCount ? `${pendingCount} en cours` : '',
-    refusedCount ? `${refusedCount} refusée${refusedCount > 1 ? 's' : ''}` : ''
+    refusedCount ? `${refusedCount} refusée${refusedCount > 1 ? 's' : ''}` : '',
+    hiddenCount ? `${hiddenCount} retirée${hiddenCount > 1 ? 's' : ''}` : ''
   ].filter(Boolean).join(' · ');
   setText('#pending-summary', moderationSummary || 'Aucune décision en attente');
 
@@ -609,6 +621,20 @@ async function renderProfilePage(session, profile) {
   setText('#private-summary', privateAnecdotes.length ? `${privateAnecdotes.length} note${privateAnecdotes.length > 1 ? 's' : ''}` : 'Carnet vide');
   if (privateList) privateList.replaceChildren(...(privateAnecdotes.length ? privateAnecdotes.map(profileEntry) : [emptyState('Votre carnet est vide. Ajoutez une note depuis la page d’accueil.') ]));
   if (moderationList) moderationList.replaceChildren(...(moderation.length ? moderation.map(profileEntry) : [emptyState('Aucune anecdote n’attend de décision.') ]));
+  const notificationList = document.querySelector('#notification-list');
+  if (notificationList) {
+    const items = notifications || [];
+    notificationList.replaceChildren(...(items.length ? items.map((notification) => {
+      const item = document.createElement('div');
+      item.className = `notification-item is-${notification.kind}`;
+      const message = document.createElement('p');
+      message.textContent = notification.message;
+      const date = document.createElement('span');
+      date.textContent = formatDate(notification.created_at);
+      item.append(message, date);
+      return item;
+    }) : [emptyState('Aucune nouvelle décision de modération.')]));
+  }
   window.dispatchEvent(new Event('anecdotes:icons-updated'));
 
   const badges = [];

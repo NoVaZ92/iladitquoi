@@ -4,6 +4,19 @@ import { enforceRateLimit, RATE_LIMITS } from '../lib/rate-limit.js';
 import voteHandler from '../lib/vote-handler.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const REPORT_REASONS = Object.freeze({
+  identification: 'Une personne ou un lieu peut être identifié',
+  sensitive_data: 'Donnée de santé ou information personnelle sensible',
+  inappropriate: 'Contenu inapproprié, agressif ou discriminatoire',
+  other: 'Autre problème de modération'
+});
+
+function normalizedReason(code, details) {
+  const label = REPORT_REASONS[code];
+  const note = typeof details === 'string' ? details.trim().replace(/\s+/g, ' ').slice(0, 350) : '';
+  if (!label || (code === 'other' && note.length < 3)) return '';
+  return note ? `${label} : ${note}`.slice(0, 500) : label;
+}
 
 export default async function handler(request, response) {
   if (request.query?.action === 'vote') return voteHandler(request, response);
@@ -13,8 +26,8 @@ export default async function handler(request, response) {
 
   const body = typeof request.body === 'object' && request.body ? request.body : {};
   const anecdoteId = typeof body.anecdoteId === 'string' ? body.anecdoteId : '';
-  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
-  if (!UUID_PATTERN.test(anecdoteId) || reason.length < 3 || reason.length > 500) {
+  const reason = normalizedReason(body.reasonCode, body.details);
+  if (!UUID_PATTERN.test(anecdoteId) || !reason) {
     return response.status(422).json({ error: 'invalid_report' });
   }
 

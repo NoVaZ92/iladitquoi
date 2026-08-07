@@ -181,7 +181,7 @@
     .dialog-close { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 5px; background: transparent; }
     .dialog-body { padding: 18px; }
     .dialog-body p { margin: 0 0 13px; color: var(--muted); font-size: 11px; line-height: 1.5; }
-    .share-url { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; background: var(--surface-soft); color: var(--text); font-size: 11px; }
+    .share-url, .report-field { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; background: var(--surface-soft); color: var(--text); font-size: 11px; } .report-field { background: white; } textarea.report-field { height: 84px; resize: vertical; line-height: 1.45; } .report-label { display: grid; gap: 6px; margin-top: 12px; color: var(--text); font-size: 10px; font-weight: 750; }
     .dialog-actions { display: flex; gap: 8px; margin-top: 13px; }
     .whatsapp { border-color: #1d9b58; color: #147441; }
     .share-status { min-height: 16px; margin-top: 10px !important; color: var(--green) !important; }
@@ -349,6 +349,10 @@
   <dialog id="share-dialog" aria-labelledby="share-title">
     <div class="dialog-head"><h2 id="share-title">Partager cette anecdote</h2><button class="dialog-close" id="close-share" type="button" aria-label="Fermer"><i data-lucide="x"></i></button></div>
     <div class="dialog-body"><p>Le partage contient uniquement le lien vers l’anecdote publiée.</p><input class="share-url" id="share-url" type="text" readonly aria-label="Lien de partage"><div class="dialog-actions"><a class="secondary-button whatsapp" id="whatsapp-share" href="#" target="_blank" rel="noopener"><i data-lucide="send"></i>WhatsApp</a><button class="secondary-button" id="copy-share" type="button"><i data-lucide="copy"></i>Copier le lien</button></div><p class="share-status" id="share-status" role="status" aria-live="polite"></p></div>
+  </dialog>
+  <dialog id="report-dialog" aria-labelledby="report-title">
+    <div class="dialog-head"><h2 id="report-title">Signaler cette anecdote</h2><button class="dialog-close" id="close-report" type="button" aria-label="Fermer"><i data-lucide="x"></i></button></div>
+    <div class="dialog-body"><p>Votre signalement est transmis à la modération. Choisissez le motif le plus utile pour accélérer la relecture.</p><label class="report-label" for="report-reason">Motif<select class="report-field" id="report-reason"><option value="identification">Une personne ou un lieu peut être identifié</option><option value="sensitive_data">Donnée de santé ou information personnelle sensible</option><option value="inappropriate">Contenu inapproprié, agressif ou discriminatoire</option><option value="other">Autre problème de modération</option></select></label><label class="report-label" for="report-details">Précision<textarea class="report-field" id="report-details" maxlength="350" placeholder="Précision facultative pour la modération."></textarea></label><div class="dialog-actions"><button class="secondary-button" id="cancel-report" type="button">Annuler</button><button class="secondary-button" id="submit-report" type="button">Envoyer le signalement</button></div><p class="share-status" id="report-status" role="status" aria-live="polite"></p></div>
   </dialog>
 
   <script type="module" src="/assets/feed.js"></script>

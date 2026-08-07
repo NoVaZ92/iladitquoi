@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0011`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0011_saved_anecdotes.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, `0008` ajoute la gestion des liens et notes prives, `0009` empeche un membre ou moderateur de modifier son propre role, `0010` rend possible la suppression complete d'un compte sans effacer l'historique des decisions de moderation et `0011` synchronise les sélections du profil. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0013`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0013_moderation_notifications.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, `0008` ajoute la gestion des liens et notes prives, `0009` empeche un membre ou moderateur de modifier son propre role, `0010` rend possible la suppression complete d'un compte sans effacer l'historique des decisions de moderation, `0011` synchronise les sélections du profil et `0012`/`0013` ajoutent le retrait du fil et les notifications de moderation. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -57,7 +57,7 @@ where id = 'UUID_DE_L_ANECDOTE';
 
 - Vercel Hobby est destine a un projet personnel non commercial. Ne pas activer publicite ou partenariats avant de passer a Vercel Pro.
 - Supabase Free peut mettre le projet en pause apres une periode d'inactivite. Exporter la base regulierement avant toute campagne ou test important.
-- Les comptes, profils, avatars, soumissions publiques, carnet prive, votes et signalements sont synchronises avec Supabase. Les selections restent locales dans cette version.
+- Les comptes, profils, avatars, soumissions publiques, carnet prive, votes, signalements et selections des comptes connectes sont synchronises avec Supabase. Les selections invitées restent locales jusqu’a la connexion.
 - Toute anecdote publique reste `pending` jusqu'a une validation humaine. Le filtrage automatique masque quelques motifs evidents, mais ne remplace pas la moderation.
 - Le deploiement envoie une politique de securite du navigateur. Si un service tiers est ajoute plus tard (mesure d'audience, image, paiement), declarer explicitement son domaine dans `Content-Security-Policy` de `vercel.json` et verifier qu'il est necessaire.
 

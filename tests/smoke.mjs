@@ -7,7 +7,7 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -31,6 +31,7 @@ const contracts = [
   ['finalized.html', 'grid-template-columns: 256px minmax(620px, 1fr) 344px', 'mise en page grand écran'],
   ['finalized.html', '--xp-progress', 'jauge XP dynamique'],
   ['finalized.html', 'href="/rules.html"', 'lien vers les règles'],
+  ['finalized.html', 'id="report-dialog"', 'motif de signalement structuré'],
   ['profile.html', 'data-profile-tab="pending"', 'suivi de modération'],
   ['profile.html', 'Décisions de modération', 'titre explicite de la modération'],
   ['profile.html', 'id="delete-refused-dialog"', 'confirmation de suppression d’une anecdote refusée'],
@@ -58,6 +59,7 @@ const contracts = [
   ['src/feed.js', '`${location.origin}/a/${anecdote.id}`', 'lien de partage du déploiement courant'],
   ['src/feed.js', "location.pathname.match(/^\\/a\\/", 'lecture de la route courte dans le navigateur'],
   ['src/feed.js', "fetch('/api/report'", 'signalement cloud'],
+  ['src/feed.js', 'reasonCode: reason.value', 'motif de signalement structuré'],
   ['src/feed.js', "fetch('/api/private'", 'carnet privé cloud'],
   ['src/feed.js', "fetch('/api/vote'", 'votes persistants'],
   ['src/feed.js', 'setSavedAnecdote', 'synchronisation des sélections connectées'],
@@ -66,7 +68,9 @@ const contracts = [
   ['src/auth.js', 'progressWithinLevel', 'progression XP dynamique'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
   ['src/auth.js', 'Motif du refus', 'motif de modération visible'],
-  ['src/auth.js', 'deleteRefusedAnecdote', 'suppression propriétaire d’une anecdote refusée'],
+  ['src/auth.js', 'Motif du retrait', 'motif de retrait visible'],
+  ['src/auth.js', 'account_notifications', 'notifications de modération du profil'],
+  ['src/auth.js', 'deleteModeratedAnecdote', 'suppression propriétaire d’une anecdote modérée'],
   ['src/auth.js', 'revokePrivateLinks', 'révocation des liens privés du propriétaire'],
   ['src/auth.js', 'deletePrivateAnecdote', 'suppression des notes privées du propriétaire'],
   ['src/auth.js', 'exportPersonalData', 'export des données personnelles'],
@@ -84,6 +88,7 @@ const contracts = [
   ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
   ['api/anecdote.js', 'anecdote_not_found', 'anecdote partagée'],
   ['api/report.js', '/rest/v1/reports', 'persistance du signalement'],
+  ['api/report.js', 'REPORT_REASONS', 'motifs de signalement contrôlés'],
   ['api/report.js', 'RATE_LIMITS.report', 'limite des signalements'],
   ['api/submit.js', 'sanitizePublicText', 'filtre serveur'],
   ['api/submit.js', 'profile.profession', 'métier du profil'],
@@ -119,6 +124,9 @@ const contracts = [
   ['supabase/migrations/0009_profile_privilege_protection.sql', 'role and xp cannot be changed from a member session', 'protection contre l’auto-promotion'],
   ['supabase/migrations/0010_account_deletion.sql', 'on delete set null', 'conservation des décisions après suppression du modérateur'],
   ['supabase/migrations/0011_saved_anecdotes.sql', 'members save published anecdotes', 'RLS des sélections publiées'],
+  ['supabase/migrations/0012_hidden_moderation_status.sql', "add value if not exists 'hidden'", 'statut de retrait distinct'],
+  ['supabase/migrations/0013_moderation_notifications.sql', 'account_notifications', 'notifications de modération persistées'],
+  ['supabase/migrations/0013_moderation_notifications.sql', 'members delete their own moderated anecdotes', 'RLS de suppression après retrait'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 

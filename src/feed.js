@@ -30,6 +30,7 @@ let feedItems = [];
 let currentSort = new URLSearchParams(location.search).get('sort') === 'new' ? 'new' : 'top';
 let currentProfile = null;
 let privateNoteCount = 0;
+let reportTarget = null;
 
 function renderIcons(root = document) {
   createIcons({ icons: ICONS, root, attrs: { 'stroke-width': 1.8 } });
@@ -284,29 +285,7 @@ function createPost(anecdote) {
   const share = createButton('Partager', 'share-2', 'text-action');
   const report = createButton('Signaler', 'flag', 'text-action');
   share.addEventListener('click', () => openShareDialog(anecdote));
-  report.addEventListener('click', async () => {
-    const confirmed = window.confirm('Signaler cette anecdote à la modération ?');
-    if (!confirmed) return;
-    report.disabled = true;
-    report.querySelector('span').textContent = 'Envoi…';
-    try {
-      const token = await window.AnecdotesAuth?.getAccessToken?.();
-      const headers = { 'content-type': 'application/json' };
-      if (token) headers.authorization = `Bearer ${token}`;
-      const response = await fetch('/api/report', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ anecdoteId: anecdote.id, reason: 'Contenu signalé depuis le fil public.' })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw apiError(data, 'report_failed');
-      report.querySelector('span').textContent = 'Signalé';
-    } catch (error) {
-      report.disabled = false;
-      report.title = actionErrorMessage(error, 'Le signalement n’a pas pu être envoyé.');
-      report.querySelector('span').textContent = error.message === 'rate_limit_exceeded' ? 'Limite atteinte' : 'Réessayer';
-    }
-  });
+  report.addEventListener('click', () => openReportDialog(anecdote, report));
   if (!isPrivateShare) actions.append(share, report);
   footer.append(identity, actions);
   content.append(header, copy, readMore, footer);
@@ -446,6 +425,67 @@ function bindShareDialog() {
       document.execCommand('copy');
     }
     document.querySelector('#share-status').textContent = 'Lien copié.';
+  });
+}
+
+function openReportDialog(anecdote, control) {
+  reportTarget = { anecdote, control };
+  const dialog = document.querySelector('#report-dialog');
+  const details = document.querySelector('#report-details');
+  document.querySelector('#report-reason').value = 'identification';
+  details.value = '';
+  details.required = false;
+  document.querySelector('#report-status').textContent = '';
+  dialog.showModal();
+}
+
+function bindReportDialog() {
+  const dialog = document.querySelector('#report-dialog');
+  const close = () => {
+    reportTarget = null;
+    dialog.close();
+  };
+  const reason = document.querySelector('#report-reason');
+  const details = document.querySelector('#report-details');
+  const submit = document.querySelector('#submit-report');
+  const status = document.querySelector('#report-status');
+  document.querySelector('#close-report').addEventListener('click', close);
+  document.querySelector('#cancel-report').addEventListener('click', close);
+  reason.addEventListener('change', () => {
+    const isOther = reason.value === 'other';
+    details.required = isOther;
+    details.placeholder = isOther ? 'Décrivez brièvement le problème.' : 'Précision facultative pour la modération.';
+  });
+  dialog.addEventListener('cancel', () => { reportTarget = null; });
+  submit.addEventListener('click', async () => {
+    if (!reportTarget) return close();
+    const detail = details.value.trim();
+    if (reason.value === 'other' && detail.length < 3) {
+      status.textContent = 'Ajoutez une courte précision pour ce motif.';
+      details.focus();
+      return;
+    }
+    submit.disabled = true;
+    status.textContent = 'Envoi du signalement…';
+    try {
+      const token = await window.AnecdotesAuth?.getAccessToken?.();
+      const headers = { 'content-type': 'application/json' };
+      if (token) headers.authorization = `Bearer ${token}`;
+      const response = await fetch('/api/report', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ anecdoteId: reportTarget.anecdote.id, reasonCode: reason.value, details: detail })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw apiError(data, 'report_failed');
+      reportTarget.control.disabled = true;
+      reportTarget.control.querySelector('span').textContent = 'Signalé';
+      close();
+    } catch (error) {
+      status.textContent = actionErrorMessage(error, 'Le signalement n’a pas pu être envoyé.');
+    } finally {
+      submit.disabled = false;
+    }
   });
 }
 
@@ -620,6 +660,7 @@ function initialize() {
   bindComposer();
   bindFilters();
   bindShareDialog();
+  bindReportDialog();
   updateNotebookSummary();
   window.addEventListener('anecdotes:auth', () => {
     syncAuthProfile().catch(() => updateComposerIdentity(null));

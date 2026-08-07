@@ -338,10 +338,19 @@ try {
   await report({
     method: 'POST',
     headers: {},
-    body: { anecdoteId: sharedId, reason: 'Contenu signalé depuis le test.' }
+    body: { anecdoteId: sharedId, reason: 'Ancien format libre.' }
+  }, response);
+  if (response.statusCode !== 422 || response.body.error !== 'invalid_report') {
+    throw new Error('Un signalement doit utiliser un motif structuré');
+  }
+  response = createResponse();
+  await report({
+    method: 'POST',
+    headers: {},
+    body: { anecdoteId: sharedId, reasonCode: 'identification', details: 'La personne concernée est reconnaissable.' }
   }, response);
   const reportPayload = JSON.parse(lastRequest.options.body);
-  if (response.statusCode !== 201 || reportPayload.anecdote_id !== sharedId || reportPayload.reporter_id !== null || !lastRequest.url.endsWith('/rest/v1/reports')) {
+  if (response.statusCode !== 201 || reportPayload.anecdote_id !== sharedId || reportPayload.reporter_id !== null || !reportPayload.reason.startsWith('Une personne ou un lieu peut être identifié') || !lastRequest.url.endsWith('/rest/v1/reports')) {
     throw new Error('Signalement public invalide');
   }
 
@@ -390,7 +399,7 @@ try {
       return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'Admin', role: 'admin' }]; } };
     }
     if (request.url.includes('/rest/v1/anecdotes?') && request.options.method === 'PATCH') {
-      return { ok: true, status: 200, async json() { return [{ id: pendingId, moderation_status: 'refused' }]; } };
+      return { ok: true, status: 200, async json() { return [{ id: pendingId, author_id: moderatorId, moderation_status: 'refused' }]; } };
     }
     if (request.url.includes('/rest/v1/anecdotes?') && request.url.includes('moderation_status=eq.pending')) {
       return { ok: true, status: 200, async json() { return [{ id: pendingId, author_label: 'Anonyme', profession: 'Infirmière', theme: 'leger', body: 'À relire', submitted_at: '2026-08-06T10:00:00Z' }]; } };
@@ -402,6 +411,9 @@ try {
       return { ok: true, status: 200, async json() { return [{ id: reportId, anecdote_id: pendingId, reporter_id: moderatorId, reason: 'Détail à vérifier', created_at: '2026-08-06T10:05:00Z' }]; } };
     }
     if (request.url.endsWith('/rest/v1/moderation_decisions')) {
+      return { ok: true, status: 201, async json() { return []; } };
+    }
+    if (request.url.endsWith('/rest/v1/account_notifications')) {
       return { ok: true, status: 201, async json() { return []; } };
     }
     if (request.url.includes('/rest/v1/reports?') && request.options.method === 'PATCH') {
@@ -423,7 +435,8 @@ try {
     body: { anecdoteId: pendingId, status: 'refused', authorMessage: 'Le détail est trop identifiable.', internalNote: 'Relecture équipe', reportIds: [reportId] }
   }, response);
   const decisionRequest = requests.find((request) => request.url.endsWith('/rest/v1/moderation_decisions'));
-  if (response.statusCode !== 200 || !decisionRequest || JSON.parse(decisionRequest.options.body).moderator_id !== moderatorId || response.body.resolvedReports !== 1) {
+  const notificationRequest = requests.find((request) => request.url.endsWith('/rest/v1/account_notifications'));
+  if (response.statusCode !== 200 || !decisionRequest || !notificationRequest || JSON.parse(decisionRequest.options.body).moderator_id !== moderatorId || JSON.parse(notificationRequest.options.body).kind !== 'anecdote_refused' || response.body.resolvedReports !== 1) {
     throw new Error('Décision de modération invalide');
   }
 
@@ -433,7 +446,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('30 contrats API vérifiés.');
+  console.log('32 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;
