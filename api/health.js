@@ -31,9 +31,9 @@ async function readiness(response) {
     if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
 
     const checks = [
-      { rpc: 'rate_limit_ready', body: {}, valid: (body) => body === true },
-      { rpc: 'consume_rate_limit', body: rateLimitProbe(), valid: (body) => Array.isArray(body) && body[0]?.allowed === true },
-      { rpc: 'account_deletion_ready', body: {}, valid: (body) => body === true }
+      { rpc: 'rate_limit_ready', body: {}, status: 'rate_limit_structure_unavailable', valid: (body) => body === true },
+      { rpc: 'consume_rate_limit', body: rateLimitProbe(), status: 'rate_limit_write_unavailable', valid: (body) => Array.isArray(body) && body[0]?.allowed === true },
+      { rpc: 'account_deletion_ready', body: {}, status: 'account_deletion_unavailable', valid: (body) => body === true }
     ];
     for (const check of checks) {
       const health = await fetch(`${url}/rest/v1/rpc/${check.rpc}`, {
@@ -49,7 +49,7 @@ async function readiness(response) {
         return response.status(503).json({ status: 'schema_required', configured: true });
       }
       if (!health.ok || !check.valid(await health.json())) {
-        return response.status(503).json({ status: 'dependency_unavailable', configured: true });
+        return response.status(503).json({ status: check.status, configured: true });
       }
     }
   } catch {

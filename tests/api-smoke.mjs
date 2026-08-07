@@ -80,7 +80,7 @@ try {
   };
   response = createResponse();
   await health({ query: { ready: '1' } }, response);
-  if (response.statusCode !== 503 || response.body.status !== 'dependency_unavailable') {
+  if (response.statusCode !== 503 || response.body.status !== 'rate_limit_write_unavailable') {
     throw new Error('La readiness doit exécuter le limiteur anti-abus');
   }
 
@@ -308,6 +308,14 @@ try {
   if (response.statusCode !== 200 || response.body.voteScore !== 12 || response.body.userVote !== 1 || !lastRequest.options.body.includes(votedId)) {
     throw new Error('Vote persistant invalide');
   }
+
+  delete process.env.SUPABASE_SECRET_KEY;
+  response = createResponse();
+  await vote({ method: 'POST', headers: { authorization: 'Bearer user-token' }, body: { anecdoteId: votedId, value: 1 } }, response);
+  if (response.statusCode !== 503 || response.body.error !== 'service_not_configured') {
+    throw new Error('Le vote ne doit pas contourner le limiteur sans clé serveur');
+  }
+  process.env.SUPABASE_SECRET_KEY = 'sb_secret_example';
 
   delete process.env.SUPABASE_SECRET_KEY;
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-role-key';

@@ -32,7 +32,7 @@ Ne jamais mettre la cle `secret` ou `service_role` dans le navigateur, dans Git 
 ## 3. Verifier apres le premier deploiement
 
 1. Ouvrir `https://votre-url/health` : la reponse doit etre `status: ok`.
-2. Ouvrir `https://votre-url/ready` : la reponse doit etre `status: ready` et `configured: true`. `configuration_required` indique des variables manquantes, `credentials_invalid` une cle incorrecte et `schema_required` que la migration SQL n'a pas ete appliquee.
+2. Ouvrir `https://votre-url/ready` : la reponse doit etre `status: ready` et `configured: true`. `configuration_required` indique des variables manquantes, `credentials_invalid` une cle incorrecte et `schema_required` que la migration SQL n'a pas ete appliquee. `rate_limit_structure_unavailable` ou `rate_limit_write_unavailable` indiquent une migration anti-abus incomplète ou défectueuse ; réexécuter `0015_rate_limit_repair.sql` dans ce cas.
 3. Soumettre une anecdote publique : elle doit etre creee avec le statut `pending` dans la table `anecdotes`.
 4. Creer un compte e-mail, confirmer l'adresse, puis verifier la creation automatique de la ligne correspondante dans `profiles`.
 5. Publier sans cocher l'anonymat : `author_id` doit contenir l'identifiant du compte et l'anecdote doit apparaitre dans le suivi de moderation du profil.
