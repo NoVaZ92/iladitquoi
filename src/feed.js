@@ -4,7 +4,7 @@ import {
   LogIn, MessageSquareText, NotebookPen, PenLine, RefreshCw, Search, Send, Share2,
   Shuffle, Sparkles, Tag, UserRound, X
 } from 'lucide';
-import { populateProfessionSelect } from '../lib/professions.js';
+import { PROFESSIONS, populateProfessionSelect } from '../lib/professions.js';
 import { sanitizePublicText } from '../lib/privacy-filter.js';
 
 const MAX_CHARS = 355;

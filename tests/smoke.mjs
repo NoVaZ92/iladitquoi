@@ -70,6 +70,7 @@ const contracts = [
   ['src/feed.js', 'hasMore', 'pagination du fil'],
   ['src/feed.js', 'syncFeedUrl', 'filtres partageables du fil'],
   ['src/feed.js', 'searchTimer', 'recherche du fil côté serveur'],
+  ['src/feed.js', 'import { PROFESSIONS, populateProfessionSelect }', 'métiers disponibles pour les filtres du navigateur'],
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
   ['src/auth.js', 'progressWithinLevel', 'progression XP dynamique'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
