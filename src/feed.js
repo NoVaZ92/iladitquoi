@@ -31,6 +31,9 @@ let currentSort = new URLSearchParams(location.search).get('sort') === 'new' ? '
 let currentProfile = null;
 let privateNoteCount = 0;
 let reportTarget = null;
+let feedPage = 0;
+let feedHasMore = false;
+let feedLoading = false;
 
 function renderIcons(root = document) {
   createIcons({ icons: ICONS, root, attrs: { 'stroke-width': 1.8 } });
@@ -317,6 +320,12 @@ function renderFeed() {
     return;
   }
   feed.append(...visible.map(createPost));
+  if (feedHasMore && !search && profession === 'all' && theme === 'all') {
+    const loadMore = createButton('Charger plus d’anecdotes', 'refresh-cw', 'feed-load-more');
+    loadMore.addEventListener('click', () => loadFeed(currentSort, { append: true }));
+    feed.append(loadMore);
+    renderIcons(loadMore);
+  }
 }
 
 function setFeedState(title, copy, retry = false) {
@@ -338,27 +347,44 @@ function setFeedState(title, copy, retry = false) {
   feed.append(state);
 }
 
-async function loadFeed(sort = currentSort) {
+async function loadFeed(sort = currentSort, { append = false } = {}) {
+  if (feedLoading) return;
+  if (sort !== currentSort) append = false;
   currentSort = sort;
+  const page = append ? feedPage + 1 : 0;
+  feedLoading = true;
   document.querySelectorAll('.segment[data-sort]').forEach((button) => {
     const active = button.dataset.sort === sort;
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
-  setFeedState('Chargement du fil…', 'Lecture des anecdotes validées dans Supabase.');
+  if (!append) setFeedState('Chargement du fil…', 'Lecture des anecdotes validées dans Supabase.');
   try {
-    const response = await fetch(`/api/feed?sort=${sort}`, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetch(`/api/feed?sort=${sort}&page=${page}&limit=20`, { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error('feed_unavailable');
     const data = await response.json();
-    feedItems = Array.isArray(data.anecdotes) ? data.anecdotes : [];
-    await includeSharedAnecdote();
+    const incoming = Array.isArray(data.anecdotes) ? data.anecdotes : [];
+    feedItems = append
+      ? [...feedItems, ...incoming.filter((item) => !feedItems.some((current) => current.id === item.id))]
+      : incoming;
+    feedPage = page;
+    feedHasMore = Boolean(data.hasMore);
+    if (!append) await includeSharedAnecdote();
     await hydrateUserVotes();
     await hydrateSavedPosts();
     renderFeed();
-    focusSharedAnecdote();
+    if (!append) focusSharedAnecdote();
   } catch {
-    feedItems = [];
-    setFeedState('Le fil ne répond pas', 'Vérifiez la connexion Supabase puis réessayez.', true);
+    if (append) {
+      feedHasMore = false;
+      renderFeed();
+      document.querySelector('#feed')?.setAttribute('title', 'Impossible de charger davantage d’anecdotes pour le moment.');
+    } else {
+      feedItems = [];
+      setFeedState('Le fil ne répond pas', 'Vérifiez la connexion Supabase puis réessayez.', true);
+    }
+  } finally {
+    feedLoading = false;
   }
 }
 

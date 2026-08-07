@@ -310,8 +310,14 @@ try {
 
   response = createResponse();
   await feed({ method: 'GET', query: { sort: 'new' } }, response);
-  if (response.statusCode !== 200 || !decodeURIComponent(lastRequest.url).includes('order=published_at.desc.nullslast,submitted_at.desc')) {
+  if (response.statusCode !== 200 || response.body.page !== 0 || !decodeURIComponent(lastRequest.url).includes('order=published_at.desc.nullslast,submitted_at.desc,id.desc') || !lastRequest.url.includes('offset=0') || !lastRequest.url.includes('limit=21')) {
     throw new Error('Tri des nouveautés invalide');
+  }
+
+  response = createResponse();
+  await feed({ method: 'GET', query: { page: '2', limit: '50' } }, response);
+  if (response.statusCode !== 200 || response.body.page !== 2 || !lastRequest.url.includes('offset=100') || !lastRequest.url.includes('limit=51')) {
+    throw new Error('Pagination du fil invalide');
   }
 
   const sharedId = '123e4567-e89b-42d3-a456-426614174000';
@@ -352,6 +358,30 @@ try {
   const reportPayload = JSON.parse(lastRequest.options.body);
   if (response.statusCode !== 201 || reportPayload.anecdote_id !== sharedId || reportPayload.reporter_id !== null || !reportPayload.reason.startsWith('Une personne ou un lieu peut être identifié') || !lastRequest.url.endsWith('/rest/v1/reports')) {
     throw new Error('Signalement public invalide');
+  }
+
+  let reportInsertions = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    lastRequest = { url: String(url), options };
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
+    if (lastRequest.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: 'reporter-123' }; } };
+    if (lastRequest.url.includes('/rest/v1/anecdotes?')) return { ok: true, status: 200, async json() { return [{ id: sharedId }]; } };
+    if (lastRequest.url.includes('/rest/v1/reports?')) return { ok: true, status: 200, async json() { return [{ id: 'existing-report' }]; } };
+    if (lastRequest.url.endsWith('/rest/v1/reports')) {
+      reportInsertions += 1;
+      return { ok: true, status: 201, async json() { return []; } };
+    }
+    return { ok: false, status: 500, async json() { return []; } };
+  };
+  response = createResponse();
+  await report({
+    method: 'POST',
+    headers: { authorization: 'Bearer reporter-token' },
+    body: { anecdoteId: sharedId, reasonCode: 'inappropriate', details: '' }
+  }, response);
+  if (response.statusCode !== 200 || response.body.status !== 'already_reported' || reportInsertions !== 0) {
+    throw new Error('Un compte ne doit pas pouvoir dupliquer un signalement ouvert');
   }
 
   response = createResponse();
@@ -446,7 +476,7 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('32 contrats API vérifiés.');
+  console.log('33 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

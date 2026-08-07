@@ -60,6 +60,26 @@ export default async function handler(request, response) {
     return response.status(502).json({ error: 'report_failed' });
   }
 
+  if (identity.user?.id) {
+    const duplicateQuery = new URLSearchParams({
+      select: 'id',
+      anecdote_id: `eq.${anecdoteId}`,
+      reporter_id: `eq.${identity.user.id}`,
+      resolved_at: 'is.null',
+      limit: '1'
+    });
+    try {
+      const existing = await fetch(`${url}/rest/v1/reports?${duplicateQuery}`, {
+        headers: getSupabaseAdminHeaders(secretKey),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!existing.ok) return response.status(502).json({ error: 'report_failed' });
+      if ((await existing.json()).length) return response.status(200).json({ status: 'already_reported' });
+    } catch {
+      return response.status(502).json({ error: 'report_failed' });
+    }
+  }
+
   const payload = {
     anecdote_id: anecdoteId,
     reporter_id: identity.user?.id || null,

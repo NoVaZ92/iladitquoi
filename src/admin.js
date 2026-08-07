@@ -6,6 +6,9 @@ import {
 const ICONS = { ArchiveRestore, ArrowLeft, Check, CircleAlert, ClipboardCheck, Eye, Flag, LogOut, RefreshCw, ShieldCheck, X };
 let token = '';
 let activeTab = 'queue';
+let pendingItems = [];
+let reportItems = [];
+let queueLoading = false;
 
 function renderIcons(root = document) {
   createIcons({ icons: ICONS, root, attrs: { 'stroke-width': 1.8 } });
@@ -150,6 +153,25 @@ function createAnecdoteCard(anecdote, { reportIds = [], report = null } = {}) {
   return article;
 }
 
+function filterItems(items) {
+  const search = document.querySelector('#admin-search')?.value.trim().toLocaleLowerCase() || '';
+  const profession = document.querySelector('#admin-profession-filter')?.value || 'all';
+  return items.filter((item) => {
+    const anecdote = item.anecdote || item;
+    const searchable = `${anecdote.body || ''} ${anecdote.author_label || ''} ${anecdote.profession || ''} ${anecdote.theme || ''} ${item.reason || ''}`.toLocaleLowerCase();
+    return (!search || searchable.includes(search)) && (profession === 'all' || anecdote.profession === profession);
+  });
+}
+
+function updateProfessionFilter() {
+  const select = document.querySelector('#admin-profession-filter');
+  if (!select) return;
+  const selected = select.value;
+  const professions = [...new Set([...pendingItems, ...reportItems].map((item) => (item.anecdote || item).profession).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  select.replaceChildren(new Option('Tous les métiers', 'all'), ...professions.map((profession) => new Option(profession, profession)));
+  select.value = professions.includes(selected) ? selected : 'all';
+}
+
 function renderPending(items) {
   const list = document.querySelector('#queue-list');
   list.replaceChildren(...(items.length ? items.map((item) => createAnecdoteCard(item)) : [emptyState('La file est vide. Rien à valider pour le moment.')]));
@@ -203,6 +225,15 @@ function renderReports(items, reportsAvailable = true) {
   renderIcons(list);
 }
 
+function renderQueue() {
+  const pending = filterItems(pendingItems);
+  const reports = filterItems(reportItems);
+  renderPending(pending);
+  renderReports(reports, document.querySelector('#reports-list')?.dataset.available !== 'false');
+  setText('#queue-visible-count', pendingItems.length === pending.length ? `${pending.length} publication${pending.length > 1 ? 's' : ''}` : `${pending.length}/${pendingItems.length} publication${pendingItems.length > 1 ? 's' : ''}`);
+  setText('#reports-visible-count', reportItems.length === reports.length ? `${reports.length} signalement${reports.length > 1 ? 's' : ''}` : `${reports.length}/${reportItems.length} signalement${reportItems.length > 1 ? 's' : ''}`);
+}
+
 function setActiveTab(name) {
   activeTab = name;
   document.querySelectorAll('[data-admin-tab]').forEach((button) => {
@@ -214,6 +245,8 @@ function setActiveTab(name) {
 }
 
 async function loadQueue() {
+  if (queueLoading) return;
+  queueLoading = true;
   const refresh = document.querySelector('#refresh-queue');
   refresh.disabled = true;
   try {
@@ -221,15 +254,19 @@ async function loadQueue() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'queue_unavailable');
     setText('[data-admin-name]', data.moderator.pseudonym);
-    setText('#pending-count', data.pending.length);
-    setText('#reports-count', data.reports.length);
-    renderPending(data.pending);
-    renderReports(data.reports, data.reportsAvailable !== false);
+    pendingItems = data.pending;
+    reportItems = data.reports;
+    document.querySelector('#reports-list').dataset.available = String(data.reportsAvailable !== false);
+    updateProfessionFilter();
+    setText('#pending-count', pendingItems.length);
+    setText('#reports-count', reportItems.length);
+    renderQueue();
     if (data.reportsAvailable === false) setStatus('Les anecdotes à valider sont chargées. Les signalements sont temporairement indisponibles.', true);
   } catch (error) {
     const message = error.message === 'forbidden' ? 'Votre compte ne possède pas les droits de modération.' : 'La file de modération est indisponible.';
     setStatus(message, true);
   } finally {
+    queueLoading = false;
     refresh.disabled = false;
   }
 }
@@ -259,6 +296,11 @@ async function initialize() {
   document.querySelector('#admin-app').setAttribute('aria-busy', 'false');
   document.querySelectorAll('[data-admin-tab]').forEach((button) => button.addEventListener('click', () => setActiveTab(button.dataset.adminTab)));
   document.querySelector('#refresh-queue').addEventListener('click', loadQueue);
+  document.querySelector('#admin-search').addEventListener('input', renderQueue);
+  document.querySelector('#admin-profession-filter').addEventListener('change', renderQueue);
+  window.setInterval(() => {
+    if (!document.hidden) loadQueue();
+  }, 90000);
   setActiveTab(activeTab);
   await loadQueue();
 }
