@@ -31,7 +31,7 @@ security definer
 set search_path = pg_catalog
 as $function$
 declare
-  current_time timestamptz := now();
+  bucket_time timestamptz := now();
   current_count integer;
   current_expiry timestamptz;
 begin
@@ -57,20 +57,20 @@ begin
     p_action,
     p_subject_hash,
     1,
-    current_time,
-    current_time + make_interval(secs => p_window_seconds)
+    bucket_time,
+    bucket_time + make_interval(secs => p_window_seconds)
   )
   on conflict (action, subject_hash) do update
   set request_count = case
-        when bucket.expires_at <= current_time then 1
+        when bucket.expires_at <= bucket_time then 1
         else bucket.request_count + 1
       end,
       window_started_at = case
-        when bucket.expires_at <= current_time then current_time
+        when bucket.expires_at <= bucket_time then bucket_time
         else bucket.window_started_at
       end,
       expires_at = case
-        when bucket.expires_at <= current_time then current_time + make_interval(secs => p_window_seconds)
+        when bucket.expires_at <= bucket_time then bucket_time + make_interval(secs => p_window_seconds)
         else bucket.expires_at
       end
   returning bucket.request_count, bucket.expires_at
@@ -79,7 +79,7 @@ begin
   allowed := current_count <= p_limit;
   retry_after_seconds := case
     when allowed then 0
-    else greatest(1, ceil(extract(epoch from (current_expiry - current_time)))::integer)
+    else greatest(1, ceil(extract(epoch from (current_expiry - bucket_time)))::integer)
   end;
   return next;
 end;

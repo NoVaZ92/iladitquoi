@@ -131,6 +131,7 @@ const contracts = [
   ['supabase/migrations/0006_refused_anecdote_retention.sql', 'purge-refused-anecdotes-after-30-days', 'purge automatique des anecdotes refusées'],
   ['supabase/migrations/0007_rate_limits.sql', 'private.rate_limit_buckets', 'compteurs anti-abus privés'],
   ['supabase/migrations/0007_rate_limits.sql', 'grant execute on function public.consume_rate_limit', 'RPC anti-abus réservée au serveur'],
+  ['supabase/migrations/0007_rate_limits.sql', 'bucket_time timestamptz := now()', 'horodatage non ambigu du limiteur anti-abus'],
   ['supabase/migrations/0007_rate_limits.sql', 'public.rate_limit_ready', 'diagnostic de migration anti-abus'],
   ['supabase/migrations/0015_rate_limit_repair.sql', 'grant usage on schema private to service_role', 'réparation des droits du limiteur anti-abus'],
   ['supabase/migrations/0007_rate_limits.sql', 'purge-expired-rate-limit-buckets', 'purge des compteurs anti-abus'],
