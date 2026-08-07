@@ -27,7 +27,7 @@ Ne jamais mettre la cle `secret` ou `service_role` dans le navigateur, dans Git 
 3. Verifier dans `Settings > Environment Variables` que l'integration Supabase a synchronise `SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `SUPABASE_PUBLISHABLE_KEY` pour `Production` et `Preview`. Les anciennes variables `SUPABASE_SERVICE_ROLE_KEY` et `SUPABASE_ANON_KEY` restent compatibles.
 4. Pour la premiere mise en ligne, renseigner l'URL Vercel finale dans `PUBLIC_APP_ORIGIN`, sans slash final. Remplacer cette valeur par le domaine final lorsqu'il sera connecte.
 5. A chaque push sur `main`, Vercel execute `npm run build`. Ce build lance les controles statiques et les contrats API avant d'autoriser le deploiement.
-6. Avant toute ouverture publique, renseigner le responsable de publication, une adresse de contact reelle pour la moderation et les demandes de donnees, puis faire relire les CGU et la politique de confidentialite. Ce sont des informations organisationnelles qui ne peuvent pas etre devinees ou configurees par le code.
+6. Avant toute ouverture publique, renseigner `LEGAL_PUBLISHER_NAME`, `LEGAL_PUBLISHING_DIRECTOR`, `LEGAL_CONTACT_EMAIL` et `LEGAL_POSTAL_ADDRESS` dans Vercel, pour Production et Preview. Ces valeurs alimentent `/legal.html`, les CGU et la politique de confidentialité. Faire ensuite relire ces textes et les coordonnées par une personne compétente : l’identité de l’éditeur et le contact ne doivent jamais être inventés par le code.
 
 ## 3. Verifier apres le premier deploiement
 

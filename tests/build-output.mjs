@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const outputDirectory = join(projectRoot, 'public');
-const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'profile.html', 'rules.html'];
+const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'legal.html', 'profile.html', 'rules.html'];
 const vercelConfig = JSON.parse(await readFile(join(projectRoot, 'vercel.json'), 'utf8'));
 
 if (vercelConfig.outputDirectory !== 'public') {
@@ -22,6 +22,7 @@ const copies = [
   ['profile.html', 'profile.html'],
   ['auth.html', 'auth.html'],
   ['rules.html', 'rules.html'],
+  ['legal.html', 'legal.html'],
   ['admin.html', 'admin.html']
 ];
 
@@ -36,7 +37,7 @@ for (const [source, destination] of copies) {
 }
 
 const assetFiles = await readdir(join(outputDirectory, 'assets'));
-if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'profile.js'])) {
+if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'legal.js', 'profile.js'])) {
   throw new Error(`Bundles inattendus: ${assetFiles.join(', ')}`);
 }
 for (const asset of assetFiles) {
@@ -46,4 +47,4 @@ for (const asset of assetFiles) {
   }
 }
 
-console.log('Sortie Vercel vérifiée: 6 pages et 4 bundles navigateur présents.');
+console.log(`Sortie Vercel vérifiée: ${copies.length} pages et ${assetFiles.length} bundles navigateur présents.`);

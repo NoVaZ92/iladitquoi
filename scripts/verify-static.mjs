@@ -1,7 +1,7 @@
 import { access } from 'node:fs/promises';
 
 const requiredFiles = [
-  'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
+  'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
   'src/admin.js', 'src/auth.js', 'src/feed.js', 'src/profile.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/professions.js', 'lib/privacy-filter.js', 'lib/rate-limit.js', 'lib/vote-handler.js',

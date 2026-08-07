@@ -3,8 +3,8 @@ import { sanitizePublicText } from '../lib/privacy-filter.js';
 import { PROFESSIONS } from '../lib/professions.js';
 
 const names = [
-  'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'admin.html',
-  'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
+  'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
+  'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js', 'src/legal.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
   'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql',
@@ -44,6 +44,11 @@ const contracts = [
   ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
   ['auth.html', 'accept="image/jpeg,image/png,image/gif"', 'import d’avatar restreint'],
   ['rules.html', 'Filtre automatique', 'règles de confidentialité'],
+  ['legal.html', 'Conditions d’utilisation', 'conditions générales accessibles'],
+  ['legal.html', 'Politique de confidentialité', 'politique de confidentialité accessible'],
+  ['legal.html', 'data-legal-publisher', 'mentions légales configurables'],
+  ['src/legal.js', "fetch('/api/configuration'", 'chargement public des mentions légales'],
+  ['api/config.js', 'LEGAL_PUBLISHER_NAME', 'identité de l’éditeur configurable'],
   ['admin.html', 'src="/assets/admin.js"', 'page administration'],
   ['admin.html', 'id="queue-list"', 'file de validation'],
   ['admin.html', 'id="admin-search"', 'recherche de modération'],
@@ -70,6 +75,8 @@ const contracts = [
   ['src/feed.js', 'sharedPrivateToken', 'lecture du lien privé dans le navigateur'],
   ['src/feed.js', 'hasMore', 'pagination du fil'],
   ['src/feed.js', 'syncFeedUrl', 'filtres partageables du fil'],
+  ['src/feed.js', 'resetFeedFilters', 'retour accueil qui réinitialise les filtres'],
+  ['finalized.html', 'data-feed-view="popular"', 'navigation latérale explicite du fil'],
   ['src/feed.js', 'searchTimer', 'recherche du fil côté serveur'],
   ['src/feed.js', 'import { PROFESSIONS, populateProfessionSelect }', 'métiers disponibles pour les filtres du navigateur'],
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
@@ -147,7 +154,7 @@ const contracts = [
   ['supabase/migrations/0013_moderation_notifications.sql', 'account_notifications', 'notifications de modération persistées'],
   ['supabase/migrations/0013_moderation_notifications.sql', 'members delete their own moderated anecdotes', 'RLS de suppression après retrait'],
   ['supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'members delete their own public anecdotes', 'RLS de suppression des publications'],
-  ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
+  ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'legal', 'profile']", 'bundles navigateur']
 ];
 
 for (const [file, needle, label] of contracts) {

@@ -54,6 +54,9 @@ try {
   process.env.SUPABASE_SECRET_KEY = 'sb_secret_example';
   process.env.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_example';
   process.env.PUBLIC_APP_ORIGIN = 'https://anecdotes.example';
+  process.env.LEGAL_PUBLISHER_NAME = 'Éditeur de test';
+  process.env.LEGAL_CONTACT_EMAIL = 'contact@example.test';
+  process.env.LEGAL_POSTAL_ADDRESS = '1 rue du Test, 75000 Paris';
   let lastRequest;
   globalThis.fetch = async (url, options = {}) => {
     lastRequest = { url: String(url), options };
@@ -100,7 +103,7 @@ try {
 
   response = createResponse();
   publicConfig({}, response);
-  if (response.statusCode !== 200 || response.headers['Cache-Control'] !== 'no-store' || response.body.supabasePublishableKey !== 'sb_publishable_example') {
+  if (response.statusCode !== 200 || response.headers['Cache-Control'] !== 'no-store' || response.body.supabasePublishableKey !== 'sb_publishable_example' || response.body.legal?.contactEmail !== 'contact@example.test') {
     throw new Error('Configuration publique Supabase invalide');
   }
 

@@ -14,9 +14,10 @@ const files = [
   ['profile.html', 'profile.html'],
   ['auth.html', 'auth.html'],
   ['rules.html', 'rules.html'],
+  ['legal.html', 'legal.html'],
   ['admin.html', 'admin.html']
 ];
-const bundles = ['admin', 'auth', 'feed', 'profile'];
+const bundles = ['admin', 'auth', 'feed', 'legal', 'profile'];
 
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });

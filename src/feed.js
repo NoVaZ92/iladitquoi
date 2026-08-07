@@ -107,6 +107,20 @@ function syncFeedUrl(sort, filters) {
   history.replaceState({}, '', url);
 }
 
+function setActiveFeedView(view) {
+  document.querySelectorAll('.nav-item[data-feed-view]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.feedView === view);
+  });
+}
+
+function resetFeedFilters() {
+  document.querySelector('#profession-filter').value = 'all';
+  document.querySelector('#search-filter').value = '';
+  document.querySelectorAll('[data-theme-filter]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.themeFilter === 'all');
+  });
+}
+
 function apiError(data, fallback) {
   const error = new Error(data?.error || fallback);
   error.retryAfter = Number(data?.retryAfter) || 0;
@@ -552,7 +566,13 @@ function bindReportDialog() {
 }
 
 function bindFilters() {
-  document.querySelectorAll('[data-sort]').forEach((button) => button.addEventListener('click', () => loadFeed(button.dataset.sort)));
+  document.querySelectorAll('[data-sort]').forEach((button) => button.addEventListener('click', () => {
+    const explicitView = button.dataset.feedView;
+    const view = explicitView || (button.dataset.sort === 'new' ? 'new' : 'popular');
+    if (explicitView === 'home') resetFeedFilters();
+    if (view) setActiveFeedView(view);
+    loadFeed(button.dataset.sort);
+  }));
   document.querySelectorAll('[data-theme-filter]').forEach((button) => button.addEventListener('click', () => {
     document.querySelectorAll('[data-theme-filter]').forEach((item) => item.classList.toggle('is-active', item === button));
     loadFeed(currentSort);
