@@ -85,7 +85,7 @@ try {
 
   response = createResponse();
   publicConfig({}, response);
-  if (response.statusCode !== 200 || response.body.supabasePublishableKey !== 'sb_publishable_example') {
+  if (response.statusCode !== 200 || response.headers['Cache-Control'] !== 'no-store' || response.body.supabasePublishableKey !== 'sb_publishable_example') {
     throw new Error('Configuration publique Supabase invalide');
   }
 

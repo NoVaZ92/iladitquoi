@@ -5,6 +5,9 @@ const AUTH_PAGE = '/auth.html';
 const PROFILE_PAGE = '/profile.html';
 const LEGACY_PRIVATE_KEYS = ['iladitquoi.private-notes', 'anecdotes-du-soin.private-notes'];
 const LOCAL_ACCOUNT_KEYS = ['iladitquoi.saved-posts', 'anecdotes-du-soin.saved-posts', ...LEGACY_PRIVATE_KEYS];
+const SAVED_KEY = 'iladitquoi.saved-posts';
+const LEGACY_SAVED_KEY = 'anecdotes-du-soin.saved-posts';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif']);
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 let supabase;
@@ -22,6 +25,10 @@ function redirectTarget() {
 
 function levelFromXp(xp) {
   return Math.max(1, Math.floor((Number(xp) || 0) / 100) + 1);
+}
+
+function progressWithinLevel(xp) {
+  return Math.min(100, Math.max(0, Number(xp) || 0) % 100);
 }
 
 function setText(selector, value) {
@@ -97,6 +104,9 @@ function updateAccountChrome(session, profile) {
   document.querySelectorAll('[data-auth-avatar]').forEach((element) => setAvatar(element, signedIn ? pseudonym : '→', profile?.avatar_url));
   setText('[data-auth-level]', signedIn ? level : 0);
   setText('[data-auth-xp]', Number(profile?.xp) || 0);
+  document.querySelectorAll('.xp-line').forEach((element) => {
+    element.style.setProperty('--xp-progress', `${signedIn ? progressWithinLevel(profile?.xp) : 0}%`);
+  });
   document.querySelectorAll('[data-auth-guest]').forEach((element) => { element.hidden = signedIn; });
   document.querySelectorAll('[data-auth-member]').forEach((element) => { element.hidden = !signedIn; });
   document.querySelectorAll('[data-admin-link]').forEach((link) => { link.hidden = !['moderator', 'admin'].includes(profile?.role); });
@@ -253,13 +263,14 @@ async function exportPersonalData(button) {
   button.disabled = true;
   showProfileStatus('Préparation de votre export…');
   try {
-    const [anecdotesResult, votesResult, reportsResult, linksResult] = await Promise.all([
+    const [anecdotesResult, votesResult, reportsResult, linksResult, savedResult] = await Promise.all([
       supabase.from('anecdotes').select('id,author_label,profession,theme,body,visibility,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at').eq('author_id', currentSession.user.id).order('submitted_at', { ascending: false }),
       supabase.from('votes').select('anecdote_id,value,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false }),
       supabase.from('reports').select('id,anecdote_id,reason,created_at,resolved_at').eq('reporter_id', currentSession.user.id).order('created_at', { ascending: false }),
-      supabase.from('private_share_links').select('id,anecdote_id,expires_at,revoked_at,created_at,last_opened_at').order('created_at', { ascending: false })
+      supabase.from('private_share_links').select('id,anecdote_id,expires_at,revoked_at,created_at,last_opened_at').order('created_at', { ascending: false }),
+      supabase.from('saved_anecdotes').select('anecdote_id,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false })
     ]);
-    const failure = [anecdotesResult, votesResult, reportsResult, linksResult].find((result) => result.error);
+    const failure = [anecdotesResult, votesResult, reportsResult, linksResult, savedResult].find((result) => result.error);
     if (failure?.error) throw failure.error;
     const selection = (() => {
       try { return JSON.parse(localStorage.getItem('iladitquoi.saved-posts') || '[]'); } catch { return []; }
@@ -275,6 +286,7 @@ async function exportPersonalData(button) {
       votes: votesResult.data || [],
       reports: reportsResult.data || [],
       private_share_links: linksResult.data || [],
+      saved_anecdotes: savedResult.data || [],
       local_selections: Array.isArray(selection) ? selection : []
     });
     showProfileStatus('Votre export a été téléchargé.', true);
@@ -383,6 +395,31 @@ function legacyPrivateNotes() {
     } catch { /* unreadable storage behaves as an empty legacy notebook */ }
   }
   return { key: LEGACY_PRIVATE_KEYS[0], notes: [] };
+}
+
+function localSavedPosts() {
+  for (const key of [SAVED_KEY, LEGACY_SAVED_KEY]) {
+    try {
+      const posts = JSON.parse(localStorage.getItem(key) || '[]');
+      if (Array.isArray(posts) && posts.length) return posts;
+    } catch { /* unreadable storage behaves as an empty selection list */ }
+  }
+  return [];
+}
+
+async function migrateLocalSavedPosts(session) {
+  if (!session) return;
+  const ids = [...new Set(localSavedPosts().map((post) => post?.id).filter((id) => UUID_PATTERN.test(id)))].slice(0, 100);
+  if (!ids.length) return;
+  const { data: existing, error } = await supabase
+    .from('saved_anecdotes')
+    .select('anecdote_id')
+    .in('anecdote_id', ids);
+  if (error) return;
+  const known = new Set((existing || []).map((item) => item.anecdote_id));
+  await Promise.all(ids.filter((id) => !known.has(id)).map((anecdoteId) => supabase
+    .from('saved_anecdotes')
+    .insert({ user_id: session.user.id, anecdote_id: anecdoteId })));
 }
 
 async function migrateLegacyPrivateNotes(session, profile) {
@@ -576,7 +613,10 @@ async function renderProfilePage(session, profile) {
 
   const badges = [];
   if (published.length >= 1) badges.push('Première publication');
+  if (published.length >= 5) badges.push('5 anecdotes');
+  if (published.length >= 10) badges.push('10 anecdotes');
   if ((Number(profile.xp) || 0) >= 100) badges.push('100 XP');
+  if ((Number(profile.xp) || 0) >= 500) badges.push('500 XP');
   setText('[data-profile-badge-count]', badges.length);
   const badgeList = document.querySelector('[data-profile-badges]');
   if (badgeList) {
@@ -821,6 +861,7 @@ async function applySession(session) {
   currentSession = session;
   currentProfile = session ? await fetchProfile(session) : null;
   await migrateLegacyPrivateNotes(currentSession, currentProfile);
+  await migrateLocalSavedPosts(currentSession);
   updateAccountChrome(session, currentProfile);
   bindGlobalAccountActions();
   if (document.body.dataset.page === 'profile') await renderProfilePage(session, currentProfile);
@@ -870,6 +911,45 @@ window.AnecdotesAuth = {
       .select('anecdote_id,value')
       .in('anecdote_id', anecdoteIds);
     return error ? new Map() : new Map((data || []).map((vote) => [vote.anecdote_id, vote.value]));
+  },
+  async getSavedAnecdoteIds() {
+    await ready;
+    if (!currentSession) return null;
+    const { data, error } = await supabase
+      .from('saved_anecdotes')
+      .select('anecdote_id')
+      .eq('user_id', currentSession.user.id);
+    return error ? null : new Set((data || []).map((item) => item.anecdote_id));
+  },
+  async getSavedAnecdotes() {
+    await ready;
+    if (!currentSession) return { available: false, posts: [] };
+    const { data, error } = await supabase
+      .from('saved_anecdotes')
+      .select('created_at,anecdote:anecdotes(id,author_label,profession,theme,body,published_at,submitted_at)')
+      .eq('user_id', currentSession.user.id)
+      .order('created_at', { ascending: false });
+    if (error) return { available: false, posts: [] };
+    return {
+      available: true,
+      posts: (data || []).filter((item) => item.anecdote).map((item) => ({
+        id: item.anecdote.id,
+        author: item.anecdote.author_label,
+        profession: item.anecdote.profession,
+        theme: item.anecdote.theme,
+        text: item.anecdote.body,
+        savedAt: item.created_at
+      }))
+    };
+  },
+  async setSavedAnecdote(anecdoteId, saved) {
+    await ready;
+    if (!currentSession || !UUID_PATTERN.test(anecdoteId)) return false;
+    const request = saved
+      ? supabase.from('saved_anecdotes').insert({ user_id: currentSession.user.id, anecdote_id: anecdoteId })
+      : supabase.from('saved_anecdotes').delete().eq('user_id', currentSession.user.id).eq('anecdote_id', anecdoteId);
+    const { error } = await request;
+    return !error;
   },
   async signOut() { await ready; return supabase?.auth.signOut(); }
 };

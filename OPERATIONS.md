@@ -39,6 +39,7 @@ Apres connexion, ouvrir `/admin`. La page n’est accessible qu’aux roles `mod
 - Le bouton `Télécharger mes données` du profil produit un JSON avec le compte, les anecdotes, votes, signalements, liens privés et sélections conservées sur ce navigateur.
 - Le bouton `Supprimer mon compte` exige la saisie de `SUPPRIMER`, efface les contenus et l'avatar, puis supprime le compte Supabase. Les anciennes décisions de modération gardent leur historique mais ne sont plus reliées à un compte supprimé.
 - Tester la suppression avec un compte non administrateur avant ouverture. Une suppression de compte ne doit jamais être effectuée depuis le SQL Editor pour un utilisateur réel, sauf procédure de support documentée.
+- Les sélections sont synchronisées pour les comptes connectés. Les sélections créées avant connexion restent disponibles localement puis sont reprises automatiquement si elles correspondent encore à une anecdote publiée.
 
 ## Modele de donnees minimal
 

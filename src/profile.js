@@ -27,8 +27,9 @@ function emptyState(message) {
   return element;
 }
 
-function renderSavedPosts() {
-  const posts = loadCollection(SAVED_KEY, LEGACY_SAVED_KEY);
+async function renderSavedPosts() {
+  const remote = await window.AnecdotesAuth?.getSavedAnecdotes?.();
+  const posts = remote?.available ? remote.posts : loadCollection(SAVED_KEY, LEGACY_SAVED_KEY);
   const list = document.querySelector('#saved-list');
   const summary = document.querySelector('#saved-summary');
   summary.textContent = posts.length ? `${posts.length} sélection${posts.length > 1 ? 's' : ''}` : 'Aucune sélection';
@@ -43,9 +44,29 @@ function renderSavedPosts() {
     meta.textContent = `${post.author || 'Anonyme'} · ${post.profession || 'Métier du soin'}`;
     const copy = document.createElement('p');
     copy.textContent = post.text || '';
-    article.append(meta, copy);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'saved-remove-button';
+    remove.innerHTML = '<i data-lucide="trash-2" aria-hidden="true"></i><span>Retirer</span>';
+    remove.addEventListener('click', async () => {
+      remove.disabled = true;
+      if (remote?.available) {
+        const removed = await window.AnecdotesAuth?.setSavedAnecdote?.(post.id, false);
+        if (!removed) {
+          remove.disabled = false;
+          remove.title = 'La sélection n’a pas pu être retirée.';
+          return;
+        }
+      } else {
+        const remaining = posts.filter((item) => item.id !== post.id);
+        try { localStorage.setItem(SAVED_KEY, JSON.stringify(remaining)); } catch { /* storage remains a best-effort fallback */ }
+      }
+      await renderSavedPosts();
+    });
+    article.append(meta, copy, remove);
     return article;
   }));
+  window.dispatchEvent(new Event('anecdotes:icons-updated'));
 }
 
 function activateTab(name) {
@@ -116,6 +137,7 @@ function initialize() {
   createIcons({ icons: ICONS, attrs: { 'stroke-width': 1.8 } });
   window.addEventListener('anecdotes:icons-updated', () => createIcons({ icons: ICONS, attrs: { 'stroke-width': 1.8 } }));
   renderSavedPosts();
+  window.addEventListener('anecdotes:auth', () => { renderSavedPosts(); });
   bindPrivateShare();
   document.querySelector('[data-export-personal-data]')?.addEventListener('click', (event) => {
     window.dispatchEvent(new CustomEvent('anecdotes:export-data', { detail: { button: event.currentTarget } }));

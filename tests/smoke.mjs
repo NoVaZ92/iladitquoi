@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { sanitizePublicText } from '../lib/privacy-filter.js';
 import { PROFESSIONS } from '../lib/professions.js';
 
@@ -7,12 +7,21 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
 const packageJson = JSON.parse(source['package.json']);
 const vercelConfig = JSON.parse(source['vercel.json']);
+
+async function countApiFunctions(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const counts = await Promise.all(entries.map((entry) => {
+    const path = `${directory}/${entry.name}`;
+    return entry.isDirectory() ? countApiFunctions(path) : entry.isFile() && entry.name.endsWith('.js') ? 1 : 0;
+  }));
+  return counts.reduce((total, count) => total + count, 0);
+}
 
 const contracts = [
   ['finalized.html', 'id="anecdote-editor"', 'composeur'],
@@ -20,12 +29,14 @@ const contracts = [
   ['finalized.html', '>iladitquoi<', 'marque'],
   ['finalized.html', '@media (max-width: 800px)', 'mise en page mobile'],
   ['finalized.html', 'grid-template-columns: 256px minmax(620px, 1fr) 344px', 'mise en page grand écran'],
+  ['finalized.html', '--xp-progress', 'jauge XP dynamique'],
   ['finalized.html', 'href="/rules.html"', 'lien vers les règles'],
   ['profile.html', 'data-profile-tab="pending"', 'suivi de modération'],
   ['profile.html', 'Décisions de modération', 'titre explicite de la modération'],
   ['profile.html', 'id="delete-refused-dialog"', 'confirmation de suppression d’une anecdote refusée'],
   ['profile.html', 'id="revoke-private-links-dialog"', 'confirmation de révocation des liens privés'],
   ['profile.html', 'id="delete-private-note-dialog"', 'confirmation de suppression des notes privées'],
+  ['profile.html', 'saved-remove-button', 'retrait des sélections depuis le profil'],
   ['profile.html', 'data-admin-link', 'accès administration conditionnel'],
   ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
   ['auth.html', 'accept="image/jpeg,image/png,image/gif"', 'import d’avatar restreint'],
@@ -49,8 +60,10 @@ const contracts = [
   ['src/feed.js', "fetch('/api/report'", 'signalement cloud'],
   ['src/feed.js', "fetch('/api/private'", 'carnet privé cloud'],
   ['src/feed.js', "fetch('/api/vote'", 'votes persistants'],
+  ['src/feed.js', 'setSavedAnecdote', 'synchronisation des sélections connectées'],
   ['src/feed.js', 'sharedPrivateToken', 'lecture du lien privé dans le navigateur'],
   ['src/auth.js', 'signInWithPassword', 'connexion e-mail'],
+  ['src/auth.js', 'progressWithinLevel', 'progression XP dynamique'],
   ['src/auth.js', 'resetPasswordForEmail', 'récupération du mot de passe'],
   ['src/auth.js', 'Motif du refus', 'motif de modération visible'],
   ['src/auth.js', 'deleteRefusedAnecdote', 'suppression propriétaire d’une anecdote refusée'],
@@ -58,6 +71,9 @@ const contracts = [
   ['src/auth.js', 'deletePrivateAnecdote', 'suppression des notes privées du propriétaire'],
   ['src/auth.js', 'exportPersonalData', 'export des données personnelles'],
   ['src/auth.js', 'deleteAccount', 'suppression du compte'],
+  ['src/auth.js', 'migrateLocalSavedPosts', 'migration des sélections locales'],
+  ['src/auth.js', 'getSavedAnecdotes', 'lecture des sélections synchronisées'],
+  ['src/profile.js', 'setSavedAnecdote?.(post.id, false)', 'retrait synchronisé d’une sélection'],
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
   ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
@@ -102,6 +118,7 @@ const contracts = [
   ['supabase/migrations/0008_private_note_management.sql', 'owners revoke active private links', 'RLS de révocation des liens privés'],
   ['supabase/migrations/0009_profile_privilege_protection.sql', 'role and xp cannot be changed from a member session', 'protection contre l’auto-promotion'],
   ['supabase/migrations/0010_account_deletion.sql', 'on delete set null', 'conservation des décisions après suppression du modérateur'],
+  ['supabase/migrations/0011_saved_anecdotes.sql', 'members save published anecdotes', 'RLS des sélections publiées'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'profile']", 'bundles navigateur']
 ];
 
@@ -141,6 +158,7 @@ if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route
 if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/ready' && route.destination === '/api/health?ready=1')) throw new Error('Route readiness groupée absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
+if (await countApiFunctions('api') > 12) throw new Error('Le plan Vercel Hobby accepte au maximum 12 fonctions par déploiement');
 const globalHeaders = vercelConfig.headers?.find((entry) => entry.source === '/(.*)')?.headers || [];
 if (!globalHeaders.some((header) => header.key === 'Content-Security-Policy' && header.value.includes("default-src 'self'"))) throw new Error('Politique de sécurité du navigateur absente');
 if (!globalHeaders.some((header) => header.key === 'Cross-Origin-Opener-Policy' && header.value === 'same-origin')) throw new Error('Isolation de fenêtre absente');

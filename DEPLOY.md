@@ -5,7 +5,7 @@ Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour un
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
-2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0010`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0010_account_deletion.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, `0008` ajoute la gestion des liens et notes prives, `0009` empeche un membre ou moderateur de modifier son propre role et `0010` rend possible la suppression complete d'un compte sans effacer l'historique des decisions de moderation. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
+2. Pour une nouvelle base, executer dans l'ordre les migrations `0001` a `0011`. Pour une base deja initialisee, executer les migrations manquantes jusqu'a `0011_saved_anecdotes.sql` avant de deployer cette version. La migration `0006` programme la purge des anecdotes refusees, `0007` active les limites anti-abus par IP et par compte, `0008` ajoute la gestion des liens et notes prives, `0009` empeche un membre ou moderateur de modifier son propre role, `0010` rend possible la suppression complete d'un compte sans effacer l'historique des decisions de moderation et `0011` synchronise les sélections du profil. Sans `0007`, les routes d'ecriture repondent volontairement `rate_limit_unavailable` au lieu d'accepter des actions non protegees.
 3. Dans `Authentication > Providers > Email`, activer les comptes par e-mail et mot de passe. Garder la confirmation d'e-mail activee.
 4. Dans `Authentication > URL Configuration`, definir `Site URL` sur `https://iladitquoi.vercel.app` et ajouter `https://iladitquoi.vercel.app/auth.html` aux Redirect URLs.
 5. Avant d'ouvrir les inscriptions au public, configurer `Authentication > SMTP Settings` avec un fournisseur SMTP. Le serveur de test Supabase n'envoie qu'aux adresses autorisees de l'equipe et reste fortement limite.
@@ -51,6 +51,7 @@ where id = 'UUID_DE_L_ANECDOTE';
 11. Creer un lien prive depuis le carnet, verifier sa lecture, puis le revoquer. Le lien doit alors repondre `share_not_found`. Supprimer ensuite la note pour verifier la suppression en cascade de ses liens.
 12. Depuis le profil, telecharger l'export personnel, puis tester la suppression avec un compte de test. Le compte, son avatar, ses anecdotes et ses liens prives doivent disparaitre. Les decisions prises par un ancien moderateur restent conservees avec un moderateur nul.
 13. Avec un compte `moderator`, verifier qu'une modification de profil ordinaire fonctionne mais qu'une tentative de modifier `role` ou `xp` depuis une session connectee est rejetee. Seul le SQL Editor, utilise par le proprietaire, doit pouvoir promouvoir ou retrograder un compte.
+14. Enregistrer une anecdote avec un compte, puis ouvrir le meme profil sur un autre navigateur. La selection doit apparaitre dans l’onglet `Sélections` sans dépendre du stockage local du premier navigateur.
 
 ## 4. Limites de cette beta
 

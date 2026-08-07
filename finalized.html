@@ -164,7 +164,7 @@
     .level-row span { color: var(--blue); font-size: 10px; font-weight: 800; text-transform: uppercase; }
     .level-row strong { font-size: 32px; line-height: 1; }
     .xp-line { height: 6px; margin: 11px 0 7px; border-radius: 999px; background: #e8ebf1; overflow: hidden; }
-    .xp-line::before { content: ""; display: block; width: 28%; height: 100%; background: var(--lime); }
+    .xp-line::before { content: ""; display: block; width: var(--xp-progress, 0%); height: 100%; background: var(--lime); transition: width .2s ease; }
     .xp-copy { color: var(--muted); font-size: 10px; }
     .right-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; color: var(--blue); font-size: 11px; font-weight: 750; text-decoration: none; }
     .right-link:hover { text-decoration: underline; }

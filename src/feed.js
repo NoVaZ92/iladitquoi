@@ -207,27 +207,40 @@ function createPost(anecdote) {
   save.setAttribute('aria-label', 'Enregistrer cette anecdote');
   save.innerHTML = '<i data-lucide="bookmark"></i>';
   let savedPosts = loadSavedPosts();
+  let isSaved = Boolean(anecdote.is_saved) || savedPosts.some((item) => item.id === anecdote.id);
   const updateSavedState = () => {
-    const active = savedPosts.some((item) => item.id === anecdote.id);
-    save.classList.toggle('is-active', active);
-    save.setAttribute('aria-pressed', String(active));
-    save.setAttribute('aria-label', active ? 'Retirer des sélections' : 'Enregistrer cette anecdote');
+    save.classList.toggle('is-active', isSaved);
+    save.setAttribute('aria-pressed', String(isSaved));
+    save.setAttribute('aria-label', isSaved ? 'Retirer des sélections' : 'Enregistrer cette anecdote');
   };
   updateSavedState();
-  save.addEventListener('click', () => {
-    const exists = savedPosts.some((item) => item.id === anecdote.id);
-    savedPosts = exists
-      ? savedPosts.filter((item) => item.id !== anecdote.id)
-      : [{
+  save.addEventListener('click', async () => {
+    const nextSaved = !isSaved;
+    save.disabled = true;
+    const session = await window.AnecdotesAuth?.getSession?.();
+    if (session) {
+      const saved = await window.AnecdotesAuth?.setSavedAnecdote?.(anecdote.id, nextSaved);
+      if (!saved) {
+        save.disabled = false;
+        save.title = 'La sélection n’a pas pu être synchronisée.';
+        return;
+      }
+    }
+    isSaved = nextSaved;
+    anecdote.is_saved = isSaved;
+    savedPosts = isSaved
+      ? [{
           id: anecdote.id,
           text: anecdote.body,
           author: anecdote.author_label,
           profession: anecdote.profession,
           theme: anecdote.theme,
           savedAt: Date.now()
-        }, ...savedPosts];
+        }, ...savedPosts.filter((item) => item.id !== anecdote.id)]
+      : savedPosts.filter((item) => item.id !== anecdote.id);
     saveJson(SAVED_KEY, savedPosts);
     updateSavedState();
+    save.disabled = false;
   });
   if (isPrivateShare) {
     const privateBadge = document.createElement('span');
@@ -361,6 +374,7 @@ async function loadFeed(sort = currentSort) {
     feedItems = Array.isArray(data.anecdotes) ? data.anecdotes : [];
     await includeSharedAnecdote();
     await hydrateUserVotes();
+    await hydrateSavedPosts();
     renderFeed();
     focusSharedAnecdote();
   } catch {
@@ -374,6 +388,12 @@ async function hydrateUserVotes() {
   const votes = await window.AnecdotesAuth?.getVotes?.(ids);
   if (!votes) return;
   feedItems.forEach((item) => { item.user_vote = votes.get(item.id) || 0; });
+}
+
+async function hydrateSavedPosts() {
+  const savedIds = await window.AnecdotesAuth?.getSavedAnecdoteIds?.();
+  if (!savedIds) return;
+  feedItems.forEach((item) => { item.is_saved = savedIds.has(item.id); });
 }
 
 async function includeSharedAnecdote() {
@@ -603,7 +623,7 @@ function initialize() {
   updateNotebookSummary();
   window.addEventListener('anecdotes:auth', () => {
     syncAuthProfile().catch(() => updateComposerIdentity(null));
-    hydrateUserVotes().then(renderFeed).catch(() => {});
+    Promise.all([hydrateUserVotes(), hydrateSavedPosts()]).then(renderFeed).catch(() => {});
   });
   syncAuthProfile().catch(() => updateComposerIdentity(null));
   loadFeed(currentSort);
