@@ -7,7 +7,7 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -92,6 +92,7 @@ const contracts = [
   ['api/health.js', "status: 'ok'", 'health check'],
   ['api/health.js', 'configuration_required', 'readiness'],
   ['api/health.js', 'rate_limit_ready', 'readiness de la protection anti-abus'],
+  ['api/health.js', 'consume_rate_limit', 'sonde d’exécution du limiteur anti-abus'],
   ['api/health.js', 'account_deletion_ready', 'readiness de la suppression de compte'],
   ['api/config.js', 'configured', 'configuration publique'],
   ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
@@ -131,6 +132,7 @@ const contracts = [
   ['supabase/migrations/0007_rate_limits.sql', 'private.rate_limit_buckets', 'compteurs anti-abus privés'],
   ['supabase/migrations/0007_rate_limits.sql', 'grant execute on function public.consume_rate_limit', 'RPC anti-abus réservée au serveur'],
   ['supabase/migrations/0007_rate_limits.sql', 'public.rate_limit_ready', 'diagnostic de migration anti-abus'],
+  ['supabase/migrations/0015_rate_limit_repair.sql', 'grant usage on schema private to service_role', 'réparation des droits du limiteur anti-abus'],
   ['supabase/migrations/0007_rate_limits.sql', 'purge-expired-rate-limit-buckets', 'purge des compteurs anti-abus'],
   ['supabase/migrations/0008_private_note_management.sql', 'members delete their own private anecdotes', 'RLS de suppression des notes privées'],
   ['supabase/migrations/0008_private_note_management.sql', 'owners revoke active private links', 'RLS de révocation des liens privés'],

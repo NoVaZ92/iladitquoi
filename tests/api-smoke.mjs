@@ -60,6 +60,9 @@ try {
     if (lastRequest.url.endsWith('/rest/v1/rpc/rate_limit_ready') || lastRequest.url.endsWith('/rest/v1/rpc/account_deletion_ready')) {
       return { ok: true, status: 200, async json() { return true; } };
     }
+    if (lastRequest.url.endsWith('/rest/v1/rpc/consume_rate_limit')) {
+      return { ok: true, status: 200, async json() { return [{ allowed: true, retry_after_seconds: 0 }]; } };
+    }
     return { ok: true, async json() { return []; } };
   };
   response = createResponse();
@@ -67,6 +70,18 @@ try {
   if (response.statusCode !== 200 || response.body.configured !== true) throw new Error('Readiness configurée invalide');
   if (lastRequest.options.headers.apikey !== 'sb_secret_example' || lastRequest.options.headers.authorization) {
     throw new Error('En-têtes de clé secrète Supabase invalides');
+  }
+
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/rest/v1/rpc/consume_rate_limit')) {
+      return { ok: true, status: 200, async json() { return [{ allowed: false, retry_after_seconds: 1 }]; } };
+    }
+    return { ok: true, status: 200, async json() { return true; } };
+  };
+  response = createResponse();
+  await health({ query: { ready: '1' } }, response);
+  if (response.statusCode !== 503 || response.body.status !== 'dependency_unavailable') {
+    throw new Error('La readiness doit exécuter le limiteur anti-abus');
   }
 
   globalThis.fetch = async () => ({ ok: false, status: 404 });

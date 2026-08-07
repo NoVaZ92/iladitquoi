@@ -1,4 +1,15 @@
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
+import { createHash } from 'node:crypto';
+
+function rateLimitProbe() {
+  const minute = new Date().toISOString().slice(0, 16);
+  return {
+    p_action: 'readiness_probe',
+    p_subject_hash: createHash('sha256').update(`iladitquoi:${minute}`).digest('hex'),
+    p_limit: 10000,
+    p_window_seconds: 120
+  };
+}
 
 async function readiness(response) {
   const { url, publishableKey, secretKey } = getSupabaseConfig();
@@ -19,11 +30,16 @@ async function readiness(response) {
     }
     if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
 
-    for (const rpc of ['rate_limit_ready', 'account_deletion_ready']) {
-      const health = await fetch(`${url}/rest/v1/rpc/${rpc}`, {
+    const checks = [
+      { rpc: 'rate_limit_ready', body: {}, valid: (body) => body === true },
+      { rpc: 'consume_rate_limit', body: rateLimitProbe(), valid: (body) => Array.isArray(body) && body[0]?.allowed === true },
+      { rpc: 'account_deletion_ready', body: {}, valid: (body) => body === true }
+    ];
+    for (const check of checks) {
+      const health = await fetch(`${url}/rest/v1/rpc/${check.rpc}`, {
         method: 'POST',
         headers: { ...getSupabaseAdminHeaders(secretKey), 'content-type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify(check.body),
         signal: AbortSignal.timeout(5000)
       });
       if (health.status === 401 || health.status === 403) {
@@ -32,7 +48,7 @@ async function readiness(response) {
       if (health.status === 404) {
         return response.status(503).json({ status: 'schema_required', configured: true });
       }
-      if (!health.ok || await health.json() !== true) {
+      if (!health.ok || !check.valid(await health.json())) {
         return response.status(503).json({ status: 'dependency_unavailable', configured: true });
       }
     }

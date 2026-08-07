@@ -114,6 +114,9 @@ function apiError(data, fallback) {
 }
 
 function actionErrorMessage(error, fallback) {
+  if (error?.message === 'rate_limit_unavailable') {
+    return 'La protection anti-abus est momentanément indisponible. Votre brouillon est conservé.';
+  }
   if (error?.message !== 'rate_limit_exceeded') return fallback;
   const seconds = Math.max(1, error.retryAfter || 1);
   const delay = seconds < 60 ? 'moins d’une minute' : `${Math.ceil(seconds / 60)} min`;
