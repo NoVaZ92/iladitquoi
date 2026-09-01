@@ -272,8 +272,15 @@ body[data-page="home"] .account-link:hover {
 body[data-page="home"] .account-avatar,
 body[data-page="home"] .profile-avatar,
 body[data-page="home"] .mini-avatar {
-  background: var(--signal-accent);
+  background-color: var(--signal-accent);
   color: #fff;
+}
+
+body[data-page="home"] .account-avatar.has-image,
+body[data-page="home"] .profile-avatar.has-image {
+  background-position: center;
+  background-size: cover;
+  color: transparent;
 }
 
 body[data-page="home"] .composer {
@@ -483,8 +490,14 @@ body[data-page="admin"] .decision-controls {
 }
 
 body[data-page="profile"] .profile-avatar-large {
-  background: var(--signal-accent);
+  background-color: var(--signal-accent);
   color: #fff;
+}
+
+body[data-page="profile"] .profile-avatar-large.has-image {
+  background-position: center;
+  background-size: cover;
+  color: transparent;
 }
 
 body[data-page="profile"] .profile-entry,
@@ -705,7 +718,13 @@ body[data-page="auth"] .field select:focus {
 }
 
 body[data-page="auth"] .avatar-preview {
-  background: var(--signal-accent);
+  background-color: var(--signal-accent);
+}
+
+body[data-page="auth"] .avatar-preview.has-image {
+  background-position: center;
+  background-size: cover;
+  color: transparent;
 }
 
 /* Rules and legal */
