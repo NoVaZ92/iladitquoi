@@ -1,11 +1,14 @@
 import { getSupabaseAdminHeaders } from '../../lib/supabase-config.js';
 import { getModeratorContext } from '../../lib/moderator.js';
+import { handleAdminBadges, handleAdminUsers } from '../../lib/admin-management.js';
 
 function idsFilter(ids) {
   return ids.length ? `in.(${ids.join(',')})` : '';
 }
 
 export default async function handler(request, response) {
+  if (request.query?.action === 'users') return handleAdminUsers(request, response);
+  if (request.query?.action === 'badges') return handleAdminBadges(request, response);
   if (request.method !== 'GET') return response.status(405).json({ error: 'method_not_allowed' });
   const context = await getModeratorContext(request);
   if (context.error) return response.status(context.status).json({ error: context.error });

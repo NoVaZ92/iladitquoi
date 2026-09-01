@@ -1,9 +1,9 @@
 import {
   ArrowLeft, Bookmark, BookOpen, Copy, createIcons, Download, FileClock, LockKeyhole, LogOut,
-  NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X
+  NotebookPen, PenLine, Send, ShieldCheck, Sun, Trash2, UserRound, X
 } from 'lucide';
 
-const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, Download, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, Trash2, UserRound, X };
+const ICONS = { ArrowLeft, Bookmark, BookOpen, Copy, Download, FileClock, LockKeyhole, LogOut, NotebookPen, PenLine, Send, ShieldCheck, Sun, Trash2, UserRound, X };
 const SAVED_KEY = 'iladitquoi.saved-posts';
 const LEGACY_SAVED_KEY = 'anecdotes-du-soin.saved-posts';
 

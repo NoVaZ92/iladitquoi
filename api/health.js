@@ -18,17 +18,24 @@ async function readiness(response) {
   if (!configured) return response.status(503).json({ status: 'configuration_required', configured: false });
 
   try {
-    const upstream = await fetch(`${url}/rest/v1/anecdotes?select=id&limit=1`, {
-      headers: getSupabaseAdminHeaders(secretKey),
-      signal: AbortSignal.timeout(5000)
-    });
-    if (upstream.status === 401 || upstream.status === 403) {
-      return response.status(503).json({ status: 'credentials_invalid', configured: true });
+    const schemaQueries = [
+      '/rest/v1/anecdotes?select=id,display_anonymously&limit=1',
+      '/rest/v1/profiles?select=public_slug,active_frame_key&limit=1',
+      '/rest/v1/badge_definitions?select=badge_key&limit=1'
+    ];
+    for (const query of schemaQueries) {
+      const upstream = await fetch(`${url}${query}`, {
+        headers: getSupabaseAdminHeaders(secretKey),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (upstream.status === 401 || upstream.status === 403) {
+        return response.status(503).json({ status: 'credentials_invalid', configured: true });
+      }
+      if (upstream.status === 400 || upstream.status === 404) {
+        return response.status(503).json({ status: 'schema_required', configured: true });
+      }
+      if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
     }
-    if (upstream.status === 404) {
-      return response.status(503).json({ status: 'schema_required', configured: true });
-    }
-    if (!upstream.ok) return response.status(503).json({ status: 'dependency_unavailable', configured: true });
 
     const checks = [
       { rpc: 'rate_limit_ready', body: {}, status: 'rate_limit_structure_unavailable', valid: (body) => body === true },

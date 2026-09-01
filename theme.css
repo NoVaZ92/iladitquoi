@@ -106,6 +106,103 @@ textarea::placeholder {
   scrollbar-color: var(--signal-line-strong) transparent;
 }
 
+/* Profile avatar frames */
+[data-avatar-frame] {
+  position: relative;
+  border: 2px solid transparent !important;
+  background-clip: padding-box;
+}
+
+[data-avatar-frame="violet"] {
+  border-color: #9b83ff !important;
+  box-shadow: 0 0 0 2px rgba(124, 92, 255, .22);
+}
+
+[data-avatar-frame="green"] {
+  border-color: var(--signal-success) !important;
+  box-shadow: 0 0 0 2px rgba(53, 201, 138, .2);
+}
+
+[data-avatar-frame="amber"] {
+  border-color: var(--signal-warning) !important;
+  box-shadow: 0 0 0 2px rgba(255, 184, 77, .2);
+}
+
+[data-avatar-frame="admin"] {
+  border-color: var(--signal-warning) !important;
+  box-shadow: 0 0 0 2px var(--signal-panel), 0 0 0 4px var(--signal-accent);
+}
+
+.frame-title {
+  margin: 16px 0 8px;
+  color: var(--signal-muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.frame-choices {
+  display: grid;
+  gap: 6px;
+}
+
+.frame-choice {
+  min-height: 36px;
+  border: 1px solid var(--signal-line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: var(--signal-surface);
+  color: var(--signal-muted);
+  font-size: 10px;
+  font-weight: 750;
+  text-align: left;
+}
+
+.frame-choice:hover,
+.frame-choice.is-active {
+  border-color: var(--signal-accent);
+  background: var(--signal-active);
+  color: var(--signal-text);
+}
+
+.frame-choice[data-frame-tone="violet"] { box-shadow: inset 3px 0 #9b83ff; }
+.frame-choice[data-frame-tone="green"] { box-shadow: inset 3px 0 var(--signal-success); }
+.frame-choice[data-frame-tone="amber"] { box-shadow: inset 3px 0 var(--signal-warning); }
+.frame-admin-note { margin-top: 8px !important; color: var(--signal-warning) !important; }
+
+.mini-avatar.has-image {
+  background-position: center;
+  background-size: cover;
+  color: transparent;
+}
+
+.story-identity {
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.story-identity:hover strong {
+  color: var(--signal-accent);
+}
+
+.story-author-line {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.story-author-role {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 18px;
+  border: 1px solid var(--signal-warning);
+  border-radius: 6px;
+  padding: 2px 5px;
+  color: var(--signal-warning);
+  font-size: 8px;
+  font-weight: 850;
+}
+
 /* Shared Signal Nuit primitives */
 .brand-mark {
   width: auto;

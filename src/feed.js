@@ -2,7 +2,7 @@ import {
   ArrowDown, ArrowRight, ArrowUp, Bookmark, BookOpen, BriefcaseMedical, Check,
   ChevronDown, Clock3, Copy, createIcons, Flame, Flag, Grid2X2, Home, LockKeyhole,
   LogIn, MessageSquareText, NotebookPen, PenLine, RefreshCw, Search, Send, Share2,
-  Shuffle, Sparkles, Tag, UserRound, X
+  ShieldCheck, Shuffle, Sparkles, Sun, Tag, UserRound, X
 } from 'lucide';
 import { PROFESSIONS, populateProfessionSelect } from '../lib/professions.js';
 import { sanitizePublicText } from '../lib/privacy-filter.js';
@@ -23,7 +23,7 @@ const ICONS = {
   ArrowDown, ArrowRight, ArrowUp, Bookmark, BookOpen, BriefcaseMedical, Check,
   ChevronDown, Clock3, Copy, Flame, Flag, Grid2X2, Home, LockKeyhole, LogIn,
   MessageSquareText, NotebookPen, PenLine, RefreshCw, Search, Send, Share2,
-  Shuffle, Sparkles, Tag, UserRound, X
+  ShieldCheck, Shuffle, Sparkles, Sun, Tag, UserRound, X
 };
 
 let feedItems = [];
@@ -301,7 +301,12 @@ function createPost(anecdote) {
   readMore.type = 'button';
   readMore.className = 'read-more';
   readMore.textContent = 'Voir plus';
-  if (copy.textContent.length <= 190) readMore.hidden = true;
+  readMore.hidden = true;
+  let canExpand = false;
+  const detectClipping = () => {
+    if (!article.classList.contains('is-expanded') && copy.scrollHeight > copy.clientHeight + 1) canExpand = true;
+    readMore.hidden = !canExpand;
+  };
   readMore.addEventListener('click', () => {
     const expanded = article.classList.toggle('is-expanded');
     readMore.textContent = expanded ? 'Réduire' : 'Voir plus';
@@ -309,17 +314,36 @@ function createPost(anecdote) {
 
   const footer = document.createElement('div');
   footer.className = 'story-footer';
-  const identity = document.createElement('div');
+  const publicAuthor = !isPrivateShare ? anecdote.author : null;
+  const identity = document.createElement(publicAuthor ? 'a' : 'div');
   identity.className = 'story-identity';
+  if (publicAuthor) {
+    identity.href = `/membre/${publicAuthor.publicSlug}`;
+    identity.setAttribute('aria-label', `Consulter le profil de ${publicAuthor.pseudonym}`);
+  }
   const avatar = document.createElement('span');
   avatar.className = 'mini-avatar';
-  avatar.textContent = String(anecdote.author_label || 'A').charAt(0).toUpperCase();
+  avatar.textContent = String(publicAuthor?.pseudonym || anecdote.author_label || 'A').charAt(0).toUpperCase();
+  if (publicAuthor?.avatarUrl) {
+    avatar.classList.add('has-image');
+    avatar.style.backgroundImage = `url(${JSON.stringify(publicAuthor.avatarUrl)})`;
+  }
+  if (publicAuthor?.frameKey) avatar.dataset.avatarFrame = publicAuthor.frameKey;
   const identityCopy = document.createElement('span');
+  const authorLine = document.createElement('span');
+  authorLine.className = 'story-author-line';
   const author = document.createElement('strong');
-  author.textContent = anecdote.author_label || 'Anonyme';
+  author.textContent = publicAuthor?.pseudonym || anecdote.author_label || 'Anonyme';
+  authorLine.append(author);
+  if (publicAuthor?.displayRole === 'Admin') {
+    const role = document.createElement('span');
+    role.className = 'story-author-role';
+    role.textContent = 'Admin';
+    authorLine.append(role);
+  }
   const meta = document.createElement('small');
-  meta.textContent = `${anecdote.profession || 'Métier du soin'} · ${formatDate(anecdote.published_at || anecdote.submitted_at)}`;
-  identityCopy.append(author, meta);
+  meta.textContent = `${publicAuthor?.profession || anecdote.profession || 'Métier du soin'} · ${formatDate(anecdote.published_at || anecdote.submitted_at)}`;
+  identityCopy.append(authorLine, meta);
   identity.append(avatar, identityCopy);
 
   const actions = document.createElement('div');
@@ -332,6 +356,8 @@ function createPost(anecdote) {
   footer.append(identity, actions);
   content.append(header, copy, readMore, footer);
   article.append(voteColumn, content);
+  window.requestAnimationFrame(detectClipping);
+  if ('ResizeObserver' in window) new ResizeObserver(detectClipping).observe(copy);
   renderIcons(article);
   return article;
 }

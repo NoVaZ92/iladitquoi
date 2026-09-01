@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Profil public d’un membre iladitquoi.">
+  <title>Profil membre · iladitquoi</title>
+  <script>try { if (localStorage.getItem('iladitquoi.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
+  <style>
+    :root { color-scheme:dark; --page:#252c40; --surface:#091725; --soft:#0e1c2b; --line:#263c52; --text:#f4f7fb; --muted:#8da1b6; --blue:#7c5cff; --green:#35c98a; font-family:Manrope,Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    * { box-sizing:border-box; }
+    body { min-width:320px; min-height:100vh; margin:0; background:var(--page); color:var(--text); }
+    button,a { font:inherit; } button { cursor:pointer; } [hidden] { display:none !important; } .lucide { width:18px; height:18px; }
+    .member-shell { display:grid; grid-template-columns:240px minmax(0,1fr); gap:16px; min-height:100vh; padding:16px; }
+    .member-sidebar { position:sticky; top:16px; display:flex; flex-direction:column; align-self:start; height:calc(100vh - 32px); border:1px solid var(--line); border-radius:22px; padding:24px 18px; background:var(--surface); }
+    .brand { display:flex; align-items:center; gap:9px; min-width:0; color:var(--text); text-decoration:none; } .brand-mark { color:var(--blue); font-family:Georgia,serif; font-size:32px; font-weight:900; line-height:1; } .brand strong { font-size:20px; }
+    .side-links { display:grid; gap:6px; margin-top:32px; } .side-link { display:flex; align-items:center; gap:9px; min-height:42px; border-radius:11px; padding:9px 11px; color:var(--muted); font-size:12px; font-weight:750; text-decoration:none; } .side-link:hover { background:var(--soft); color:var(--text); }
+    .privacy-note { margin-top:auto; color:var(--muted); font-size:10px; line-height:1.55; }
+    .member-main { min-width:0; border:1px solid var(--line); border-radius:22px; background:var(--surface); }
+    .mobile-header { display:none; }
+    .member-inner { width:min(100%,980px); margin:0 auto; padding:40px 42px 72px; }
+    .profile-state { display:grid; place-items:center; min-height:360px; border:1px dashed var(--line); border-radius:16px; padding:24px; color:var(--muted); text-align:center; } .profile-state strong { color:var(--text); font-size:17px; } .profile-state span { margin-top:6px; font-size:12px; }
+    .member-hero { display:flex; align-items:center; justify-content:space-between; gap:28px; border-bottom:1px solid var(--line); padding-bottom:28px; }
+    .member-identity { display:flex; align-items:center; gap:18px; min-width:0; }
+    .member-avatar { display:grid; place-items:center; flex:none; width:86px; height:86px; overflow:hidden; border-radius:50%; background:var(--soft); color:var(--text); font-size:28px; font-weight:850; } .member-avatar.has-image { background-position:center; background-size:cover; color:transparent; }
+    .role-badge { display:inline-flex; align-items:center; gap:5px; min-height:24px; margin-bottom:8px; border:1px solid var(--signal-warning); border-radius:8px; padding:4px 8px; color:var(--signal-warning); font-size:10px; font-weight:850; }
+    h1 { margin:0; overflow-wrap:anywhere; font-size:34px; line-height:1.15; } .member-meta { margin:7px 0 0; color:var(--muted); font-size:13px; }
+    .member-stats { display:flex; flex:none; } .member-stat { min-width:95px; border-left:1px solid var(--line); padding:4px 18px; text-align:center; } .member-stat strong,.member-stat span { display:block; } .member-stat strong { font-size:23px; } .member-stat span { margin-top:4px; color:var(--muted); font-size:9px; text-transform:uppercase; }
+    .member-section { padding-top:28px; } .section-head { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:14px; } .section-head h2 { margin:0; font-size:19px; } .section-head p { margin:5px 0 0; color:var(--muted); font-size:11px; }
+    .public-badges { display:flex; flex-wrap:wrap; gap:8px; } .public-badge { display:flex; align-items:center; gap:7px; min-height:38px; border:1px solid var(--line); border-radius:11px; padding:8px 11px; background:var(--soft); color:var(--text); font-size:10px; font-weight:750; } .public-badge .lucide { width:15px; color:var(--blue); }
+    .member-stories { display:grid; gap:12px; } .member-story { border:1px solid var(--line); border-radius:16px; padding:18px 20px; background:var(--soft); } .story-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--muted); font-size:10px; } .story-theme { border-radius:7px; padding:4px 8px; background:var(--signal-active); color:var(--blue); font-weight:800; text-transform:capitalize; } .story-copy { display:-webkit-box; margin:14px 0 0; overflow:hidden; font-size:15px; line-height:1.6; -webkit-box-orient:vertical; -webkit-line-clamp:4; } .member-story.is-expanded .story-copy { display:block; } .story-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; } .story-score { display:flex; align-items:center; gap:6px; color:var(--green); font-size:11px; font-weight:800; } .story-button { display:inline-flex; align-items:center; gap:6px; min-height:34px; border:0; border-radius:9px; padding:6px 8px; background:transparent; color:var(--muted); font-size:10px; font-weight:750; } .story-button:hover { background:var(--signal-active); color:var(--text); }
+    .load-more { width:100%; min-height:42px; margin-top:12px; border:1px solid var(--line); border-radius:11px; background:var(--soft); color:var(--text); font-size:11px; font-weight:800; }
+    @media (max-width:760px) { .member-shell { display:block; padding:0; } .member-sidebar { display:none; } .member-main { min-height:100vh; border:0; border-radius:0; } .mobile-header { display:flex; align-items:center; justify-content:space-between; min-height:62px; border-bottom:1px solid var(--line); padding:10px 16px; } .member-inner { padding:28px 16px 56px; } .member-hero { align-items:flex-start; flex-direction:column; } .member-stats { width:100%; } .member-stat { flex:1; min-width:0; padding-inline:10px; } .member-stat:first-child { border-left:0; } }
+    @media (max-width:430px) { .member-inner { padding-inline:12px; } .member-avatar { width:68px; height:68px; } h1 { font-size:27px; } .member-stat strong { font-size:19px; } .member-story { padding:15px; } .story-meta { align-items:flex-start; flex-direction:column; } }
+  </style>
+  <link rel="stylesheet" href="/theme.css">
+</head>
+<body data-page="member">
+  <div class="member-shell">
+    <aside class="member-sidebar">
+      <div class="brand-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span><strong>iladitquoi</strong></a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div>
+      <nav class="side-links"><a class="side-link" href="/"><i data-lucide="arrow-left"></i>Retour au fil</a><a class="side-link" href="/#composer"><i data-lucide="pen-line"></i>Partager une anecdote</a></nav>
+      <p class="privacy-note">Seules les anecdotes publiées avec un profil visible apparaissent ici.</p>
+    </aside>
+    <main class="member-main">
+      <header class="mobile-header"><div class="mobile-brand"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span><strong>iladitquoi</strong></a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div><a class="side-link" href="/" aria-label="Retour au fil"><i data-lucide="arrow-left"></i></a></header>
+      <div class="member-inner">
+        <div class="profile-state" id="member-state"><strong>Chargement du profil…</strong><span>Lecture des publications publiques.</span></div>
+        <div id="member-content" hidden>
+          <section class="member-hero">
+            <div class="member-identity"><span class="member-avatar" id="member-avatar" aria-hidden="true">·</span><div><span class="role-badge" id="member-role" hidden><i data-lucide="shield-check"></i>Admin</span><h1 id="member-name">Profil</h1><p class="member-meta" id="member-meta"></p></div></div>
+            <div class="member-stats"><div class="member-stat"><strong id="member-xp">0</strong><span>XP</span></div><div class="member-stat"><strong id="member-publications">0</strong><span>publiées</span></div><div class="member-stat"><strong id="member-score">0</strong><span>score reçu</span></div></div>
+          </section>
+          <section class="member-section"><div class="section-head"><div><h2>Badges</h2><p>Distinctions débloquées sur iladitquoi.</p></div><span id="member-badge-count"></span></div><div class="public-badges" id="member-badges"></div></section>
+          <section class="member-section"><div class="section-head"><div><h2>Anecdotes publiées</h2><p>Les publications partagées avec un profil visible.</p></div></div><div class="member-stories" id="member-stories"></div><button class="load-more" id="member-load-more" type="button" hidden>Afficher plus</button></section>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/assets/member.js"></script>
+  <script type="module" src="/assets/theme.js"></script>
+</body>
+</html>

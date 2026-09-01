@@ -1,5 +1,7 @@
 import { getSupabaseAdminHeaders, getSupabaseConfig } from '../lib/supabase-config.js';
 import { PROFESSIONS } from '../lib/professions.js';
+import { loadPublicAuthors, serializePublicAnecdote } from '../lib/public-profile.js';
+import { handlePublicProfile } from '../lib/public-profile-handler.js';
 
 const ALLOWED_THEMES = new Set(['leger', 'drole', 'touchant', 'epuisant', 'surprenant', 'apprentissage']);
 
@@ -18,6 +20,7 @@ function normalizedSearch(value) {
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') return response.status(405).json({ error: 'method_not_allowed' });
+  if (request.query?.view === 'profile') return handlePublicProfile(request, response);
   const { url, secretKey } = getSupabaseConfig();
   if (!url || !secretKey) return response.status(503).json({ error: 'service_not_configured' });
   const sort = request.query?.sort === 'new' ? 'new' : 'top';
@@ -28,7 +31,7 @@ export default async function handler(request, response) {
   const search = normalizedSearch(request.query?.search);
 
   const query = new URLSearchParams({
-    select: 'id,author_label,profession,theme,body,vote_score,published_at,submitted_at',
+    select: 'id,author_id,author_label,profession,theme,body,vote_score,published_at,submitted_at,display_anonymously',
     visibility: 'eq.public',
     moderation_status: 'eq.published',
     order: sort === 'new'
@@ -52,8 +55,14 @@ export default async function handler(request, response) {
   if (!upstream.ok) return response.status(502).json({ error: 'feed_unavailable' });
   response.setHeader('Cache-Control', 'no-store');
   const anecdotes = await upstream.json();
+  let authorsById;
+  try {
+    authorsById = await loadPublicAuthors({ url, secretKey, anecdotes });
+  } catch {
+    return response.status(502).json({ error: 'feed_unavailable' });
+  }
   return response.status(200).json({
-    anecdotes: anecdotes.slice(0, limit),
+    anecdotes: anecdotes.slice(0, limit).map((item) => serializePublicAnecdote(item, authorsById)),
     page,
     hasMore: anecdotes.length > limit
   });

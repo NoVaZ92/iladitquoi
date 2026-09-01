@@ -77,22 +77,48 @@ async function createBrowserClient() {
 
 async function fetchProfile(session) {
   if (!session) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id,pseudonym,profession,role,xp,avatar_url,created_at')
-    .eq('id', session.user.id)
-    .maybeSingle();
+  const [{ data, error }, { data: badgeRows, error: badgeError }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id,public_slug,pseudonym,profession,role,xp,avatar_url,active_frame_key,created_at')
+      .eq('id', session.user.id)
+      .maybeSingle(),
+    supabase
+      .from('profile_badges')
+      .select('badge_key,badge_definitions(badge_key,label,description,icon,frame_key,sort_order)')
+      .eq('profile_id', session.user.id)
+  ]);
   if (error) throw error;
+  if (badgeError) throw badgeError;
+  if (!data) return null;
+  data.badges = (badgeRows || []).map((row) => ({
+    ...row.badge_definitions,
+    badge_key: row.badge_key
+  })).filter((badge) => badge.badge_key)
+    .sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
   return data;
+}
+
+function profileFrameKey(profile) {
+  if (profile?.role === 'admin') return 'admin';
+  return profile?.badges?.find((badge) => badge.badge_key === profile.active_frame_key)?.frame_key || '';
+}
+
+function setAvatarFrame(element, profile) {
+  if (!element) return;
+  const frameKey = profileFrameKey(profile);
+  if (frameKey) element.dataset.avatarFrame = frameKey;
+  else delete element.dataset.avatarFrame;
 }
 
 function updateAccountChrome(session, profile) {
   const signedIn = Boolean(session);
   const pseudonym = profile?.pseudonym || (signedIn ? 'Mon compte' : 'Se connecter');
   const level = levelFromXp(profile?.xp);
+  const isAdmin = profile?.role === 'admin';
   const meta = signedIn
     ? profile?.profession
-      ? `${profile.profession} · Niveau ${level}`
+      ? `${profile.profession} · ${isAdmin ? 'Niveau Admin' : `Niveau ${level}`}`
       : 'Profil à compléter'
     : 'Créer un compte';
 
@@ -102,11 +128,14 @@ function updateAccountChrome(session, profile) {
   });
   setText('[data-auth-name]', pseudonym);
   setText('[data-auth-meta]', meta);
-  document.querySelectorAll('[data-auth-avatar]').forEach((element) => setAvatar(element, signedIn ? pseudonym : '→', profile?.avatar_url));
-  setText('[data-auth-level]', signedIn ? level : 0);
-  setText('[data-auth-xp]', Number(profile?.xp) || 0);
+  document.querySelectorAll('[data-auth-avatar]').forEach((element) => {
+    setAvatar(element, signedIn ? pseudonym : '→', profile?.avatar_url);
+    setAvatarFrame(element, signedIn ? profile : null);
+  });
+  setText('[data-auth-level]', signedIn ? (isAdmin ? 'Admin' : level) : 0);
+  setText('[data-auth-xp]', signedIn ? (isAdmin ? '∞' : Number(profile?.xp) || 0) : 0);
   document.querySelectorAll('.xp-line').forEach((element) => {
-    element.style.setProperty('--xp-progress', `${signedIn ? progressWithinLevel(profile?.xp) : 0}%`);
+    element.style.setProperty('--xp-progress', `${signedIn ? (isAdmin ? 100 : progressWithinLevel(profile?.xp)) : 0}%`);
   });
   document.querySelectorAll('[data-auth-guest]').forEach((element) => { element.hidden = signedIn; });
   document.querySelectorAll('[data-auth-member]').forEach((element) => { element.hidden = !signedIn; });
@@ -265,7 +294,7 @@ async function exportPersonalData(button) {
   showProfileStatus('Préparation de votre export…');
   try {
     const [anecdotesResult, votesResult, reportsResult, linksResult, savedResult, notificationsResult] = await Promise.all([
-      supabase.from('anecdotes').select('id,author_label,profession,theme,body,visibility,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at').eq('author_id', currentSession.user.id).order('submitted_at', { ascending: false }),
+      supabase.from('anecdotes').select('id,author_label,profession,theme,body,visibility,display_anonymously,moderation_status,moderation_reason,vote_score,submitted_at,published_at,updated_at').eq('author_id', currentSession.user.id).order('submitted_at', { ascending: false }),
       supabase.from('votes').select('anecdote_id,value,created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false }),
       supabase.from('reports').select('id,anecdote_id,reason,created_at,resolved_at').eq('reporter_id', currentSession.user.id).order('created_at', { ascending: false }),
       supabase.from('private_share_links').select('id,anecdote_id,expires_at,revoked_at,created_at,last_opened_at').order('created_at', { ascending: false }),
@@ -573,10 +602,19 @@ async function renderProfilePage(session, profile) {
   }
 
   const level = levelFromXp(profile.xp);
+  const isAdmin = profile.role === 'admin';
   setText('[data-profile-pseudonym]', profile.pseudonym);
-  setText('[data-profile-profession]', `${profile.profession} · Niveau ${level}`);
-  document.querySelectorAll('[data-profile-avatar]').forEach((element) => setAvatar(element, profile.pseudonym, profile.avatar_url));
-  setText('[data-profile-xp]', Number(profile.xp) || 0);
+  setText('[data-profile-profession]', `${profile.profession} · ${isAdmin ? 'Niveau Admin' : `Niveau ${level}`}`);
+  document.querySelectorAll('[data-profile-avatar]').forEach((element) => {
+    setAvatar(element, profile.pseudonym, profile.avatar_url);
+    setAvatarFrame(element, profile);
+  });
+  setText('[data-profile-xp]', isAdmin ? '∞' : Number(profile.xp) || 0);
+  document.querySelectorAll('[data-delete-account]').forEach((button) => { button.hidden = isAdmin; });
+  document.querySelectorAll('[data-public-profile-link]').forEach((link) => {
+    link.href = profile.public_slug ? `/membre/${profile.public_slug}` : '#';
+    link.hidden = !profile.public_slug;
+  });
 
   const [{ data: anecdotes, error }, { data: activeShareLinks, error: linksError }, { data: notifications, error: notificationsError }] = await Promise.all([
     supabase
@@ -651,22 +689,63 @@ async function renderProfilePage(session, profile) {
   }
   window.dispatchEvent(new Event('anecdotes:icons-updated'));
 
-  const badges = [];
-  if (published.length >= 1) badges.push('Première publication');
-  if (published.length >= 5) badges.push('5 anecdotes');
-  if (published.length >= 10) badges.push('10 anecdotes');
-  if ((Number(profile.xp) || 0) >= 100) badges.push('100 XP');
-  if ((Number(profile.xp) || 0) >= 500) badges.push('500 XP');
+  const badges = profile.badges || [];
   setText('[data-profile-badge-count]', badges.length);
   const badgeList = document.querySelector('[data-profile-badges]');
   if (badgeList) {
-    badgeList.replaceChildren(...badges.map((label) => {
+    badgeList.replaceChildren(...badges.map((item) => {
       const badge = document.createElement('span');
       badge.className = 'badge';
-      badge.textContent = label;
+      badge.textContent = item.label;
+      badge.title = item.description;
       return badge;
     }));
     if (!badges.length) badgeList.append(emptyState('Votre premier badge arrivera avec votre première publication.'));
+  }
+
+  const frameList = document.querySelector('[data-profile-frames]');
+  if (frameList) {
+    const unlockedFrames = badges.filter((badge) => badge.frame_key && badge.badge_key !== 'admin');
+    const choices = [{ badge_key: '', label: 'Sans cadre', frame_key: '' }, ...unlockedFrames];
+    frameList.replaceChildren(...choices.map((item) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'frame-choice';
+      button.dataset.frameBadge = item.badge_key;
+      button.dataset.frameTone = item.frame_key || 'none';
+      button.textContent = item.label;
+      const selected = !isAdmin && (profile.active_frame_key || '') === item.badge_key;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.disabled = isAdmin;
+      button.addEventListener('click', async () => {
+        frameList.querySelectorAll('button').forEach((choice) => { choice.disabled = true; });
+        const { error: frameError } = await supabase
+          .from('profiles')
+          .update({ active_frame_key: item.badge_key || null })
+          .eq('id', session.user.id);
+        frameList.querySelectorAll('button').forEach((choice) => { choice.disabled = false; });
+        if (frameError) {
+          showProfileStatus('Ce cadre n’a pas pu être activé. Rechargez vos badges puis réessayez.');
+          return;
+        }
+        profile.active_frame_key = item.badge_key || null;
+        frameList.querySelectorAll('button').forEach((choice) => {
+          const active = choice.dataset.frameBadge === (profile.active_frame_key || '');
+          choice.classList.toggle('is-active', active);
+          choice.setAttribute('aria-pressed', String(active));
+        });
+        document.querySelectorAll('[data-profile-avatar], [data-auth-avatar]').forEach((avatar) => setAvatarFrame(avatar, profile));
+        showProfileStatus('Cadre de profil mis à jour.', true);
+      });
+      return button;
+    }));
+    if (isAdmin) {
+      const note = document.createElement('p');
+      note.className = 'frame-admin-note';
+      note.textContent = 'Le cadre Admin exclusif est activé en permanence.';
+      frameList.append(note);
+    }
   }
 }
 

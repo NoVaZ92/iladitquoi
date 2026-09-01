@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const outputDirectory = join(projectRoot, 'public');
-const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'legal.html', 'profile.html', 'rules.html', 'theme.css'];
+const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'legal.html', 'member.html', 'profile.html', 'rules.html', 'theme.css'];
 const vercelConfig = JSON.parse(await readFile(join(projectRoot, 'vercel.json'), 'utf8'));
 
 if (vercelConfig.outputDirectory !== 'public') {
@@ -21,6 +21,7 @@ const copies = [
   ['finalized.html', 'index.html'],
   ['finalized.html', 'finalized.html'],
   ['profile.html', 'profile.html'],
+  ['member.html', 'member.html'],
   ['auth.html', 'auth.html'],
   ['rules.html', 'rules.html'],
   ['legal.html', 'legal.html'],
@@ -38,7 +39,7 @@ for (const [source, destination] of copies) {
 }
 
 const assetFiles = await readdir(join(outputDirectory, 'assets'));
-if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'legal.js', 'profile.js', 'theme.js'])) {
+if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'legal.js', 'member.js', 'profile.js', 'theme.js'])) {
   throw new Error(`Bundles inattendus: ${assetFiles.join(', ')}`);
 }
 for (const asset of assetFiles) {

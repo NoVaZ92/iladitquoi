@@ -40,6 +40,15 @@ export default async function handler(request, response) {
   const headers = getSupabaseAdminHeaders(secretKey);
   const userId = identity.user.id;
   try {
+    const profileQuery = new URLSearchParams({ id: `eq.${userId}`, select: 'role', limit: '1' });
+    const profileResponse = await fetch(`${url}/rest/v1/profiles?${profileQuery}`, {
+      headers,
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!profileResponse.ok) return response.status(502).json({ error: 'account_deletion_failed' });
+    const [profile] = await profileResponse.json();
+    if (profile?.role === 'admin') return response.status(403).json({ error: 'protected_admin_account' });
+
     const avatarsDeleted = await deleteAvatarFiles(url, headers, userId);
     if (!avatarsDeleted) return response.status(502).json({ error: 'account_cleanup_failed' });
 

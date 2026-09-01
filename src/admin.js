@@ -1,11 +1,12 @@
 import {
-  ArchiveRestore, ArrowLeft, Check, CircleAlert, ClipboardCheck, createIcons, Eye, Flag,
-  LogOut, RefreshCw, ShieldCheck, X
+  ArchiveRestore, ArrowLeft, Award, Check, CircleAlert, ClipboardCheck, createIcons, Eye, Flag,
+  LogOut, RefreshCw, Search, ShieldCheck, Sun, UserRound, X
 } from 'lucide';
 
-const ICONS = { ArchiveRestore, ArrowLeft, Check, CircleAlert, ClipboardCheck, Eye, Flag, LogOut, RefreshCw, ShieldCheck, X };
+const ICONS = { ArchiveRestore, ArrowLeft, Award, Check, CircleAlert, ClipboardCheck, Eye, Flag, LogOut, RefreshCw, Search, ShieldCheck, Sun, UserRound, X };
 let token = '';
 let activeTab = 'queue';
+let isOwnerAdmin = false;
 let pendingItems = [];
 let reportItems = [];
 let queueLoading = false;
@@ -235,6 +236,7 @@ function renderQueue() {
 }
 
 function setActiveTab(name) {
+  if (name === 'users' && !isOwnerAdmin) return;
   activeTab = name;
   document.querySelectorAll('[data-admin-tab]').forEach((button) => {
     const active = button.dataset.adminTab === name;
@@ -242,6 +244,115 @@ function setActiveTab(name) {
     button.setAttribute('aria-selected', String(active));
   });
   document.querySelectorAll('[data-admin-panel]').forEach((panel) => { panel.hidden = panel.dataset.adminPanel !== name; });
+  document.querySelector('#moderation-tools').hidden = name === 'users';
+  const headings = {
+    queue: ['File de validation', 'Les décisions publiées deviennent visibles dans le fil immédiatement.'],
+    reports: ['Signalements', 'Traitez les alertes ouvertes et documentez chaque retrait.'],
+    users: ['Utilisateurs et accès', 'Gérez les contributeurs et les distinctions spéciales.']
+  };
+  setText('[data-admin-title]', headings[name][0]);
+  setText('[data-admin-copy]', headings[name][1]);
+}
+
+function setUserAvatar(element, user) {
+  element.textContent = (user.pseudonym || '·').charAt(0).toUpperCase();
+  if (!user.avatar_url) return;
+  element.classList.add('has-image');
+  element.style.backgroundImage = `url(${JSON.stringify(user.avatar_url)})`;
+}
+
+async function updateUser(user, action, enabled, buttons) {
+  const confirmation = action === 'role'
+    ? enabled ? `Donner l’accès à la modération à ${user.pseudonym} ?` : `Retirer l’accès à la modération de ${user.pseudonym} ?`
+    : enabled ? `Attribuer le badge Pionnier à ${user.pseudonym} ?` : `Retirer le badge Pionnier de ${user.pseudonym} ?`;
+  if (!window.confirm(confirmation)) return;
+  buttons.forEach((button) => { button.disabled = true; });
+  setStatus(action === 'role' ? 'Mise à jour du rôle…' : 'Mise à jour du badge…');
+  try {
+    const response = await fetch(action === 'role' ? '/api/admin/users' : '/api/admin/badges', {
+      method: action === 'role' ? 'PATCH' : enabled ? 'POST' : 'DELETE',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify(action === 'role'
+        ? { publicSlug: user.public_slug, contributor: enabled }
+        : { publicSlug: user.public_slug, badgeKey: 'pioneer' })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'admin_operation_failed');
+    setStatus(action === 'role'
+      ? enabled ? `${user.pseudonym} est maintenant contributeur.` : `${user.pseudonym} n’a plus accès à la modération.`
+      : enabled ? `Badge Pionnier attribué à ${user.pseudonym}.` : `Badge Pionnier retiré à ${user.pseudonym}.`);
+    await searchUsers();
+  } catch {
+    buttons.forEach((button) => { button.disabled = false; });
+    setStatus('La modification n’a pas pu être enregistrée.', true);
+  }
+}
+
+function createUserCard(user) {
+  const article = document.createElement('article');
+  article.className = 'user-card';
+  const identity = document.createElement('div');
+  identity.className = 'user-identity';
+  const avatar = document.createElement('span');
+  avatar.className = 'user-avatar';
+  setUserAvatar(avatar, user);
+  const copy = document.createElement('div');
+  copy.className = 'user-copy';
+  const name = document.createElement('strong');
+  name.textContent = user.pseudonym;
+  const details = document.createElement('span');
+  details.textContent = `${user.profession || 'Métier non renseigné'} · ${user.email || 'Email indisponible'}`;
+  const role = document.createElement('span');
+  role.className = `user-role${user.role === 'admin' ? ' is-admin' : user.role === 'moderator' ? ' is-contributor' : ''}`;
+  role.textContent = user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? 'Contributeur' : 'Membre';
+  copy.append(name, details, role);
+  identity.append(avatar, copy);
+  const actions = document.createElement('div');
+  actions.className = 'user-actions';
+  if (user.role !== 'admin') {
+    const contributor = document.createElement('button');
+    contributor.type = 'button';
+    contributor.className = `user-action${user.role === 'moderator' ? ' is-danger' : ''}`;
+    contributor.textContent = user.role === 'moderator' ? 'Retirer la modération' : 'Ajouter comme contributeur';
+    const pioneer = document.createElement('button');
+    pioneer.type = 'button';
+    pioneer.className = `user-action${user.has_pioneer_badge ? ' is-danger' : ''}`;
+    pioneer.textContent = user.has_pioneer_badge ? 'Retirer Pionnier' : 'Attribuer Pionnier';
+    const buttons = [contributor, pioneer];
+    contributor.addEventListener('click', () => updateUser(user, 'role', user.role !== 'moderator', buttons));
+    pioneer.addEventListener('click', () => updateUser(user, 'badge', !user.has_pioneer_badge, buttons));
+    actions.append(contributor, pioneer);
+  } else {
+    const protectedLabel = document.createElement('span');
+    protectedLabel.className = 'user-role is-admin';
+    protectedLabel.textContent = 'Compte protégé';
+    actions.append(protectedLabel);
+  }
+  article.append(identity, actions);
+  return article;
+}
+
+async function searchUsers() {
+  const input = document.querySelector('#admin-user-search');
+  const results = document.querySelector('#admin-user-results');
+  const query = input.value.trim();
+  if (query.length < 2) {
+    results.replaceChildren(emptyState('Saisissez au moins deux caractères pour rechercher un compte.'));
+    return;
+  }
+  results.replaceChildren(emptyState('Recherche des utilisateurs…'));
+  try {
+    const response = await fetch(`/api/admin/users?q=${encodeURIComponent(query)}`, {
+      headers: { authorization: `Bearer ${token}` }, cache: 'no-store'
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'users_unavailable');
+    const users = Array.isArray(data.users) ? data.users : [];
+    results.replaceChildren(...(users.length ? users.map(createUserCard) : [emptyState('Aucun utilisateur ne correspond à cette recherche.')]));
+  } catch {
+    results.replaceChildren(emptyState('La recherche est temporairement indisponible.'));
+    setStatus('Impossible de rechercher les utilisateurs.', true);
+  }
 }
 
 async function loadQueue() {
@@ -292,12 +403,18 @@ async function initialize() {
     document.querySelector('#admin-denied').hidden = false;
     return;
   }
+  isOwnerAdmin = profile.role === 'admin';
+  document.querySelectorAll('[data-admin-only]').forEach((element) => { element.hidden = !isOwnerAdmin; });
   token = await auth.getAccessToken();
   document.querySelector('#admin-app').setAttribute('aria-busy', 'false');
   document.querySelectorAll('[data-admin-tab]').forEach((button) => button.addEventListener('click', () => setActiveTab(button.dataset.adminTab)));
-  document.querySelector('#refresh-queue').addEventListener('click', loadQueue);
+  document.querySelector('#refresh-queue').addEventListener('click', () => activeTab === 'users' ? searchUsers() : loadQueue());
   document.querySelector('#admin-search').addEventListener('input', renderQueue);
   document.querySelector('#admin-profession-filter').addEventListener('change', renderQueue);
+  document.querySelector('#admin-user-search-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    searchUsers();
+  });
   window.setInterval(() => {
     if (!document.hidden) loadQueue();
   }, 90000);

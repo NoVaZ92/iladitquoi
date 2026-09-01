@@ -3,11 +3,11 @@ import { sanitizePublicText } from '../lib/privacy-filter.js';
 import { PROFESSIONS } from '../lib/professions.js';
 
 const names = [
-  'theme.css', 'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
-  'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js', 'src/legal.js', 'src/theme.js',
+  'theme.css', 'finalized.html', 'profile.html', 'member.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
+  'src/admin.js', 'src/feed.js', 'src/member.js', 'src/profile.js', 'src/auth.js', 'src/legal.js', 'src/theme.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
-  'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql',
+  'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js', 'lib/public-profile.js', 'lib/public-profile-handler.js', 'lib/admin-management.js',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql', 'supabase/migrations/0016_public_profiles_badges_and_contributors.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -35,12 +35,14 @@ const contracts = [
   ['profile.html', 'data-theme-toggle', 'bascule de thème sur le profil'],
   ['auth.html', 'data-theme-toggle', 'bascule de thème sur la connexion'],
   ['admin.html', 'data-theme-toggle', 'bascule de thème sur l’administration'],
+  ['member.html', 'data-theme-toggle', 'bascule de thème sur le profil public'],
   ['rules.html', 'data-theme-toggle', 'bascule de thème sur les règles'],
   ['legal.html', 'data-theme-toggle', 'bascule de thème sur les pages légales'],
   ['finalized.html', 'href="/theme.css"', 'thème partagé de l’accueil'],
   ['profile.html', 'href="/theme.css"', 'thème partagé du profil'],
   ['auth.html', 'href="/theme.css"', 'thème partagé de l’authentification'],
   ['admin.html', 'href="/theme.css"', 'thème partagé de l’administration'],
+  ['member.html', 'href="/theme.css"', 'thème partagé du profil public'],
   ['rules.html', 'href="/theme.css"', 'thème partagé des règles'],
   ['legal.html', 'href="/theme.css"', 'thème partagé des pages légales'],
   ['finalized.html', 'id="anecdote-editor"', 'composeur'],
@@ -60,6 +62,11 @@ const contracts = [
   ['profile.html', 'id="delete-private-note-dialog"', 'confirmation de suppression des notes privées'],
   ['profile.html', 'saved-remove-button', 'retrait des sélections depuis le profil'],
   ['profile.html', 'data-admin-link', 'accès administration conditionnel'],
+  ['profile.html', 'data-profile-frames', 'sélecteur de cadre'],
+  ['profile.html', 'data-public-profile-link', 'lien vers le profil public'],
+  ['member.html', 'name="robots" content="noindex,nofollow"', 'profil public non indexé'],
+  ['member.html', 'id="member-stories"', 'anecdotes du profil public'],
+  ['src/member.js', "fetch(`/api/public-profile?slug=", 'chargement du profil public'],
   ['auth.html', 'id="signup-form"', 'création de compte e-mail'],
   ['auth.html', 'accept="image/jpeg,image/png,image/gif"', 'import d’avatar restreint'],
   ['rules.html', 'Filtre automatique', 'règles de confidentialité'],
@@ -71,6 +78,8 @@ const contracts = [
   ['admin.html', 'src="/assets/admin.js"', 'page administration'],
   ['admin.html', 'id="queue-list"', 'file de validation'],
   ['admin.html', 'id="admin-search"', 'recherche de modération'],
+  ['admin.html', 'data-admin-tab="users"', 'gestion des utilisateurs réservée à l’admin'],
+  ['src/admin.js', "fetch(action === 'role' ? '/api/admin/users' : '/api/admin/badges'", 'gestion des contributeurs et badges'],
   ['admin.html', 'id="admin-app" aria-busy="true"', 'état de chargement visible'],
   ['src/admin.js', 'ClipboardCheck, createIcons, Eye', 'moteur des icônes de la modération'],
   ['src/admin.js', "fetch('/api/admin/decision'", 'décision de modération'],
@@ -81,6 +90,7 @@ const contracts = [
   ['api/admin/decision.js', 'author_message_required', 'motif de refus requis'],
   ['api/admin/report.js', 'resolved_by', 'traçabilité des signalements'],
   ['lib/moderator.js', "['moderator', 'admin']", 'contrôle de rôle serveur'],
+  ['lib/moderator.js', "context.profile.role !== 'admin'", 'contrôle administrateur strict'],
   ['src/feed.js', "fetch('/api/submit'", 'soumission cloud'],
   ['src/feed.js', 'fetch(`/api/feed?${query}`', 'fil Supabase trié'],
   ['src/feed.js', 'Promise.all([hydrateUserVotes(), hydrateSavedPosts()])', 'hydratation du compte non bloquante'],
@@ -92,6 +102,7 @@ const contracts = [
   ['src/feed.js', "fetch('/api/private'", 'carnet privé cloud'],
   ['src/feed.js', "fetch('/api/vote'", 'votes persistants'],
   ['src/feed.js', 'setSavedAnecdote', 'synchronisation des sélections connectées'],
+  ['src/feed.js', '`/membre/${publicAuthor.publicSlug}`', 'auteur lié au profil public'],
   ['src/feed.js', 'sharedPrivateToken', 'lecture du lien privé dans le navigateur'],
   ['src/feed.js', 'hasMore', 'pagination du fil'],
   ['src/feed.js', 'syncFeedUrl', 'filtres partageables du fil'],
@@ -123,11 +134,16 @@ const contracts = [
   ['api/health.js', 'consume_rate_limit', 'sonde d’exécution du limiteur anti-abus'],
   ['api/health.js', 'rate_limit_write_unavailable', 'diagnostic précis de l’écriture du limiteur'],
   ['api/health.js', 'account_deletion_ready', 'readiness de la suppression de compte'],
+  ['api/health.js', 'badge_definitions?select=badge_key', 'readiness des profils publics et badges'],
   ['api/config.js', 'configured', 'configuration publique'],
   ['api/feed.js', "request.query?.sort === 'new'", 'tri serveur'],
   ['api/feed.js', 'boundedInteger', 'pagination serveur bornée'],
   ['api/feed.js', 'PROFESSIONS.includes', 'filtre métier serveur contrôlé'],
   ['api/feed.js', 'normalizedSearch', 'recherche serveur normalisée'],
+  ['api/feed.js', "request.query?.view === 'profile'", 'profil public regroupé avec le fil'],
+  ['lib/public-profile.js', 'displayAnonymously !== true', 'anonymat protégé dans les auteurs publics'],
+  ['lib/public-profile-handler.js', "display_anonymously: 'eq.false'", 'anecdotes anonymes exclues du profil'],
+  ['lib/admin-management.js', 'getAdminContext', 'gestion utilisateurs réservée à l’admin'],
   ['api/anecdote.js', 'anecdote_not_found', 'anecdote partagée'],
   ['api/report.js', '/rest/v1/reports', 'persistance du signalement'],
   ['api/report.js', 'REPORT_REASONS', 'motifs de signalement contrôlés'],
@@ -142,6 +158,7 @@ const contracts = [
   ['api/private-share.js', 'RATE_LIMITS.privateShare', 'limite de création des liens privés'],
   ['api/account.js', 'RATE_LIMITS.accountDeletion', 'limite de suppression de compte'],
   ['api/account.js', '/auth/v1/admin/users/', 'suppression Auth du compte'],
+  ['api/account.js', 'protected_admin_account', 'compte administrateur protégé contre la suppression'],
   ['lib/rate-limit.js', "createHmac('sha256'", 'pseudonymisation des sujets de limitation'],
   ['lib/rate-limit.js', "response.status(429)", 'réponse de limitation explicite'],
   ['lib/vote-handler.js', 'cast_anecdote_vote', 'vote atomique'],
@@ -174,7 +191,14 @@ const contracts = [
   ['supabase/migrations/0013_moderation_notifications.sql', 'account_notifications', 'notifications de modération persistées'],
   ['supabase/migrations/0013_moderation_notifications.sql', 'members delete their own moderated anecdotes', 'RLS de suppression après retrait'],
   ['supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'members delete their own public anecdotes', 'RLS de suppression des publications'],
-  ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'legal', 'profile', 'theme']", 'bundles navigateur']
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'display_anonymously boolean not null', 'anonymat explicite'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'admin_set_contributor', 'promotion contributeur transactionnelle'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'protected_admin_account', 'compte admin protégé'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'new.public_slug is distinct from old.public_slug', 'slug public immuable'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', "public_slug ~ '^[a-f0-9]{18}$'", 'format du slug public contraint'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'grant select on table public.profile_badges to authenticated, service_role', 'lecture des badges explicitement limitée'],
+  ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'refresh_profile_badges', 'attribution automatique des badges'],
+  ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'legal', 'member', 'profile', 'theme']", 'bundles navigateur']
 ];
 
 for (const [file, needle, label] of contracts) {
@@ -219,6 +243,8 @@ if (source['.nvmrc'].trim() !== '24') throw new Error('.nvmrc doit cibler Node 2
 if (vercelConfig.outputDirectory !== 'public') throw new Error('Dossier de sortie Vercel incorrect');
 if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.destination.includes('anecdote=:id'))) throw new Error('Route courte de partage absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route.destination.includes('private=:token'))) throw new Error('Route courte privée absente');
+if (!vercelConfig.rewrites.some((route) => route.source === '/membre/:slug' && route.destination.includes('member?slug=:slug'))) throw new Error('Route de profil public absente');
+if (!vercelConfig.rewrites.some((route) => route.source === '/api/public-profile' && route.destination.includes('view=profile'))) throw new Error('API de profil public non regroupée');
 if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route.destination.includes('action=vote'))) throw new Error('Route de vote regroupée absente');
 for (const [sourcePath, destination] of [
   ['/', '/finalized'],

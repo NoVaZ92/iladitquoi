@@ -69,6 +69,7 @@ export default async function handler(request, response) {
     visibility: 'public',
     moderation_status: 'pending',
     author_label: anonymous ? 'Anonyme' : profile.pseudonym,
+    display_anonymously: anonymous,
     moderation_reason: privacy.changed ? `Filtre automatique : ${privacy.flags.join(', ')} masqué(s) avant stockage.` : null,
     ...(identity.user ? { author_id: identity.user.id } : {})
   };

@@ -11,6 +11,9 @@ import privateAnecdote from '../api/private.js';
 import privateShare from '../api/private-share.js';
 import submit from '../api/submit.js';
 import vote from '../lib/vote-handler.js';
+import { handleAdminBadges, handleAdminUsers } from '../lib/admin-management.js';
+import { handlePublicProfile } from '../lib/public-profile-handler.js';
+import { serializePublicAnecdote } from '../lib/public-profile.js';
 
 function createResponse() {
   return {
@@ -256,6 +259,7 @@ try {
     const rateLimit = allowedRateLimitResponse(url);
     if (rateLimit) return rateLimit;
     if (request.url.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: deletedAccountId }; } };
+    if (request.url.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ role: 'member' }]; } };
     if (request.url.includes('/storage/v1/object/avatars/')) return { ok: false, status: 404, async json() { return {}; } };
     if (request.url.includes('/rest/v1/anecdotes?') && request.options.method === 'DELETE') return { ok: true, status: 204, async json() { return {}; } };
     if (request.url.endsWith(`/auth/v1/admin/users/${deletedAccountId}`) && request.options.method === 'DELETE') return { ok: true, status: 204, async json() { return {}; } };
@@ -267,6 +271,22 @@ try {
   const authDelete = accountRequests.find((request) => request.url.endsWith(`/auth/v1/admin/users/${deletedAccountId}`));
   if (response.statusCode !== 204 || !anecdotesDelete || !authDelete) {
     throw new Error('Suppression de compte et des contenus invalide');
+  }
+
+  let destructiveAdminCall = false;
+  globalThis.fetch = async (url) => {
+    const value = String(url);
+    const rateLimit = allowedRateLimitResponse(url);
+    if (rateLimit) return rateLimit;
+    if (value.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: deletedAccountId }; } };
+    if (value.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ role: 'admin' }]; } };
+    destructiveAdminCall = true;
+    return { ok: false, status: 500, async json() { return {}; } };
+  };
+  response = createResponse();
+  await account({ method: 'DELETE', headers: { authorization: 'Bearer admin-token' } }, response);
+  if (response.statusCode !== 403 || response.body.error !== 'protected_admin_account' || destructiveAdminCall) {
+    throw new Error('Le compte administrateur protégé ne doit pas pouvoir être supprimé');
   }
 
   const privateId = '623e4567-e89b-42d3-a456-426614174005';
@@ -503,7 +523,102 @@ try {
     throw new Error('Clôture de signalement invalide');
   }
 
-  console.log('33 contrats API vérifiés.');
+  const publicSlug = '0123456789abcdef01';
+  response = createResponse();
+  await handlePublicProfile({ method: 'GET', query: { slug: 'slug-invalide' } }, response);
+  if (response.statusCode !== 400 || response.body.error !== 'invalid_slug') {
+    throw new Error('Un slug public invalide doit être refusé');
+  }
+
+  const publicProfileRequests = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const request = { url: String(url), options };
+    publicProfileRequests.push(request);
+    if (request.url.includes('/rest/v1/profiles?')) {
+      return { ok: true, status: 200, async json() { return [{
+        id: moderatorId, public_slug: publicSlug, pseudonym: 'NoVaZ', profession: 'Orthophoniste',
+        role: 'admin', xp: 540, avatar_url: 'https://images.example/avatar.png', active_frame_key: null
+      }]; } };
+    }
+    if (request.url.includes('/rest/v1/profile_badges?')) {
+      return { ok: true, status: 200, async json() { return [{
+        profile_id: moderatorId, badge_key: 'admin',
+        badge_definitions: { badge_key: 'admin', label: 'Admin', description: 'Administrateur', icon: 'shield-check', frame_key: 'admin', sort_order: 80 }
+      }]; } };
+    }
+    if (request.url.includes('/rest/v1/anecdotes?') && new URL(request.url).searchParams.get('select') === 'vote_score') {
+      return { ok: true, status: 200, async json() { return [{ vote_score: 12 }]; } };
+    }
+    if (request.url.includes('/rest/v1/anecdotes?')) {
+      return { ok: true, status: 200, async json() { return [{
+        id: sharedId, author_id: moderatorId, author_label: 'Ancien pseudo', profession: 'Orthophoniste',
+        theme: 'drole', body: 'Anecdote publique', vote_score: 12, submitted_at: '2026-08-06T10:00:00Z',
+        published_at: '2026-08-06T11:00:00Z', display_anonymously: false
+      }]; } };
+    }
+    return { ok: false, status: 500, async json() { return {}; } };
+  };
+  response = createResponse();
+  await handlePublicProfile({ method: 'GET', query: { slug: publicSlug } }, response);
+  const publicProfilePayload = JSON.stringify(response.body);
+  if (response.statusCode !== 200 || response.body.profile.xpLabel !== '∞' || response.body.profile.levelLabel !== 'Admin' || response.body.profile.frameKey !== 'admin' || response.body.anecdotes[0].author.publicSlug !== publicSlug) {
+    throw new Error('Profil public administrateur invalide');
+  }
+  if (publicProfilePayload.includes(moderatorId) || publicProfilePayload.includes('email')) {
+    throw new Error('Le profil public ne doit exposer ni UUID interne ni e-mail');
+  }
+  if (!publicProfileRequests.some((request) => request.url.includes('display_anonymously=eq.false'))) {
+    throw new Error('Le profil public doit filtrer explicitement les anecdotes anonymes');
+  }
+
+  const anonymousProjection = serializePublicAnecdote({
+    id: sharedId, author_id: moderatorId, author_label: 'Anonyme', profession: 'Infirmière',
+    body: 'Publication anonyme', display_anonymously: true
+  }, new Map([[moderatorId, { author: { publicSlug } }]]));
+  if (anonymousProjection.author !== null || 'author_id' in anonymousProjection || 'display_anonymously' in anonymousProjection) {
+    throw new Error('Une anecdote anonyme ne doit jamais exposer son profil interne');
+  }
+
+  globalThis.fetch = async (url) => {
+    const value = String(url);
+    if (value.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: moderatorId }; } };
+    if (value.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'Contributeur', role: 'moderator' }]; } };
+    return { ok: false, status: 500, async json() { return {}; } };
+  };
+  response = createResponse();
+  await handleAdminUsers({ method: 'GET', headers: { authorization: 'Bearer contributor-token' }, query: { q: 'No' } }, response);
+  if (response.statusCode !== 403) throw new Error('Un contributeur ne doit pas gérer les utilisateurs');
+
+  let managementRpc = null;
+  globalThis.fetch = async (url, options = {}) => {
+    const value = String(url);
+    if (value.endsWith('/auth/v1/user')) return { ok: true, status: 200, async json() { return { id: moderatorId }; } };
+    if (value.includes('/rest/v1/profiles?')) return { ok: true, status: 200, async json() { return [{ id: moderatorId, pseudonym: 'NoVaZ', role: 'admin' }]; } };
+    if (value.endsWith('/rest/v1/rpc/admin_search_users')) return { ok: true, status: 200, async json() { return [{ public_slug: publicSlug, pseudonym: 'Membre', role: 'member' }]; } };
+    if (value.endsWith('/rest/v1/rpc/admin_set_contributor')) {
+      managementRpc = JSON.parse(options.body);
+      return { ok: true, status: 200, async json() { return [{ public_slug: publicSlug, pseudonym: 'Membre', role: 'moderator' }]; } };
+    }
+    if (value.endsWith('/rest/v1/rpc/admin_set_special_badge')) {
+      managementRpc = JSON.parse(options.body);
+      return { ok: true, status: 200, async json() { return null; } };
+    }
+    return { ok: false, status: 500, async json() { return {}; } };
+  };
+  response = createResponse();
+  await handleAdminUsers({ method: 'GET', headers: { authorization: 'Bearer admin-token' }, query: { q: 'Membre' } }, response);
+  if (response.statusCode !== 200 || response.body.users[0].public_slug !== publicSlug) throw new Error('Recherche utilisateur administrateur invalide');
+  response = createResponse();
+  await handleAdminUsers({ method: 'PATCH', headers: { authorization: 'Bearer admin-token' }, body: { publicSlug, contributor: true } }, response);
+  if (response.statusCode !== 200 || managementRpc.p_enabled !== true || managementRpc.p_actor_id !== moderatorId) throw new Error('Promotion contributeur invalide');
+  response = createResponse();
+  await handleAdminBadges({ method: 'POST', headers: { authorization: 'Bearer admin-token' }, body: { publicSlug, badgeKey: 'pioneer' } }, response);
+  if (response.statusCode !== 200 || managementRpc.p_badge_key !== 'pioneer' || managementRpc.p_enabled !== true) throw new Error('Attribution du badge Pionnier invalide');
+  response = createResponse();
+  await handleAdminBadges({ method: 'POST', headers: { authorization: 'Bearer admin-token' }, body: { publicSlug, badgeKey: 'admin' } }, response);
+  if (response.statusCode !== 422) throw new Error('Le badge Admin ne doit pas être attribuable manuellement');
+
+  console.log('41 contrats API vérifiés.');
 } finally {
   process.env = originalEnv;
   globalThis.fetch = originalFetch;

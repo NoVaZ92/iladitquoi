@@ -222,6 +222,9 @@ Les profils ne sont pas indexés par défaut par les moteurs de recherche. Une a
 - Aucun classement global n'est affiché.
 - Le downvote influence la visibilité et peut alimenter un signal de qualité, mais ne retire pas d'XP.
 - Un utilisateur ne peut voter qu'une fois par anecdote, ne peut pas voter sur sa propre anecdote et peut modifier son vote. Les scores affichés restent agrégés ; l'identité des votants n'est pas publique.
+- Le catalogue initial comprend huit badges persistants : Première anecdote, Habitué de garde, Plume du soin, Chroniqueur confirmé, Apprécié, Incontournable, Pionnier et Admin.
+- Plume du soin, Incontournable et Pionnier débloquent un cadre sélectionnable. Le cadre Admin est exclusif, imposé et accompagné de l’affichage `Niveau Admin · XP ∞` sans modifier l’XP stockée.
+- Les badges automatiques restent acquis après leur déblocage. Le badge Pionnier peut être attribué ou retiré uniquement par l’administrateur.
 - Pour le pilote, la visibilité repose sur un score net upvotes moins downvotes, avec un poids de récence simple. Une vue « Nouvelles » garantit que les anecdotes récentes ne sont pas invisibles. Les limites anti-abus par IP et par compte sont actives ; la détection des comptes multiples reste une mesure à ajouter si les volumes le justifient.
 - L'XP est accordée après validation et enregistrée comme des événements positifs liés à une contribution. Elle n'est pas accordée à une publication anonyme. Une anecdote supprimée pour violation grave ne conserve pas son XP ; les votes supprimés sont annulés.
 
@@ -249,6 +252,8 @@ Le cycle est explicite :
 Une correction crée une nouvelle version de modération et conserve l'ancienne décision dans l'historique interne. Un refus définitif peut être escaladé au propriétaire du site une seule fois par un auteur connecté ; l'appel ne rend jamais l'anecdote visible automatiquement.
 
 Les anecdotes refusées sont conservées pendant 30 jours après la décision, sauf suppression anticipée par leur auteur, puis effacées automatiquement avec leur historique associé. Les modérateurs ne peuvent accéder qu'aux éléments nécessaires à leur mission. Le propriétaire attribue les rôles, retire les accès et consulte les journaux d'accès ; les bénévoles ne peuvent pas modifier les règles, supprimer l'historique ou gérer d'autres modérateurs. Ils suivent une courte formation, acceptent une obligation de confidentialité, déclarent les conflits d'intérêts et peuvent escalader un cas sensible au propriétaire du site.
+
+Le rôle technique `moderator` est présenté comme « Contributeur » dans l’administration et reste invisible publiquement. Seul l’administrateur voit l’onglet Utilisateurs, peut rechercher un compte, accorder ou retirer l’accès à la modération et gérer les badges spéciaux. Aucune interface ne permet de créer un second administrateur ou de modifier le compte administrateur protégé.
 
 Le filtre automatique peut signaler les noms, prénoms, coordonnées, établissements, dates précises et détails potentiellement identifiants, mais il ne remplace pas la décision humaine. La règle de publication doit rappeler qu'un nom supprimé ne suffit pas toujours à anonymiser une situation.
 

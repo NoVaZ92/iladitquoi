@@ -11,11 +11,15 @@
     { "source": "/cgu", "destination": "/legal" },
     { "source": "/confidentialite", "destination": "/legal" },
     { "source": "/mentions-legales", "destination": "/legal" },
+    { "source": "/membre/:slug", "destination": "/member?slug=:slug" },
     { "source": "/a/:id", "destination": "/?anecdote=:id" },
     { "source": "/p/:token", "destination": "/?private=:token" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/ready", "destination": "/api/health?ready=1" },
     { "source": "/api/configuration", "destination": "/api/config" },
+    { "source": "/api/public-profile", "destination": "/api/feed?view=profile" },
+    { "source": "/api/admin/users", "destination": "/api/admin/queue?action=users" },
+    { "source": "/api/admin/badges", "destination": "/api/admin/queue?action=badges" },
     { "source": "/api/vote", "destination": "/api/report?action=vote" }
   ],
   "headers": [
