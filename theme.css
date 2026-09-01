@@ -35,6 +35,24 @@
   font-family: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+html[data-theme="light"] {
+  color-scheme: light;
+  --signal-canvas: #f1f3f8;
+  --signal-panel: #ffffff;
+  --signal-surface: #f8f9fc;
+  --signal-surface-raised: #eef1f7;
+  --signal-active: #ebe8ff;
+  --signal-line: #d7ddea;
+  --signal-line-strong: #acb8cb;
+  --signal-text: #182236;
+  --signal-muted: #62728a;
+  --signal-accent: #5d46e8;
+  --signal-accent-hover: #4933c7;
+  --signal-success: #167a50;
+  --signal-warning: #a85f00;
+  --signal-danger: #bd3348;
+}
+
 html,
 body {
   background: var(--signal-canvas);
@@ -51,6 +69,14 @@ select,
 textarea,
 dialog {
   color-scheme: dark;
+}
+
+html[data-theme="light"] button,
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea,
+html[data-theme="light"] dialog {
+  color-scheme: light;
 }
 
 button,
@@ -89,6 +115,46 @@ textarea::placeholder {
   color: var(--signal-accent);
   font-size: 31px;
   line-height: 1;
+}
+
+.brand-row,
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 10px;
+}
+
+.brand-row .brand,
+.mobile-brand .brand {
+  min-width: 0;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--signal-line);
+  border-radius: 10px;
+  background: var(--signal-surface);
+  color: var(--signal-muted);
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--signal-accent);
+  background: var(--signal-active);
+  color: var(--signal-text);
+}
+
+.theme-toggle .lucide {
+  width: 17px;
+  height: 17px;
 }
 
 .compose-link,
@@ -822,6 +888,129 @@ body[data-page="legal"] .detail {
 body[data-page="legal"] .detail + .detail,
 body[data-page="legal"] footer {
   border-color: var(--signal-line);
+}
+
+/* Light theme adjustments for semantic states and the legacy page accents. */
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #75839a;
+}
+
+html[data-theme="light"] :focus-visible {
+  outline-color: rgba(93, 70, 232, .28);
+}
+
+html[data-theme="light"] .profile-status.is-success,
+html[data-theme="light"] .auth-status:not(.is-error),
+html[data-theme="light"] .share-status,
+html[data-theme="light"] .whatsapp,
+html[data-theme="light"] .share-action.whatsapp {
+  color: var(--signal-success) !important;
+}
+
+html[data-theme="light"] body[data-page="home"] .composer:focus-within,
+html[data-theme="light"] body[data-page="auth"] .field input:focus,
+html[data-theme="light"] body[data-page="auth"] .field select:focus {
+  border-color: var(--signal-accent);
+  box-shadow: 0 0 0 3px rgba(93, 70, 232, .16);
+}
+
+html[data-theme="light"] body[data-page="home"] .story.is-private-share,
+html[data-theme="light"] body[data-page="profile"] .profile-entry.is-private {
+  background: #f1f3fb;
+}
+
+html[data-theme="light"] body[data-page="home"] .story.is-shared {
+  box-shadow: 0 0 0 3px rgba(93, 70, 232, .12);
+}
+
+html[data-theme="light"] body[data-page="home"] .vote-score,
+html[data-theme="light"] body[data-page="home"] .read-more,
+html[data-theme="light"] body[data-page="legal"] .legal-section a,
+html[data-theme="light"] body[data-page="legal"] footer a {
+  color: var(--signal-accent);
+}
+
+html[data-theme="light"] body[data-page="home"] .tone-blue,
+html[data-theme="light"] body[data-page="home"] .tone-violet,
+html[data-theme="light"] body[data-page="profile"] .badge,
+html[data-theme="light"] body[data-page="admin"] .theme-leger,
+html[data-theme="light"] body[data-page="admin"] .theme-surprenant,
+html[data-theme="light"] body[data-page="rules"] .number {
+  background: #ebe8ff;
+  color: #4d3cc4;
+}
+
+html[data-theme="light"] body[data-page="home"] .tone-orange,
+html[data-theme="light"] body[data-page="admin"] .theme-drole {
+  background: #fff0d9;
+  color: #955400;
+}
+
+html[data-theme="light"] body[data-page="home"] .tone-pink,
+html[data-theme="light"] body[data-page="admin"] .theme-touchant {
+  background: #ffe8ef;
+  color: #a51d4b;
+}
+
+html[data-theme="light"] body[data-page="home"] .tone-green,
+html[data-theme="light"] body[data-page="admin"] .theme-epuisant,
+html[data-theme="light"] body[data-page="admin"] .state-published {
+  background: #e3f6ed;
+  color: #116b47;
+}
+
+html[data-theme="light"] body[data-page="home"] .tone-neutral,
+html[data-theme="light"] body[data-page="admin"] .theme-apprentissage {
+  background: #edf0f5;
+  color: #526078;
+}
+
+html[data-theme="light"] body[data-page="profile"] .profile-entry.is-pending,
+html[data-theme="light"] body[data-page="profile"] .profile-entry.is-hidden,
+html[data-theme="light"] body[data-page="admin"] .report-card {
+  border-color: #e8c987;
+  background: #fff9e9;
+}
+
+html[data-theme="light"] body[data-page="profile"] .profile-entry.is-refused {
+  border-color: #e7adb8;
+  background: #fff0f2;
+}
+
+html[data-theme="light"] body[data-page="profile"] .moderation-state.is-pending,
+html[data-theme="light"] body[data-page="profile"] .moderation-decision.is-pending,
+html[data-theme="light"] body[data-page="profile"] .moderation-state.is-hidden,
+html[data-theme="light"] body[data-page="profile"] .moderation-decision.is-hidden,
+html[data-theme="light"] body[data-page="admin"] .state-hidden {
+  border-color: #e5c47c;
+  background: #fff5d9;
+  color: #8b5700;
+}
+
+html[data-theme="light"] body[data-page="profile"] .moderation-state.is-refused,
+html[data-theme="light"] body[data-page="profile"] .moderation-decision.is-refused,
+html[data-theme="light"] body[data-page="admin"] .state {
+  border-color: #e3a5b1;
+  background: #ffecef;
+  color: #a32940;
+}
+
+html[data-theme="light"] body[data-page="profile"] .moderation-state.is-published {
+  border-color: #a8d8bf;
+  background: #e8f8ef;
+  color: #126b47;
+}
+
+html[data-theme="light"] body[data-page="rules"] .warning,
+html[data-theme="light"] body[data-page="legal"] .configuration {
+  background: #fff0f2;
+  color: #7e3947;
+}
+
+html[data-theme="light"] body[data-page="legal"] .legal-section p,
+html[data-theme="light"] body[data-page="legal"] .legal-section li {
+  color: #4e5d72;
 }
 
 @media (max-width: 1320px) {

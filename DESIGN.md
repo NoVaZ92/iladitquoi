@@ -164,6 +164,18 @@ Palette de référence :
 
 Les rayons suivent trois niveaux : 10 à 12 px pour les contrôles, 14 à 16 px pour les anecdotes et composeurs, 22 px pour les colonnes structurantes. Aucun rayon supérieur n'est utilisé dans l'application de production.
 
+### Thème clair
+
+Le mode sombre est proposé par défaut, avec une bascule persistante à côté du logo `iladitquoi` sur chaque page. Le thème clair conserve exactement la même structure et les mêmes priorités de lecture :
+
+- fond `#F1F3F8` et panneaux `#FFFFFF` ;
+- surfaces de contenu `#F8F9FC` et contrôles `#EEF1F7` ;
+- texte `#182236`, texte secondaire `#62728A` et séparateurs `#D7DDEA` ;
+- action principale `#5D46E8`, avec un survol `#4933C7` ;
+- succès `#167A50`, attente `#A85F00` et refus `#BD3348`.
+
+Le bouton de thème est une icône Lucide seule, avec un libellé accessible et une infobulle. Le choix est mémorisé localement et appliqué avant le chargement de la feuille de style pour éviter un flash de thème.
+
 ### Accueil
 
 - Fil principal des anecdotes les plus upvotées et validées.

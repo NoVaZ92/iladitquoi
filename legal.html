@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Conditions d’utilisation, politique de confidentialité et mentions légales d’iladitquoi.">
   <title>Informations légales · iladitquoi</title>
+  <script>try { if (localStorage.getItem('iladitquoi.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
   <style>
     :root { color-scheme: light; --page: #f7f8fb; --surface: #fff; --surface-soft: #f1f4fa; --line: #dfe4ed; --text: #101522; --muted: #687187; --blue: #155cff; --blue-dark: #0b46d1; --danger: #b9362b; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; } html, body { min-width: 320px; min-height: 100%; margin: 0; background: var(--page); color: var(--text); } a { color: inherit; } :focus-visible { outline: 3px solid rgba(21,92,255,.24); outline-offset: 2px; }
@@ -20,7 +21,7 @@
   <link rel="stylesheet" href="/theme.css">
 </head>
 <body data-page="legal">
-  <header class="topbar"><div class="topbar-inner"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span>iladitquoi</a><a class="back" href="/">Retour au fil</a></div></header>
+  <header class="topbar"><div class="topbar-inner"><div class="brand-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span>iladitquoi</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div><a class="back" href="/">Retour au fil</a></div></header>
   <main>
     <p class="eyebrow">Cadre de confiance</p><h1>Conditions, confidentialité et informations légales.</h1><p class="lead">Ces informations expliquent les règles d’utilisation du service, le traitement des données et le cadre de modération. Elles s’appliquent à la version bêta d’iladitquoi.</p>
     <aside class="configuration" data-legal-configuration hidden><strong>Configuration en attente.</strong> Les coordonnées de l’éditeur doivent être renseignées avant toute ouverture publique ou commerciale du service.</aside>
@@ -35,5 +36,6 @@
   </main>
   <footer>© <span data-legal-publisher>iladitquoi</span> · <a href="#cgu">CGU</a> · <a href="#confidentialite">Confidentialité</a> · <a href="/rules.html">Règles de publication</a></footer>
   <script type="module" src="/assets/legal.js"></script>
+  <script type="module" src="/assets/theme.js"></script>
 </body>
 </html>

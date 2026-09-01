@@ -38,7 +38,7 @@ for (const [source, destination] of copies) {
 }
 
 const assetFiles = await readdir(join(outputDirectory, 'assets'));
-if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'legal.js', 'profile.js'])) {
+if (JSON.stringify(assetFiles.sort()) !== JSON.stringify(['admin.js', 'auth.js', 'feed.js', 'legal.js', 'profile.js', 'theme.js'])) {
   throw new Error(`Bundles inattendus: ${assetFiles.join(', ')}`);
 }
 for (const asset of assetFiles) {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Les règles de publication et de confidentialité d’iladitquoi.">
   <title>Règles de publication · iladitquoi</title>
+  <script>try { if (localStorage.getItem('iladitquoi.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
   <style>
     :root { color-scheme: light; --page: #f7f8fb; --surface: #fff; --line: #dfe4ed; --text: #101522; --muted: #687187; --blue: #155cff; --soft: #eaf0ff; --danger: #b9362b; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
@@ -35,7 +36,7 @@
   <link rel="stylesheet" href="/theme.css">
 </head>
 <body data-page="rules">
-  <header class="topbar"><div class="topbar-inner"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span>iladitquoi</a><a class="back" href="/">Retour au fil</a></div></header>
+  <header class="topbar"><div class="topbar-inner"><div class="brand-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span>iladitquoi</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div><a class="back" href="/">Retour au fil</a></div></header>
   <main>
     <section class="intro"><p class="eyebrow">Avant de raconter</p><h1>Une bonne anecdote ne permet d’identifier personne.</h1><p class="lead">Le soin inspire des histoires mémorables. Gardons ce qui fait sourire, pas les informations privées des patients, des proches ou des collègues.</p></section>
     <div class="rules">
@@ -50,5 +51,6 @@
     <a class="action" href="/#composer">J’ai compris, écrire une anecdote</a>
     <p class="legal-links">Consultez également les <a href="/legal.html#cgu">conditions d’utilisation</a> et la <a href="/legal.html#confidentialite">politique de confidentialité</a>.</p>
   </main>
+  <script type="module" src="/assets/theme.js"></script>
 </body>
 </html>

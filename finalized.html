@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="iladitquoi, les anecdotes que les professionnels du soin racontent après leur garde.">
   <title>iladitquoi · Les histoires du soin</title>
+  <script>try { if (localStorage.getItem('iladitquoi.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
   <style>
     :root {
       color-scheme: light;
@@ -243,10 +244,10 @@
 <body data-page="home">
   <div class="app-shell">
     <aside class="left-rail" aria-label="Navigation principale">
-      <a class="brand" href="/">
+      <div class="brand-row"><a class="brand" href="/">
         <span class="brand-mark" aria-hidden="true">”</span>
         <span class="brand-copy"><span class="brand-name">iladitquoi</span><span class="brand-tagline">Des blouses, des histoires, zéro prénom.</span></span>
-      </a>
+      </a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div>
       <a class="compose-link" href="#composer"><i data-lucide="pen-line"></i>Partager une anecdote</a>
       <nav class="rail-nav">
         <button class="nav-item is-active" type="button" data-sort="top" data-feed-view="home"><i data-lucide="home"></i>Accueil</button>
@@ -270,7 +271,7 @@
 
     <main class="main-column">
       <header class="mobile-header">
-        <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span><span class="brand-name">iladitquoi</span></a>
+        <div class="mobile-brand"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">”</span><span class="brand-name">iladitquoi</span></a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Passer au thème clair" title="Passer au thème clair"><i data-lucide="sun"></i></button></div>
         <a class="mobile-account" href="/auth.html" data-auth-link aria-label="Compte"><span data-auth-avatar>→</span></a>
       </header>
       <div class="main-inner">
@@ -361,5 +362,6 @@
 
   <script type="module" src="/assets/feed.js"></script>
   <script type="module" src="/assets/auth.js"></script>
+  <script type="module" src="/assets/theme.js"></script>
 </body>
 </html>
