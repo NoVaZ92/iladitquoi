@@ -420,10 +420,14 @@ async function loadFeed(sort = currentSort, { append = false } = {}) {
     feedPage = page;
     feedHasMore = Boolean(data.hasMore);
     if (!append) await includeSharedAnecdote();
-    await hydrateUserVotes();
-    await hydrateSavedPosts();
     renderFeed();
     if (!append) focusSharedAnecdote();
+    Promise.all([hydrateUserVotes(), hydrateSavedPosts()])
+      .then(() => {
+        renderFeed();
+        if (!append) focusSharedAnecdote();
+      })
+      .catch(() => {});
   } catch {
     if (append) {
       feedHasMore = false;

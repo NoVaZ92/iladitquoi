@@ -72,6 +72,7 @@ const contracts = [
   ['lib/moderator.js', "['moderator', 'admin']", 'contrôle de rôle serveur'],
   ['src/feed.js', "fetch('/api/submit'", 'soumission cloud'],
   ['src/feed.js', 'fetch(`/api/feed?${query}`', 'fil Supabase trié'],
+  ['src/feed.js', 'Promise.all([hydrateUserVotes(), hydrateSavedPosts()])', 'hydratation du compte non bloquante'],
   ['src/feed.js', 'rate_limit_exceeded', 'message utilisateur de limitation'],
   ['src/feed.js', '`${location.origin}/a/${anecdote.id}`', 'lien de partage du déploiement courant'],
   ['src/feed.js', "location.pathname.match(/^\\/a\\/", 'lecture de la route courte dans le navigateur'],
