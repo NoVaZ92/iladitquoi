@@ -74,6 +74,8 @@ const contracts = [
   ['legal.html', 'Politique de confidentialité', 'politique de confidentialité accessible'],
   ['legal.html', 'data-legal-publisher', 'mentions légales configurables'],
   ['src/legal.js', "fetch('/api/configuration'", 'chargement public des mentions légales'],
+  ['scripts/build-static.mjs', "import { build } from 'esbuild'", 'compilation statique dans le processus Node'],
+  ['scripts/build-static.mjs', 'Generation des bundles statiques impossible', 'erreur de build contextualisée'],
   ['api/config.js', 'LEGAL_PUBLISHER_NAME', 'identité de l’éditeur configurable'],
   ['admin.html', 'src="/assets/admin.js"', 'page administration'],
   ['admin.html', 'id="queue-list"', 'file de validation'],
