@@ -4,6 +4,8 @@
 
 Le fil, les comptes, les avatars, les soumissions publiques, le carnet prive, les votes, les signalements et les selections des comptes connectes utilisent Supabase. Les selections visiteur restent locales jusqu’a la connexion.
 
+Le thème Signal Nuit est partagé par toutes les pages via `theme.css`. Toute évolution visuelle doit conserver les couleurs sémantiques distinctes pour les validations, attentes et refus de modération.
+
 ## Donner le role administrateur
 
 Creer d'abord le compte depuis le site, puis executer cette requete dans le SQL Editor Supabase :

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const outputDirectory = join(projectRoot, 'public');
-const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'legal.html', 'profile.html', 'rules.html'];
+const expectedFiles = ['admin.html', 'assets', 'auth.html', 'finalized.html', 'index.html', 'legal.html', 'profile.html', 'rules.html', 'theme.css'];
 const vercelConfig = JSON.parse(await readFile(join(projectRoot, 'vercel.json'), 'utf8'));
 
 if (vercelConfig.outputDirectory !== 'public') {
@@ -17,6 +17,7 @@ if (JSON.stringify(outputFiles) !== JSON.stringify(expectedFiles)) {
 }
 
 const copies = [
+  ['theme.css', 'theme.css'],
   ['finalized.html', 'index.html'],
   ['finalized.html', 'finalized.html'],
   ['profile.html', 'profile.html'],
@@ -47,4 +48,4 @@ for (const asset of assetFiles) {
   }
 }
 
-console.log(`Sortie Vercel vérifiée: ${copies.length} pages et ${assetFiles.length} bundles navigateur présents.`);
+console.log(`Sortie Vercel vérifiée: ${copies.length - 1} pages, 1 feuille de style et ${assetFiles.length} bundles navigateur présents.`);
