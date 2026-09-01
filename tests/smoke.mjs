@@ -25,6 +25,9 @@ async function countApiFunctions(directory) {
 
 const contracts = [
   ['theme.css', '--signal-accent: #7c5cff', 'palette Signal Nuit'],
+  ['theme.css', 'body[data-page="home"] .account-avatar.has-image', 'avatar desktop avec image'],
+  ['theme.css', 'body[data-page="profile"] .profile-avatar-large.has-image', 'avatar du profil avec image'],
+  ['theme.css', 'body[data-page="auth"] .avatar-preview.has-image', 'aperçu d’avatar avec image'],
   ['theme.css', 'color-scheme: dark', 'mode sombre natif'],
   ['finalized.html', 'href="/theme.css"', 'thème partagé de l’accueil'],
   ['profile.html', 'href="/theme.css"', 'thème partagé du profil'],
@@ -168,6 +171,16 @@ const contracts = [
 
 for (const [file, needle, label] of contracts) {
   if (!source[file].includes(needle)) throw new Error(`Contrat manquant: ${label}`);
+}
+
+if (!/body\[data-page="home"\] \.account-avatar\.has-image,[\s\S]*?body\[data-page="home"\] \.profile-avatar\.has-image\s*\{[\s\S]*?color:\s*transparent;[\s\S]*?\}/.test(source['theme.css'])) {
+  throw new Error('Les avatars desktop avec image doivent masquer leur initiale');
+}
+if (!/body\[data-page="profile"\] \.profile-avatar-large\.has-image\s*\{[^}]*color:\s*transparent;[^}]*\}/.test(source['theme.css'])) {
+  throw new Error('L’avatar du profil avec image doit masquer son initiale');
+}
+if (!/body\[data-page="auth"\] \.avatar-preview\.has-image\s*\{[^}]*color:\s*transparent;[^}]*\}/.test(source['theme.css'])) {
+  throw new Error('L’aperçu d’avatar avec image doit masquer son initiale');
 }
 
 for (const file of ['finalized.html', 'profile.html', 'auth.html', 'src/auth.js', 'src/feed.js']) {
