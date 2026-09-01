@@ -2,6 +2,8 @@
 
 Cette configuration utilise Vercel Hobby et Supabase Free. Elle convient pour une beta sans publicite, sans partenariat et sans donnees de patient. Le cout fixe est nul, hors nom de domaine.
 
+L’interface de production utilise le thème Signal Nuit défini dans `DESIGN.md` et centralisé dans `theme.css`. Le build copie cette feuille à la racine de `public/`.
+
 ## 1. Creer Supabase
 
 1. Creer un projet Supabase Free dans une region europeenne.
@@ -33,10 +35,11 @@ Ne jamais mettre la cle `secret` ou `service_role` dans le navigateur, dans Git 
 
 1. Ouvrir `https://votre-url/health` : la reponse doit etre `status: ok`.
 2. Ouvrir `https://votre-url/ready` : la reponse doit etre `status: ready` et `configured: true`. `configuration_required` indique des variables manquantes, `credentials_invalid` une cle incorrecte et `schema_required` que la migration SQL n'a pas ete appliquee. `rate_limit_structure_unavailable` ou `rate_limit_write_unavailable` indiquent une migration anti-abus incomplète ou défectueuse ; réexécuter `0015_rate_limit_repair.sql` dans ce cas.
-3. Soumettre une anecdote publique : elle doit etre creee avec le statut `pending` dans la table `anecdotes`.
-4. Creer un compte e-mail, confirmer l'adresse, puis verifier la creation automatique de la ligne correspondante dans `profiles`.
-5. Publier sans cocher l'anonymat : `author_id` doit contenir l'identifiant du compte et l'anecdote doit apparaitre dans le suivi de moderation du profil.
-6. Depuis Supabase, passer une anecdote de test a `published`. La migration `0003` renseigne automatiquement `published_at` et l'anecdote apparait dans les fils Top et Nouvelles.
+3. Vérifier que `/connexion`, `/profil`, `/regles`, `/cgu`, `/confidentialite` et `/mentions-legales` répondent sans 404. Avec `cleanUrls`, les destinations de réécriture Vercel ne doivent pas contenir l’extension `.html`.
+4. Soumettre une anecdote publique : elle doit etre creee avec le statut `pending` dans la table `anecdotes`.
+5. Creer un compte e-mail, confirmer l'adresse, puis verifier la creation automatique de la ligne correspondante dans `profiles`.
+6. Publier sans cocher l'anonymat : `author_id` doit contenir l'identifiant du compte et l'anecdote doit apparaitre dans le suivi de moderation du profil.
+7. Depuis Supabase, passer une anecdote de test a `published`. La migration `0003` renseigne automatiquement `published_at` et l'anecdote apparait dans les fils Top et Nouvelles.
 
 ```sql
 update public.anecdotes
@@ -44,14 +47,14 @@ set moderation_status = 'published'
 where id = 'UUID_DE_L_ANECDOTE';
 ```
 
-7. Promouvoir un compte `admin`, ouvrir `https://votre-url/admin`, puis traiter une anecdote `pending` et un signalement de test.
-8. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
-9. Refuser une anecdote liee a un compte, puis verifier que son auteur peut la supprimer depuis l'onglet `Moderation` de son profil. Dans `Supabase > Integrations > Cron`, les jobs `purge-refused-anecdotes-after-30-days` et `purge-expired-rate-limit-buckets` doivent etre actifs.
-10. Verifier dans le SQL Editor que `private.rate_limit_buckets` existe, puis ouvrir `/ready` : la reponse doit rester `ready` car ce controle exerce maintenant le limiteur. Les colonnes ne doivent contenir que des empreintes SHA-256 et jamais une adresse IP ou un identifiant de compte en clair.
-11. Creer un lien prive depuis le carnet, verifier sa lecture, puis le revoquer. Le lien doit alors repondre `share_not_found`. Supprimer ensuite la note pour verifier la suppression en cascade de ses liens.
-12. Depuis le profil, telecharger l'export personnel, puis tester la suppression avec un compte de test. Le compte, son avatar, ses anecdotes et ses liens prives doivent disparaitre. Les decisions prises par un ancien moderateur restent conservees avec un moderateur nul.
-13. Avec un compte `moderator`, verifier qu'une modification de profil ordinaire fonctionne mais qu'une tentative de modifier `role` ou `xp` depuis une session connectee est rejetee. Seul le SQL Editor, utilise par le proprietaire, doit pouvoir promouvoir ou retrograder un compte.
-14. Enregistrer une anecdote avec un compte, puis ouvrir le meme profil sur un autre navigateur. La selection doit apparaitre dans l’onglet `Sélections` sans dépendre du stockage local du premier navigateur.
+8. Promouvoir un compte `admin`, ouvrir `https://votre-url/admin`, puis traiter une anecdote `pending` et un signalement de test.
+9. Verifier que seule la cle publishable apparait dans le navigateur. La cle secret ne doit apparaitre ni dans `View Source`, ni dans les requetes navigateur, ni dans le depot.
+10. Refuser une anecdote liee a un compte, puis verifier que son auteur peut la supprimer depuis l'onglet `Moderation` de son profil. Dans `Supabase > Integrations > Cron`, les jobs `purge-refused-anecdotes-after-30-days` et `purge-expired-rate-limit-buckets` doivent etre actifs.
+11. Verifier dans le SQL Editor que `private.rate_limit_buckets` existe, puis ouvrir `/ready` : la reponse doit rester `ready` car ce controle exerce maintenant le limiteur. Les colonnes ne doivent contenir que des empreintes SHA-256 et jamais une adresse IP ou un identifiant de compte en clair.
+12. Creer un lien prive depuis le carnet, verifier sa lecture, puis le revoquer. Le lien doit alors repondre `share_not_found`. Supprimer ensuite la note pour verifier la suppression en cascade de ses liens.
+13. Depuis le profil, telecharger l'export personnel, puis tester la suppression avec un compte de test. Le compte, son avatar, ses anecdotes et ses liens prives doivent disparaitre. Les decisions prises par un ancien moderateur restent conservees avec un moderateur nul.
+14. Avec un compte `moderator`, verifier qu'une modification de profil ordinaire fonctionne mais qu'une tentative de modifier `role` ou `xp` depuis une session connectee est rejetee. Seul le SQL Editor, utilise par le proprietaire, doit pouvoir promouvoir ou retrograder un compte.
+15. Enregistrer une anecdote avec un compte, puis ouvrir le meme profil sur un autre navigateur. La selection doit apparaitre dans l’onglet `Sélections` sans dépendre du stockage local du premier navigateur.
 
 ## 4. Limites de cette beta
 

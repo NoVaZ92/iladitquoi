@@ -9,6 +9,7 @@ const outputDirectory = join(projectRoot, 'public');
 const execFileAsync = promisify(execFile);
 const esbuildExecutable = join(projectRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'esbuild.cmd' : 'esbuild');
 const files = [
+  ['theme.css', 'theme.css'],
   ['finalized.html', 'index.html'],
   ['finalized.html', 'finalized.html'],
   ['profile.html', 'profile.html'],
@@ -37,4 +38,4 @@ await Promise.all([
     ]))
 ]);
 
-console.log(`Static output generated: public/ (${files.length} pages and ${bundles.length} bundles).`);
+console.log(`Static output generated: public/ (${files.length - 1} pages, 1 stylesheet and ${bundles.length} bundles).`);

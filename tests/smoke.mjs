@@ -3,7 +3,7 @@ import { sanitizePublicText } from '../lib/privacy-filter.js';
 import { PROFESSIONS } from '../lib/professions.js';
 
 const names = [
-  'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
+  'theme.css', 'finalized.html', 'profile.html', 'auth.html', 'rules.html', 'legal.html', 'admin.html',
   'src/admin.js', 'src/feed.js', 'src/profile.js', 'src/auth.js', 'src/legal.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js',
@@ -24,6 +24,14 @@ async function countApiFunctions(directory) {
 }
 
 const contracts = [
+  ['theme.css', '--signal-accent: #7c5cff', 'palette Signal Nuit'],
+  ['theme.css', 'color-scheme: dark', 'mode sombre natif'],
+  ['finalized.html', 'href="/theme.css"', 'thème partagé de l’accueil'],
+  ['profile.html', 'href="/theme.css"', 'thème partagé du profil'],
+  ['auth.html', 'href="/theme.css"', 'thème partagé de l’authentification'],
+  ['admin.html', 'href="/theme.css"', 'thème partagé de l’administration'],
+  ['rules.html', 'href="/theme.css"', 'thème partagé des règles'],
+  ['legal.html', 'href="/theme.css"', 'thème partagé des pages légales'],
   ['finalized.html', 'id="anecdote-editor"', 'composeur'],
   ['finalized.html', 'src="/assets/feed.js"', 'bundle du fil'],
   ['finalized.html', '>iladitquoi<', 'marque'],
@@ -190,7 +198,21 @@ if (vercelConfig.outputDirectory !== 'public') throw new Error('Dossier de sorti
 if (!vercelConfig.rewrites.some((route) => route.source === '/a/:id' && route.destination.includes('anecdote=:id'))) throw new Error('Route courte de partage absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/p/:token' && route.destination.includes('private=:token'))) throw new Error('Route courte privée absente');
 if (!vercelConfig.rewrites.some((route) => route.source === '/api/vote' && route.destination.includes('action=vote'))) throw new Error('Route de vote regroupée absente');
-if (!vercelConfig.rewrites.some((route) => route.source === '/admin' && route.destination === '/admin.html')) throw new Error('Route administration absente');
+for (const [sourcePath, destination] of [
+  ['/', '/finalized'],
+  ['/connexion', '/auth'],
+  ['/compte', '/profile'],
+  ['/profil', '/profile'],
+  ['/regles', '/rules'],
+  ['/cgu', '/legal'],
+  ['/confidentialite', '/legal'],
+  ['/mentions-legales', '/legal']
+]) {
+  if (!vercelConfig.rewrites.some((route) => route.source === sourcePath && route.destination === destination)) {
+    throw new Error(`Route propre absente ou invalide: ${sourcePath}`);
+  }
+}
+if (vercelConfig.rewrites.some((route) => /\.html(?:$|\?)/.test(route.destination))) throw new Error('Une destination Vercel cleanUrls ne doit pas utiliser l’extension .html');
 if (!vercelConfig.rewrites.some((route) => route.source === '/ready' && route.destination === '/api/health?ready=1')) throw new Error('Route readiness groupée absente');
 if (Object.values(vercelConfig.functions || {}).some((config) => config && typeof config === 'object' && 'runtime' in config)) throw new Error('Runtime Vercel invalide');
 if (await countApiFunctions('api') > 12) throw new Error('Le plan Vercel Hobby accepte au maximum 12 fonctions par déploiement');
