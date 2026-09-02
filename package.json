@@ -8,6 +8,7 @@
   "scripts": {
     "build": "node scripts/verify-static.mjs && node tests/smoke.mjs && node tests/api-smoke.mjs && node scripts/build-static.mjs && node tests/build-output.mjs",
     "check:env": "node scripts/check-env.mjs",
+    "generate:admin-frame": "node scripts/generate-admin-frame.mjs",
     "test": "node tests/smoke.mjs && node tests/api-smoke.mjs"
   },
   "dependencies": {

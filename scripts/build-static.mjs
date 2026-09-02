@@ -17,12 +17,16 @@ const files = [
   ['admin.html', 'admin.html']
 ];
 const bundles = ['admin', 'auth', 'feed', 'legal', 'member', 'profile', 'theme'];
+const staticAssets = ['admin-frame-gold.gif'];
 
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });
 await mkdir(join(outputDirectory, 'assets'), { recursive: true });
 await Promise.all(files.map(([source, destination]) =>
   copyFile(join(projectRoot, source), join(outputDirectory, destination))
+));
+await Promise.all(staticAssets.map((asset) =>
+  copyFile(join(projectRoot, 'assets', asset), join(outputDirectory, 'assets', asset))
 ));
 
 try {
@@ -42,4 +46,4 @@ try {
   throw new Error(`Generation des bundles statiques impossible: ${detail}`, { cause: error });
 }
 
-console.log(`Static output generated: public/ (${files.length - 1} pages, 1 stylesheet and ${bundles.length} bundles).`);
+console.log(`Static output generated: public/ (${files.length - 1} pages, 1 stylesheet, ${bundles.length} bundles and ${staticAssets.length} media asset).`);
