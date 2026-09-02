@@ -537,8 +537,14 @@ try {
     if (request.url.includes('/rest/v1/profiles?')) {
       return { ok: true, status: 200, async json() { return [{
         id: moderatorId, public_slug: publicSlug, pseudonym: 'NoVaZ', profession: 'Orthophoniste',
-        role: 'admin', xp: 540, avatar_url: 'https://images.example/avatar.png', active_frame_key: null
+        role: 'admin', xp: 540, avatar_url: 'https://images.example/avatar.png', active_frame_key: 'pioneer'
       }]; } };
+    }
+    if (request.url.includes('/rest/v1/badge_definitions?')) {
+      return { ok: true, status: 200, async json() { return [
+        { badge_key: 'pioneer', label: 'Pionnier', description: 'Badge spécial', icon: 'compass', frame_key: 'amber', sort_order: 70 },
+        { badge_key: 'admin', label: 'Admin', description: 'Administrateur', icon: 'shield-check', frame_key: 'admin', sort_order: 80 }
+      ]; } };
     }
     if (request.url.includes('/rest/v1/profile_badges?')) {
       return { ok: true, status: 200, async json() { return [{
@@ -561,8 +567,11 @@ try {
   response = createResponse();
   await handlePublicProfile({ method: 'GET', query: { slug: publicSlug } }, response);
   const publicProfilePayload = JSON.stringify(response.body);
-  if (response.statusCode !== 200 || response.body.profile.xpLabel !== '∞' || response.body.profile.levelLabel !== 'Admin' || response.body.profile.frameKey !== 'admin' || response.body.anecdotes[0].author.publicSlug !== publicSlug) {
+  if (response.statusCode !== 200 || response.body.profile.xpLabel !== '∞' || response.body.profile.levelLabel !== 'Admin' || response.body.profile.frameKey !== 'amber' || response.body.anecdotes[0].author.frameKey !== 'amber' || response.body.anecdotes[0].author.publicSlug !== publicSlug) {
     throw new Error('Profil public administrateur invalide');
+  }
+  if (response.body.profile.badges.length !== 1 || response.body.profile.badges[0].key !== 'admin') {
+    throw new Error('Le choix d’un cadre Admin ne doit pas attribuer le badge correspondant');
   }
   if (publicProfilePayload.includes(moderatorId) || publicProfilePayload.includes('email')) {
     throw new Error('Le profil public ne doit exposer ni UUID interne ni e-mail');

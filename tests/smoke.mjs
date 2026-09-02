@@ -7,7 +7,7 @@ const names = [
   'src/admin.js', 'src/feed.js', 'src/member.js', 'src/profile.js', 'src/auth.js', 'src/legal.js', 'src/theme.js',
   'api/health.js', 'api/config.js', 'api/feed.js', 'api/anecdote.js', 'api/report.js', 'api/submit.js', 'api/private.js', 'api/private-share.js', 'api/account.js', 'api/admin/queue.js', 'api/admin/decision.js', 'api/admin/report.js',
   'lib/supabase-config.js', 'lib/auth-user.js', 'lib/moderator.js', 'lib/rate-limit.js', 'lib/vote-handler.js', 'lib/public-profile.js', 'lib/public-profile-handler.js', 'lib/admin-management.js',
-  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql', 'supabase/migrations/0016_public_profiles_badges_and_contributors.sql',
+  'supabase/migrations/0001_initial_schema.sql', 'supabase/migrations/0002_authentication.sql', 'supabase/migrations/0003_publication_timestamp.sql', 'supabase/migrations/0004_profile_avatars.sql', 'supabase/migrations/0005_persistent_votes.sql', 'supabase/migrations/0006_refused_anecdote_retention.sql', 'supabase/migrations/0007_rate_limits.sql', 'supabase/migrations/0008_private_note_management.sql', 'supabase/migrations/0009_profile_privilege_protection.sql', 'supabase/migrations/0010_account_deletion.sql', 'supabase/migrations/0011_saved_anecdotes.sql', 'supabase/migrations/0012_hidden_moderation_status.sql', 'supabase/migrations/0013_moderation_notifications.sql', 'supabase/migrations/0014_owner_public_anecdote_deletion.sql', 'supabase/migrations/0015_rate_limit_repair.sql', 'supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'supabase/migrations/0017_admin_frame_catalog.sql',
   'scripts/build-static.mjs', 'package.json', 'vercel.json', '.nvmrc'
 ];
 const source = Object.fromEntries(await Promise.all(names.map(async (name) => [name, await readFile(name, 'utf8')])));
@@ -129,6 +129,8 @@ const contracts = [
   ['src/auth.js', 'getSavedAnecdotes', 'lecture des sélections synchronisées'],
   ['src/profile.js', 'setSavedAnecdote?.(post.id, false)', 'retrait synchronisé d’une sélection'],
   ['src/auth.js', 'migrateLegacyPrivateNotes', 'migration du carnet privé local'],
+  ['src/auth.js', 'profile.frameCatalog', 'catalogue complet des cadres pour l’administrateur'],
+  ['src/auth.js', 'Le compte Admin peut utiliser tous les cadres du catalogue.', 'choix de cadre administrateur explicite'],
   ['src/auth.js', "supabase.storage\n        .from('avatars')", 'envoi de l’avatar vers Supabase Storage'],
   ['api/health.js', "status: 'ok'", 'health check'],
   ['api/health.js', 'configuration_required', 'readiness'],
@@ -200,6 +202,9 @@ const contracts = [
   ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', "public_slug ~ '^[a-f0-9]{18}$'", 'format du slug public contraint'],
   ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'grant select on table public.profile_badges to authenticated, service_role', 'lecture des badges explicitement limitée'],
   ['supabase/migrations/0016_public_profiles_badges_and_contributors.sql', 'refresh_profile_badges', 'attribution automatique des badges'],
+  ['supabase/migrations/0017_admin_frame_catalog.sql', 'new.role = \'admin\'', 'accès administrateur au catalogue de cadres'],
+  ['supabase/migrations/0017_admin_frame_catalog.sql', 'frame_not_in_catalog', 'cadre administrateur limité au catalogue'],
+  ['supabase/migrations/0017_admin_frame_catalog.sql', 'frame_not_unlocked', 'cadres membres toujours soumis au déblocage'],
   ['scripts/build-static.mjs', "const bundles = ['admin', 'auth', 'feed', 'legal', 'member', 'profile', 'theme']", 'bundles navigateur']
 ];
 

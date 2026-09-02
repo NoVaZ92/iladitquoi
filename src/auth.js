@@ -77,7 +77,11 @@ async function createBrowserClient() {
 
 async function fetchProfile(session) {
   if (!session) return null;
-  const [{ data, error }, { data: badgeRows, error: badgeError }] = await Promise.all([
+  const [
+    { data, error },
+    { data: badgeRows, error: badgeError },
+    { data: frameCatalogRows, error: frameCatalogError }
+  ] = await Promise.all([
     supabase
       .from('profiles')
       .select('id,public_slug,pseudonym,profession,role,xp,avatar_url,active_frame_key,created_at')
@@ -86,22 +90,32 @@ async function fetchProfile(session) {
     supabase
       .from('profile_badges')
       .select('badge_key,badge_definitions(badge_key,label,description,icon,frame_key,sort_order)')
-      .eq('profile_id', session.user.id)
+      .eq('profile_id', session.user.id),
+    supabase
+      .from('badge_definitions')
+      .select('badge_key,label,description,icon,frame_key,sort_order')
+      .not('frame_key', 'is', null)
+      .order('sort_order', { ascending: true })
   ]);
   if (error) throw error;
   if (badgeError) throw badgeError;
+  if (frameCatalogError) throw frameCatalogError;
   if (!data) return null;
   data.badges = (badgeRows || []).map((row) => ({
     ...row.badge_definitions,
     badge_key: row.badge_key
   })).filter((badge) => badge.badge_key)
     .sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
+  data.frameCatalog = frameCatalogRows || [];
   return data;
 }
 
 function profileFrameKey(profile) {
-  if (profile?.role === 'admin') return 'admin';
-  return profile?.badges?.find((badge) => badge.badge_key === profile.active_frame_key)?.frame_key || '';
+  const isAdmin = profile?.role === 'admin';
+  const selectedBadgeKey = profile?.active_frame_key || (isAdmin ? 'admin' : '');
+  const availableFrames = isAdmin ? profile?.frameCatalog : profile?.badges;
+  const selectedFrame = availableFrames?.find((badge) => badge.badge_key === selectedBadgeKey)?.frame_key;
+  return selectedFrame || (isAdmin ? 'admin' : '');
 }
 
 function setAvatarFrame(element, profile) {
@@ -705,8 +719,13 @@ async function renderProfilePage(session, profile) {
 
   const frameList = document.querySelector('[data-profile-frames]');
   if (frameList) {
-    const unlockedFrames = badges.filter((badge) => badge.frame_key && badge.badge_key !== 'admin');
-    const choices = [{ badge_key: '', label: 'Sans cadre', frame_key: '' }, ...unlockedFrames];
+    const unlockedFrames = isAdmin
+      ? (profile.frameCatalog || []).filter((badge) => badge.frame_key)
+      : badges.filter((badge) => badge.frame_key && badge.badge_key !== 'admin');
+    const choices = isAdmin
+      ? unlockedFrames
+      : [{ badge_key: '', label: 'Sans cadre', frame_key: '' }, ...unlockedFrames];
+    const selectedBadgeKey = profile.active_frame_key || (isAdmin ? 'admin' : '');
     frameList.replaceChildren(...choices.map((item) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -714,10 +733,9 @@ async function renderProfilePage(session, profile) {
       button.dataset.frameBadge = item.badge_key;
       button.dataset.frameTone = item.frame_key || 'none';
       button.textContent = item.label;
-      const selected = !isAdmin && (profile.active_frame_key || '') === item.badge_key;
+      const selected = selectedBadgeKey === item.badge_key;
       button.classList.toggle('is-active', selected);
       button.setAttribute('aria-pressed', String(selected));
-      button.disabled = isAdmin;
       button.addEventListener('click', async () => {
         frameList.querySelectorAll('button').forEach((choice) => { choice.disabled = true; });
         const { error: frameError } = await supabase
@@ -743,7 +761,7 @@ async function renderProfilePage(session, profile) {
     if (isAdmin) {
       const note = document.createElement('p');
       note.className = 'frame-admin-note';
-      note.textContent = 'Le cadre Admin exclusif est activé en permanence.';
+      note.textContent = 'Le compte Admin peut utiliser tous les cadres du catalogue.';
       frameList.append(note);
     }
   }
